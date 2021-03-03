@@ -1,4 +1,4 @@
-/#ifndef DATAFILEROOT_H_
+#ifndef DATAFILEROOT_H_
 #define DATAFILEROOT_H_
 
 #include <vector>

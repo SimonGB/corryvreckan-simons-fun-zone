@@ -11,6 +11,7 @@ CORRYVRECKAN_MODULE_SOURCES(${MODULE_NAME}
     ALiBaVa/HDFRoot.cpp
     ALiBaVa/Tracer.cpp
     ALiBaVa/utils.cpp
+    ALiBaVa/Hit.cpp
 )
 
 # Provide standard install target

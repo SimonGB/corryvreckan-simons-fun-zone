@@ -8,11 +8,11 @@
  * Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
+ #ifndef EventLoaderALiBaVa_H
+ #define EventLoaderALiBaVa_H 1
+
 #include "core/module/Module.hpp"
 #include "ALiBaVa/DataFileRoot.h"
-
-using namespace DataFileRoot;
-using namespace std;
 
 namespace corryvreckan {
     /** @ingroup Modules
@@ -28,7 +28,7 @@ namespace corryvreckan {
          * @param config Configuration object for this module as retrieved from the steering file
          * @param detector Pointer to the detector for this module instance
          */
-        EventLoaderALiBaVa(Configuration& config, vector<shared_ptr<Detector>> detectors);
+        EventLoaderALiBaVa(Configuration& config, std::vector<std::shared_ptr<Detector>> detector);
 
         /**
          * @brief [Initialise this module]
@@ -38,17 +38,18 @@ namespace corryvreckan {
         /**
          * @brief [Run the function of this module]
          */
-        StatusCode run(const shared_ptr<Clipboard>& clipboard) override;
+        StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
 
         /**
          * @brief [Finalise module]
          */
-        void finalize(const shared_ptr<ReadonlyClipboard>& clipboard) override;
+        void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
-        shared_ptr<Detector> m_detector;
+        std::shared_ptr<Detector> m_detector;
         DataFileRoot * ALibavaPointer;
         int nEvents = 0;
     };
 
 } // namespace corryvreckan
+#endif

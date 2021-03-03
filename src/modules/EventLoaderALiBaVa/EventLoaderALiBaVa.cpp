@@ -17,10 +17,9 @@
 #include "EventLoaderALiBaVa.h"
 
 using namespace corryvreckan;
-using namespace DataFileRoot;
 using namespace std;
 
-EventLoaderALiBaVa::EventLoaderALiBaVa(Configuration& config, vector<shared_ptr<Detector>> detectors)
+EventLoaderALiBaVa::EventLoaderALiBaVa(Configuration& config, vector<shared_ptr<Detector>> detector)
     : Module(config, move(detector)) {
       m_detector = detector;
     }
@@ -74,7 +73,7 @@ void EventLoaderALiBaVa::initialize() {
 
   // Open the ALiBaVa data
   ALiBaVaPointer = DataFileRoot::OpenFile();
-  ALiBaVa_loader(ALiBaVaPointer, m_datafilename, m_pedestalfilename, m_calibrationfilename);
+  auxfunctions::ALiBaVa_loader(ALiBaVaPointer, m_datafilename, m_pedestalfilename, m_calibrationfilename);
 
 }
 
@@ -97,6 +96,8 @@ StatusCode EventLoaderALiBaVa::run(const shared_ptr<Clipboard>&) {
   }
 
   clipboard->putData(pixels, m_detector->getName());
+
+  return 1;
 }
 
 void EventLoaderALiBaVa::finalize(const shared_ptr<ReadonlyClipboard>&) {
