@@ -11,27 +11,23 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <dirent.h>
 
 #include "objects/Pixel.hpp"
 #include "ALiBaVa/auxfunctions.h"
 #include "EventLoaderALiBaVa.h"
 
 using namespace corryvreckan;
-using namespace std;
 
-EventLoaderALiBaVa::EventLoaderALiBaVa(Configuration& config, vector<shared_ptr<Detector>> detector)
+EventLoaderALiBaVa::EventLoaderALiBaVa(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, move(detector)) {
       m_detector = detector;
     }
 
 void EventLoaderALiBaVa::initialize() {
 
-  string m_datafilename;
-  string m_pedestalfilename;
-  string m_calibrationfilename;
-
   // Take input directory from global parameters
-  string inputDirectory = config_.getPath("input_directory");
+  std::string inputDirectory = config_.getPath("input_directory");
 
   // Open the root directory
   DIR* directory = opendir(inputDirectory.c_str());
@@ -43,22 +39,22 @@ void EventLoaderALiBaVa::initialize() {
 
   // Read the files (data, pedestal and calibration) in the folder
   while(entry = readdir(directory)) {
-      if(entry->d_type == isFile) {
-          string filename = inputDirectory + "/" + entry->d_name;
-          if(filename.find("dat") != string::npos){
+      if(entry->d_type == DT_REG) {
+          std::string filename = inputDirectory + "/" + entry->d_name;
+          if(filename.find("dat") != std::string::npos){
             m_datafilename = filename;
           }
-          if(filename.find("ped") != string::npos){
+          if(filename.find("ped") != std::string::npos){
             m_pedestalfilename = filename;
           }
-          if(filename.find("cal") != string::npos){
+          if(filename.find("cal") != std::string::npos){
             m_calibrationfilename = filename;
           }
       }
   }
 
   if(m_datafilename.length() == 0) {
-      LOG(ERROR)("No data file was found for ALiBaVa in " + inputDirectory);
+      LOG(ERROR) << "No data file was found for ALiBaVa in " << inputDirectory;
       return;
   }
 
@@ -73,11 +69,11 @@ void EventLoaderALiBaVa::initialize() {
 
   // Open the ALiBaVa data
   ALiBaVaPointer = DataFileRoot::OpenFile();
-  auxfunctions::ALiBaVa_loader(ALiBaVaPointer, m_datafilename, m_pedestalfilename, m_calibrationfilename);
+  ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
 
 }
 
-StatusCode EventLoaderALiBaVa::run(const shared_ptr<Clipboard>&) {
+StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
 
   while(!ALiBaVaPointer->read_event()){
       nEvents++;
@@ -86,22 +82,20 @@ StatusCode EventLoaderALiBaVa::run(const shared_ptr<Clipboard>&) {
       double eventTime = ALiBaVaPointer->time();
 
       for(int chan = 0; chan < ALiBaVaPointer->nchan(); chan++){
-        calibration = ALiBaVaPointer->get_gain();
-        CalSignal = ALiBaVaPointer->signal(chan);
-        ADCSignal = ALiBaVaPointer->signal(chan)*calibration;
-        auto pixel = make_shared<Pixel>(m_detector->getName(), chan, 0, ADCSignal, CalSignal, eventTime);
+        double calibration = ALiBaVaPointer->get_gain(chan);
+        double CalSignal = ALiBaVaPointer->signal(chan);
+        double ADCSignal = ALiBaVaPointer->signal(chan)*calibration;
+        auto pixel = std::make_shared<Pixel>(m_detector->getName(), chan, 0, ADCSignal, CalSignal, eventTime);
         pixels.push_back(pixel);
       }
-
+      clipboard->putData(pixels, m_detector->getName());
   }
-
-  clipboard->putData(pixels, m_detector->getName());
-
-  return 1;
+  return StatusCode::Success;
 }
 
-void EventLoaderALiBaVa::finalize(const shared_ptr<ReadonlyClipboard>&) {
-    ALiBaVaPointer.close();
+
+void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) {
+    ALiBaVaPointer->close();
     delete ALiBaVaPointer;
     LOG(DEBUG) << "Analysed " << nEvents << " events";
 }

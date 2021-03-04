@@ -28,7 +28,7 @@ namespace corryvreckan {
          * @param config Configuration object for this module as retrieved from the steering file
          * @param detector Pointer to the detector for this module instance
          */
-        EventLoaderALiBaVa(Configuration& config, std::vector<std::shared_ptr<Detector>> detector);
+        EventLoaderALiBaVa(Configuration& config, std::shared_ptr<Detector> detector);
 
         /**
          * @brief [Initialise this module]
@@ -47,8 +47,12 @@ namespace corryvreckan {
 
     private:
         std::shared_ptr<Detector> m_detector;
-        DataFileRoot * ALibavaPointer;
+        DataFileRoot * ALiBaVaPointer;
         int nEvents = 0;
+
+        std::string m_datafilename;
+        std::string m_pedestalfilename;
+        std::string m_calibrationfilename;
     };
 
 } // namespace corryvreckan
