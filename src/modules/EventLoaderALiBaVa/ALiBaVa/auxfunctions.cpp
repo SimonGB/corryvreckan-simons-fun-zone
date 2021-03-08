@@ -3,10 +3,22 @@
 #include <TF1.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <fstream>
+#include <TROOT.h>
 
 #include "Data.h"
 #include "Tracer.h"
 #include "utils.h"
+
+bool debug_event=false;
+void set_debug(bool x)
+{
+    debug_event = x;
+}
+bool get_debug()
+{
+    return debug_event;
+}
 
 TH1 *draw_gain_hist(DataFileRoot &A, const char *hname, double factor, bool flip, int chip,
                int odd, int mxevts)
@@ -147,7 +159,7 @@ void save_text_file(TH1 *h1, const char *name)
  *             channels, and pedestal and noise for each channel.
  *             If no file is given the data file will be used.
  */
-void ALiBaVa_loader(DataFileRoot *A,
+int ALiBaVa_loader(DataFileRoot *A,
                        const char *data_file, const char *cal_file, const char *ped_file)
 {
 
@@ -171,7 +183,7 @@ void ALiBaVa_loader(DataFileRoot *A,
     // If none given, no calibration will be applied
     if (cal_file)
     {
-        if (DataFileRoot::is_text(cal_file))
+        if (is_text(cal_file))
         {
             cal_f = cal_file;
         }
