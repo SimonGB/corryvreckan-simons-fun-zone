@@ -208,4 +208,5 @@ namespace corryvreckan {
     };
 } // namespace corryvreckan
 
+#include "BigPixelDetector.hpp"
 #endif // CORRYVRECKAN_DETECTOR_H
