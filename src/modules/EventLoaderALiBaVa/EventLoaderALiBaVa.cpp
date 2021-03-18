@@ -29,6 +29,8 @@ void EventLoaderALiBaVa::initialize() {
   // Take input directory from global parameters
   std::string inputDirectory = config_.getPath("input_directory");
 
+  LOG(DEBUG) << "input directory read";
+
   // Open the root directory
   DIR* directory = opendir(inputDirectory.c_str());
   if(directory == nullptr) {
@@ -36,6 +38,8 @@ void EventLoaderALiBaVa::initialize() {
       return;
   }
   dirent* entry;
+
+  LOG(DEBUG) << "input directory opened";
 
   // Read the files (data, pedestal and calibration) in the folder
   while(entry = readdir(directory)) {
@@ -53,6 +57,8 @@ void EventLoaderALiBaVa::initialize() {
       }
   }
 
+  LOG(DEBUG) << "input files read";
+
   if(m_datafilename.length() == 0) {
       LOG(ERROR) << "No data file was found for ALiBaVa in " << inputDirectory;
       return;
@@ -67,10 +73,16 @@ void EventLoaderALiBaVa::initialize() {
       LOG(WARNING) << "No calibration file was found." << "\n" << "Results will be uncalibrated.";
   }
 
+  LOG(DEBUG) << "passed file checks";
+
   // Open the ALiBaVa data
-  ALiBaVaPointer = DataFileRoot::OpenFile();
+  ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
+  LOG(DEBUG) << "pointer created to alibava file";
+
+  // ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
   ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
 
+  LOG(DEBUG) << "Initializer finished";
 }
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {

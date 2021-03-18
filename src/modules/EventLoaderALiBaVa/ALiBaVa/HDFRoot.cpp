@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include "HDFRoot.h"
+#include "core/utils/log.h"
 
 #ifdef HAVE_HDF5
 #include <ctime>
@@ -138,7 +139,9 @@ HDFRoot::~HDFRoot()
 
 bool HDFRoot::valid() const
 {
+    LOG(DEBUG) << "Testing if file is Valid";
     return priv->fileid!=H5I_BADID;
+    LOG(DEBUG) << "Tested if file is Valid";
 }
 void HDFRoot::open(const char *name)
 {

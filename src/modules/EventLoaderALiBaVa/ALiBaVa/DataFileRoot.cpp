@@ -160,12 +160,12 @@ void DataFileRoot::compute_pedestals_fast(int mxevts, double wped, double wnoise
     for (i=0;i<max_nchan;i++)
         _ped[i] = _noise[i] = 0.;
 
-    std::cout << "Computing fast pedestals..." << std::endl;
+    // std::cout << "Computing fast pedestals..." << std::endl;
     for (ievt=0; read_data()==0 && ievt<mxevts; ievt++)
     {
         if (!(ievt%1000))
         {
-            std::cout << "\revent " << std::setw(10) << ievt << std::flush;
+            // std::cout << "\revent " << std::setw(10) << ievt << std::flush;
         }
         common_mode();
         for (i=0; i<nchan(); i++)
@@ -208,7 +208,7 @@ void DataFileRoot::compute_pedestals_fast(int mxevts, double wped, double wnoise
             }
         }
     }
-    std::cout << "\nDone" << std::endl;
+    // std::cout << "\nDone" << std::endl;
     rewind();
 }
 

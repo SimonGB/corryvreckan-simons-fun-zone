@@ -14,6 +14,7 @@
 #include "Hit.h"
 #include "ChanList.h"
 #include "utils.h"
+#include "core/utils/log.h"
 
 struct AsciiRootPriv
 {
@@ -83,7 +84,9 @@ AsciiRoot::~AsciiRoot()
 
 bool AsciiRoot::valid() const
 {
+	LOG(DEBUG) << "Testing if file is Valid";
 	return (priv->ifile!=0);
+	LOG(DEBUG) << "Tested if file is Valid finished";
 }
 
 
