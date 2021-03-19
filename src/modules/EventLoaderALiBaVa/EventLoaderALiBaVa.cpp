@@ -86,19 +86,32 @@ void EventLoaderALiBaVa::initialize() {
 }
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
-
+  LOG(DEBUG) << "Starting run";
   while(!ALiBaVaPointer->read_event()){
+      LOG(DEBUG) << "reading event";
       nEvents++;
+      LOG(DEBUG) << "nEvents incremented";
       PixelVector pixels;
+      LOG(DEBUG) << "Pixelvector created";
       ALiBaVaPointer->process_event();
+      LOG(DEBUG) << "event processed";
       double eventTime = ALiBaVaPointer->time();
+      LOG(DEBUG) << "time retrieved";
 
       for(int chan = 0; chan < ALiBaVaPointer->nchan(); chan++){
+        LOG(DEBUG) << "Starting channel " << chan;
         double calibration = ALiBaVaPointer->get_gain(chan);
+        LOG(DEBUG) << "calibration defined";
         double CalSignal = ALiBaVaPointer->signal(chan);
+        LOG(DEBUG) << "signal defined";
         double ADCSignal = ALiBaVaPointer->signal(chan)*calibration;
+        LOG(DEBUG) << "raw signal defined";
+        LOG(DEBUG) << chan << 0 << ADCSignal << CalSignal << eventTime;
+        LOG(DEBUG) << m_detector->getName();
         auto pixel = std::make_shared<Pixel>(m_detector->getName(), chan, 0, ADCSignal, CalSignal, eventTime);
+        LOG(DEBUG) << "pixel created";
         pixels.push_back(pixel);
+        LOG(DEBUG) << "pixel pushed back into vector";
       }
       clipboard->putData(pixels, m_detector->getName());
   }
