@@ -174,8 +174,9 @@ void save_text_file(TH1 *h1, const char *name)
  *             If no file is given the data file will be used.
  */
 int ALiBaVa_loader(DataFileRoot *A,
-                       const char *data_file, const char *cal_file, const char *ped_file)
+                       const char *data_file, const char *ped_file, const char *cal_file)
 {
+    LOG(DEBUG) << A->valid();
     LOG(DEBUG) << "TYPE OF A IN START ALIBAVA_LOADER (*)" << "->:" << A->type();
     const char *ped_f = "/tmp/alibava_ped.ped";
     const char *cal_f = "/tmp/alibava_cal.cal";

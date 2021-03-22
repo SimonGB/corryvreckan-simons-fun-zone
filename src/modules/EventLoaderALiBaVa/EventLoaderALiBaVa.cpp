@@ -44,15 +44,15 @@ void EventLoaderALiBaVa::initialize() {
   // Read the files (data, pedestal and calibration) in the folder
   while(entry = readdir(directory)) {
       if(entry->d_type == DT_REG) {
-          std::string filename = inputDirectory + "/" + entry->d_name;
-          if(filename.find("dat") != std::string::npos){
-            m_datafilename = filename;
+          std::string entryName = entry->d_name;
+          if(entryName.find("dat") != std::string::npos){
+            m_datafilename = inputDirectory + "/" + entryName;
           }
-          if(filename.find("ped") != std::string::npos){
-            m_pedestalfilename = filename;
+          if(entryName.find("ped") != std::string::npos){
+            m_pedestalfilename = inputDirectory + "/" + entryName;
           }
-          if(filename.find("cal") != std::string::npos){
-            m_calibrationfilename = filename;
+          if(entryName.find("cal") != std::string::npos){
+            m_calibrationfilename = inputDirectory + "/" + entryName;
           }
       }
   }
@@ -76,11 +76,22 @@ void EventLoaderALiBaVa::initialize() {
   LOG(DEBUG) << "passed file checks";
 
   // Open the ALiBaVa data
-  ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
-  LOG(DEBUG) << "pointer created to alibava file";
+  //########### TEST AREA ############
+  LOG(DEBUG) << "####################################################";
+  // DataFileRoot * test = DataFileRoot::OpenFile(m_datafilename.c_str(),m_pedestalfilename.c_str(),m_calibrationfilename.c_str());
+  LOG(DEBUG) << m_datafilename.c_str();
+  LOG(DEBUG) << m_calibrationfilename.c_str();
+  LOG(DEBUG) << m_pedestalfilename.c_str();
 
+  DataFileRoot * test = DataFileRoot::OpenFile(m_datafilename.c_str());
+  // test->open(m_pedestalfilename.c_str());
+  LOG(DEBUG) << test->valid();
+  LOG(DEBUG) << test->type();
+  LOG(DEBUG) << "####################################################";
+  //##################################
   // ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
-  ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
+  // LOG(DEBUG) << "pointer created to alibava file";
+  // ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
 
   LOG(DEBUG) << "Initializer finished";
 }
