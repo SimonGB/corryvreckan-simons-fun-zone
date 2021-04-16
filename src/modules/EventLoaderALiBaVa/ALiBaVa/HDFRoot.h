@@ -23,6 +23,7 @@ class HDFRoot: public DataFileRoot
         virtual ~HDFRoot();
 
         bool valid() const;
+        int nevents() const;
         void open(const char *name);
         void close();
         void rewind();

@@ -109,6 +109,14 @@ class DataFileRoot
          * implemented
          *
          */
+
+         /**
+          * Gives the number of events.
+          *
+          * @return an int
+          */
+         virtual int nevents() const =0;
+
         /**
          * Tells if the data stream is valid.
          *

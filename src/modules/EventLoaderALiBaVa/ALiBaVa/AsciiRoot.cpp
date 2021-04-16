@@ -82,11 +82,17 @@ AsciiRoot::~AsciiRoot()
     delete priv;
 }
 
+int AsciiRoot::nevents() const
+{
+		LOG(ERROR) << "THIS HASN'T BEEN IMPLEMENTED PROPERLY YET, PROBABLY SHOULD BE SOMETHING LIKE HEADER[x]";
+    return -1;
+}
+
 bool AsciiRoot::valid() const
 {
-	LOG(DEBUG) << "Testing if file is Valid";
+	// LOG(DEBUG) << "Testing if file is Valid";
 	return (priv->ifile!=0);
-	LOG(DEBUG) << "Tested if file is Valid finished";
+	// LOG(DEBUG) << "Tested if file is Valid finished";
 }
 
 

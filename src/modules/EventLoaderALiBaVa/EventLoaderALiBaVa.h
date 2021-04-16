@@ -48,6 +48,7 @@ namespace corryvreckan {
     private:
         std::shared_ptr<Detector> m_detector;
         DataFileRoot * ALiBaVaPointer;
+        int iEvent = 0;
         int nEvents = 0;
 
         std::string m_datafilename;

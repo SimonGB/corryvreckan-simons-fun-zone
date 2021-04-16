@@ -17,6 +17,10 @@
 #include "HDFRoot.h"
 #include "core/utils/log.h"
 
+// #ifndef HAVE_HDF5
+// #define HAVE_HDF5
+// #endif
+
 #ifdef HAVE_HDF5
 #include <ctime>
 #include <hdf5.h>
@@ -139,10 +143,14 @@ HDFRoot::~HDFRoot()
 
 bool HDFRoot::valid() const
 {
-    LOG(DEBUG) << "Testing if file is Valid";
     return priv->fileid!=H5I_BADID;
-    LOG(DEBUG) << "Tested if file is Valid";
 }
+
+int HDFRoot::nevents() const
+{
+    return priv->nevts;
+}
+
 void HDFRoot::open(const char *name)
 {
     Header H;
@@ -194,7 +202,8 @@ void HDFRoot::open(const char *name)
     else
         _step = 0;
 
-    std::cout << "Run type: " << _type << " acquired on " << ctime(&_t0);
+    LOG(DEBUG) << "Run type: " << _type << " acquired on " << ctime(&_t0);
+    LOG(DEBUG) << _t0;
 
     // Get pedestals and noise
     hid_t dset =  H5Dopen2(priv->fileid, "/header/pedestal", H5P_DEFAULT);
@@ -232,7 +241,7 @@ void HDFRoot::open(const char *name)
     H5Sclose(dspace);
     priv->npoints = dims[0];
 
-    std::cout << "...N. of evts. " << priv->nevts << " - N. points " << priv->npoints << std::endl;
+    LOG(DEBUG) << "Nr. of evts. " << priv->nevts << " - Nr. of points " << priv->npoints << std::endl;
 
     /*
      * Now get the very first scan point
@@ -242,6 +251,7 @@ void HDFRoot::open(const char *name)
     priv->saved_evt = priv->ievt;
     priv->saved_point = priv->ipoint;
 }
+
 void HDFRoot::close()
 {
     if (valid())

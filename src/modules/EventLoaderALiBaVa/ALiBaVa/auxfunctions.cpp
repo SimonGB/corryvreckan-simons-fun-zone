@@ -24,7 +24,7 @@ bool get_debug()
 TH1 *draw_gain_hist(DataFileRoot &A, const char *hname, double factor, bool flip, int chip,
                int odd, int mxevts)
 {
-    LOG(DEBUG) << "TYPE OF A IN DRAW_GAIN_HIST (&) .: " << A.type();
+    // LOG(DEBUG) << "TYPE OF A IN DRAW_GAIN_HIST (&) .: " << A.type();
     double s = A.step()/2.;
     if (mxevts<0)
         mxevts = 100000000;
@@ -74,7 +74,7 @@ TH1 *draw_gain_hist(DataFileRoot &A, const char *hname, double factor, bool flip
     {
         A.process_event();
         A.get_scan_values(delay, charge);
-        std::cout << "Delay " << delay << " charge " << charge << std::endl;
+        // std::cout << "Delay " << delay << " charge " << charge << std::endl;
         //short delay = int(A.value()) >> 16;
         //short charge = int(A.value()) & 0xffff;
         double val;
@@ -176,31 +176,46 @@ void save_text_file(TH1 *h1, const char *name)
 int ALiBaVa_loader(DataFileRoot *A,
                        const char *data_file, const char *ped_file, const char *cal_file)
 {
-    LOG(DEBUG) << A->valid();
-    LOG(DEBUG) << "TYPE OF A IN START ALIBAVA_LOADER (*)" << "->:" << A->type();
+    // LOG(DEBUG) << A->valid();
+    // LOG(DEBUG) << "TYPE OF A IN START ALIBAVA_LOADER (*)" << "->:" << A->type();
     const char *ped_f = "/tmp/alibava_ped.ped";
     const char *cal_f = "/tmp/alibava_cal.cal";
 
     LOG(DEBUG) << "Computing pedestals";
-    if (!ped_file || !is_text(ped_file))
-    //if there is no pedestal file -> TRUE or TRUE -> TRUE
-    //if there is an HDF5 pedestal file -> FALSE or TRUE -> TRUE
-    //if there is an ASCII pedestal file -> FALSE or FALSE -> FALSE
+    if (!ped_file)
     {
         if (A->valid())
         {
             A->save();
             A->rewind();
         }
-        else
+        else{
             A->open(data_file);
-
+        }
         A->compute_pedestals_fast();
         A->save_pedestals(ped_f);
         A->restore();
     }
     else
-        ped_f = ped_file;
+    {
+        if (!is_text(ped_file))
+        {
+            // DataFileRoot * PedestalPointer = DataFileRoot::OpenFile(0,ped_file,0);
+            DataFileRoot * PedestalPointer = DataFileRoot::OpenFile(ped_file);
+            // PedestalPointer->open(ped_file);
+            // LOG(DEBUG) << "A";
+            PedestalPointer->compute_pedestals_fast();
+            // LOG(DEBUG) << "B";
+            PedestalPointer->save_pedestals(ped_f);
+            // LOG(DEBUG) << "C";
+            PedestalPointer->close();
+            // LOG(DEBUG) << "D";
+            delete PedestalPointer;
+            }
+        else
+            ped_f = ped_file;
+    }
+    LOG(DEBUG) << "Computing calibration";
     // Get the calibration (i.e. if necessary, convert HDF5/binary to text)
     // If none given, no calibration will be applied
     if (cal_file)
@@ -211,19 +226,20 @@ int ALiBaVa_loader(DataFileRoot *A,
         }
         else
         {
-            LOG(DEBUG) << "Calibration file is HDF5";
-            DataFileRoot * B = DataFileRoot::OpenFile(cal_file, ped_f);
-            draw_gain_hist(*B, "hGain");
+            // LOG(DEBUG) << "Calibration file is HDF5";
+            // DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file, ped_f, 0);
+            DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file);
+            draw_gain_hist(*CalibrationPointer, "hGain");
             save_text_file((TH1 *)gDirectory->Get("hGain"), cal_f);
-            delete B;
-            LOG(DEBUG) << "succesfully converted HDF5 calibration file";
+            delete CalibrationPointer;
+            // LOG(DEBUG) << "succesfully converted HDF5 calibration file";
         }
     }
     else
         cal_f = 0;
-    LOG(DEBUG) << "Calibration loaded succesfully";
+    // LOG(DEBUG) << "Calibration loaded succesfully";
 
-    LOG(DEBUG) << "TYPE OF A IN END ALIBAVA_LOADER (*)" << "->:" << A->type();
+    // LOG(DEBUG) << "TYPE OF A IN END ALIBAVA_LOADER (*)" << "->:" << A->type();
 
     // Load the data, pedestal, and calibration
     if (data_file && !A->valid())
@@ -235,5 +251,5 @@ int ALiBaVa_loader(DataFileRoot *A,
     if (ped_f)
         A->load_pedestals(ped_f);
 
-    LOG(DEBUG) << "Loader finished";
+    // LOG(DEBUG) << "Loader finished";
 }

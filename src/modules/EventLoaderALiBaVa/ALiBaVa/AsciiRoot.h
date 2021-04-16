@@ -27,7 +27,7 @@ class AsciiRoot : public DataFileRoot
         virtual ~AsciiRoot();
 
         bool valid() const;
-
+        int nevents() const;
         void open(const char *name);
         void save();
         void restore();

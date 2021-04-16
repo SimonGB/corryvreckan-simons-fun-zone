@@ -16,11 +16,12 @@
 #include "objects/Pixel.hpp"
 #include "ALiBaVa/auxfunctions.h"
 #include "EventLoaderALiBaVa.h"
+#include "ALiBaVa/HDFRoot.h"
 
 using namespace corryvreckan;
 
 EventLoaderALiBaVa::EventLoaderALiBaVa(Configuration& config, std::shared_ptr<Detector> detector)
-    : Module(config, move(detector)) {
+    : Module(config, detector) {
       m_detector = detector;
     }
 
@@ -29,7 +30,7 @@ void EventLoaderALiBaVa::initialize() {
   // Take input directory from global parameters
   std::string inputDirectory = config_.getPath("input_directory");
 
-  LOG(DEBUG) << "input directory read";
+  // LOG(DEBUG) << "input directory read";
 
   // Open the root directory
   DIR* directory = opendir(inputDirectory.c_str());
@@ -39,7 +40,7 @@ void EventLoaderALiBaVa::initialize() {
   }
   dirent* entry;
 
-  LOG(DEBUG) << "input directory opened";
+  // LOG(DEBUG) << "input directory opened";
 
   // Read the files (data, pedestal and calibration) in the folder
   while(entry = readdir(directory)) {
@@ -57,7 +58,7 @@ void EventLoaderALiBaVa::initialize() {
       }
   }
 
-  LOG(DEBUG) << "input files read";
+  // LOG(DEBUG) << "input files read";
 
   if(m_datafilename.length() == 0) {
       LOG(ERROR) << "No data file was found for ALiBaVa in " << inputDirectory;
@@ -73,59 +74,70 @@ void EventLoaderALiBaVa::initialize() {
       LOG(WARNING) << "No calibration file was found." << "\n" << "Results will be uncalibrated.";
   }
 
-  LOG(DEBUG) << "passed file checks";
+  // LOG(DEBUG) << "passed file checks";
 
   // Open the ALiBaVa data
-  //########### TEST AREA ############
-  LOG(DEBUG) << "####################################################";
-  // DataFileRoot * test = DataFileRoot::OpenFile(m_datafilename.c_str(),m_pedestalfilename.c_str(),m_calibrationfilename.c_str());
-  LOG(DEBUG) << m_datafilename.c_str();
-  LOG(DEBUG) << m_calibrationfilename.c_str();
-  LOG(DEBUG) << m_pedestalfilename.c_str();
-
-  DataFileRoot * test = DataFileRoot::OpenFile(m_datafilename.c_str());
-  // test->open(m_pedestalfilename.c_str());
-  LOG(DEBUG) << test->valid();
-  LOG(DEBUG) << test->type();
-  LOG(DEBUG) << "####################################################";
-  //##################################
-  // ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
+  ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
   // LOG(DEBUG) << "pointer created to alibava file";
-  // ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
-
-  LOG(DEBUG) << "Initializer finished";
+  ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
+  // LOG(DEBUG) << "Initializer finished";
+  nEvents = ALiBaVaPointer->nevents();
 }
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
-  LOG(DEBUG) << "Starting run";
+  // LOG(STATUS) << "Starting run";
+  // std::string detectorName = "TEST";
+  PixelVector pixels;
   while(!ALiBaVaPointer->read_event()){
-      LOG(DEBUG) << "reading event";
-      nEvents++;
-      LOG(DEBUG) << "nEvents incremented";
-      PixelVector pixels;
-      LOG(DEBUG) << "Pixelvector created";
+      // LOG(DEBUG) << "reading event";
+      iEvent++;
+      // LOG(DEBUG) << "iEvent incremented";
+      // LOG(DEBUG) << "Pixelvector created";
       ALiBaVaPointer->process_event();
-      LOG(DEBUG) << "event processed";
+      // LOG(DEBUG) << "event processed";
       double eventTime = ALiBaVaPointer->time();
-      LOG(DEBUG) << "time retrieved";
+      // LOG(DEBUG) << "time retrieved";
 
       for(int chan = 0; chan < ALiBaVaPointer->nchan(); chan++){
-        LOG(DEBUG) << "Starting channel " << chan;
+      // for(int chan = 0; chan < 5; chan++){
+
+        // LOG(DEBUG) << "Starting channel " << chan;
         double calibration = ALiBaVaPointer->get_gain(chan);
-        LOG(DEBUG) << "calibration defined";
+        // LOG(DEBUG) << calibration;
+        // LOG(DEBUG) << "calibration defined";
         double CalSignal = ALiBaVaPointer->signal(chan);
-        LOG(DEBUG) << "signal defined";
+        // LOG(DEBUG) << "signal defined";
         double ADCSignal = ALiBaVaPointer->signal(chan)*calibration;
-        LOG(DEBUG) << "raw signal defined";
-        LOG(DEBUG) << chan << 0 << ADCSignal << CalSignal << eventTime;
-        LOG(DEBUG) << m_detector->getName();
+        // LOG(DEBUG) << "raw signal defined";
+        // LOG(DEBUG) << chan;
+        // LOG(DEBUG) << ADCSignal;
+        // LOG(DEBUG) << CalSignal;
+        // LOG(DEBUG) << eventTime;
+        // LOG(DEBUG) << detectorName;
         auto pixel = std::make_shared<Pixel>(m_detector->getName(), chan, 0, ADCSignal, CalSignal, eventTime);
-        LOG(DEBUG) << "pixel created";
+        // LOG(DEBUG) << "pixel created";
         pixels.push_back(pixel);
-        LOG(DEBUG) << "pixel pushed back into vector";
+        // LOG(DEBUG) << "pixel pushed back into vector";
+        // LOG(STATUS) << "Channel number " << chan;
       }
-      clipboard->putData(pixels, m_detector->getName());
+      // LOG(STATUS) << "Event number " << iEvent;
+      break;
+      // if(iEvent > 10)
+      // {
+      //   // LOG(STATUS) << "###########################################################################################################";
+      //   break;
+      // }
   }
+
+
+  clipboard->putData(pixels, m_detector->getName());
+  if(iEvent >= nEvents){
+    return StatusCode::EndRun;
+  }
+  if(pixels.empty()){
+    return StatusCode::NoData;
+  }
+  // LOG(STATUS) << "Ending run";
   return StatusCode::Success;
 }
 
@@ -133,5 +145,5 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) {
     ALiBaVaPointer->close();
     delete ALiBaVaPointer;
-    LOG(DEBUG) << "Analysed " << nEvents << " events";
+    LOG(STATUS) << "Analysed " << iEvent << " of total " << nEvents << " events";
 }

@@ -26,6 +26,10 @@
 #include "HDFRoot.h"
 #include "utils.h"
 
+// #ifndef HAVE_HDF5
+// #define HAVE_HDF5
+// #endif
+
 #ifdef __APPLE__
 #define sighandler_t sig_t
 #endif
