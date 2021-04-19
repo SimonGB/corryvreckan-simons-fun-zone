@@ -50,6 +50,8 @@ namespace corryvreckan {
         DataFileRoot * ALiBaVaPointer;
         int iEvent = 0;
         int nEvents = 0;
+        double lastAlibavaTimeStamp = 0;
+        const double billion = 1000000000;
 
         std::string m_datafilename;
         std::string m_pedestalfilename;
