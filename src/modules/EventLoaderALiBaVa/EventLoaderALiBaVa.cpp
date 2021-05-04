@@ -95,6 +95,7 @@ void EventLoaderALiBaVa::initialize() {
 
   ALiBaVaPointer->rewind();
   LOG(STATUS) << "It's not stuck, it's just really slow...";
+  LOG(DEBUG) << "The reason is that reading the Alibava events doesn't happen in-order. So I'm forced to iterate over ALL Alibava events for every single Corryvreckan event...";
 }
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -167,5 +168,5 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) {
     ALiBaVaPointer->close();
     delete ALiBaVaPointer;
-    LOG(STATUS) << "Analysed " << iEvent << " of total " << nEvents << " ALiBaVa events";
+    LOG(DEBUG) << "Analysed " << iEvent << " of total " << nEvents << " ALiBaVa events";
 }

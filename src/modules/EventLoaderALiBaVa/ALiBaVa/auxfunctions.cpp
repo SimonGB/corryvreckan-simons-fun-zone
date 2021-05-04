@@ -151,7 +151,7 @@ void save_text_file(TH1 *h1, const char *name)
     std::ofstream ofile(name);
     if (!ofile)
     {
-        std::cout << "Could not open " << name << " for writing" << std::endl;
+        LOG(ERROR) << "Could not open " << name << " for writing" << std::endl;
         return;
     }
     int ib, nb=h1->GetNbinsX();

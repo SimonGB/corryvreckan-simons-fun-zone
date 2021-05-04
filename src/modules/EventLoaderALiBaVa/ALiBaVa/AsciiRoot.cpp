@@ -62,6 +62,8 @@ std::vector<int> decode_header(const std::string &h, AsciiRoot::XtraValues &xtra
             vout.push_back(atoi(buf) );
         }
     }
+		LOG(DEBUG) << "####################";
+		for (auto i: vout) std::cout << i << ' ';
     return vout;
 }
 
@@ -84,7 +86,7 @@ AsciiRoot::~AsciiRoot()
 
 int AsciiRoot::nevents() const
 {
-		LOG(ERROR) << "THIS HASN'T BEEN IMPLEMENTED PROPERLY YET, PROBABLY SHOULD BE SOMETHING LIKE HEADER[x]";
+		LOG(ERROR) << "Total number of events hasn't been properly implemented yet for binary files.";
     return -1;
 }
 
