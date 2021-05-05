@@ -74,13 +74,13 @@ void EventLoaderALiBaVa::initialize() {
       LOG(WARNING) << "No calibration file was found." << "\n" << "Results will be uncalibrated.";
   }
 
-  // LOG(DEBUG) << "passed file checks";
+  LOG(DEBUG) << "passed file checks";
 
   // Open the ALiBaVa data
   ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
-  // LOG(DEBUG) << "pointer created to alibava file";
+  LOG(DEBUG) << "pointer created to alibava file";
   ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
-  // LOG(DEBUG) << "Initializer finished";
+  LOG(DEBUG) << "Initializer finished";
   nEvents = ALiBaVaPointer->nevents();
   ALiBaVaPointer->rewind();
 
