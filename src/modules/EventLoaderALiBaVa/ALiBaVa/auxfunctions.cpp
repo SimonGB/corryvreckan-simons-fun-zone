@@ -222,22 +222,23 @@ int ALiBaVa_loader(DataFileRoot *A,
     {
         if (is_text(cal_file))
         {
+            LOG(DEBUG) << "Calibration already available";
             cal_f = cal_file;
         }
         else
         {
-            // LOG(DEBUG) << "Calibration file is HDF5";
+            LOG(DEBUG) << "Calibration file is HDF5 or ASCII";
             // DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file, ped_f, 0);
             DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file);
             draw_gain_hist(*CalibrationPointer, "hGain");
             save_text_file((TH1 *)gDirectory->Get("hGain"), cal_f);
             delete CalibrationPointer;
-            // LOG(DEBUG) << "succesfully converted HDF5 calibration file";
+            LOG(DEBUG) << "succesfully converted calibration file";
         }
     }
     else
         cal_f = 0;
-    // LOG(DEBUG) << "Calibration loaded succesfully";
+    LOG(DEBUG) << "Calibration loaded succesfully";
 
     // LOG(DEBUG) << "TYPE OF A IN END ALIBAVA_LOADER (*)" << "->:" << A->type();
 
@@ -251,5 +252,5 @@ int ALiBaVa_loader(DataFileRoot *A,
     if (ped_f)
         A->load_pedestals(ped_f);
 
-    // LOG(DEBUG) << "Loader finished";
+    LOG(DEBUG) << "Loader finished";
 }
