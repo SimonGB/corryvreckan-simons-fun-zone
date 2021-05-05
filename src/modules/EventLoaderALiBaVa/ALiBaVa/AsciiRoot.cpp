@@ -62,8 +62,8 @@ std::vector<int> decode_header(const std::string &h, AsciiRoot::XtraValues &xtra
             vout.push_back(atoi(buf) );
         }
     }
-		LOG(DEBUG) << "####################";
-		for (auto i: vout) std::cout << i << ' ';
+		// LOG(DEBUG) << "####################";
+		// for (auto i: vout) std::cout << i << ' ';
     return vout;
 }
 
@@ -142,7 +142,7 @@ void AsciiRoot::open(const char *name)
         header = header.substr(5);
     }
 
-    std::cout << "type: " << _type << " header: " << header << std::endl;
+    // std::cout << "type: " << _type << " header: " << header << std::endl;
     std::vector<int> param = decode_header(header, _xtra);
     priv->ifile->read((char *)_ped, max_nchan*sizeof(double));
     priv->ifile->read((char *)_noise, max_nchan*sizeof(double));
