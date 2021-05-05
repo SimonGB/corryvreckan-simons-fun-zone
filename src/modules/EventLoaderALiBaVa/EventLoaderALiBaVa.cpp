@@ -30,7 +30,7 @@ void EventLoaderALiBaVa::initialize() {
   // Take input directory from global parameters
   std::string inputDirectory = config_.getPath("input_directory");
 
-  // LOG(DEBUG) << "input directory read";
+  LOG(DEBUG) << "input directory read";
 
   // Open the root directory
   DIR* directory = opendir(inputDirectory.c_str());
@@ -40,7 +40,7 @@ void EventLoaderALiBaVa::initialize() {
   }
   dirent* entry;
 
-  // LOG(DEBUG) << "input directory opened";
+  LOG(DEBUG) << "input directory opened";
 
   // Read the files (data, pedestal and calibration) in the folder
   while(entry = readdir(directory)) {
