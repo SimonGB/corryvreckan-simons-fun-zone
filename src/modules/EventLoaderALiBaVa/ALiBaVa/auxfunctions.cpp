@@ -245,12 +245,15 @@ int ALiBaVa_loader(DataFileRoot *A,
     // Load the data, pedestal, and calibration
     if (data_file && !A->valid())
         A->open(data_file);
+    LOG(DEBUG) << "load data";
 
     if (cal_f)
         A->load_gain(cal_f);
+    LOG(DEBUG) << "load cal";
 
     if (ped_f)
         A->load_pedestals(ped_f);
+    LOG(DEBUG) << "load ped";
 
     LOG(DEBUG) << "Loader finished";
 }
