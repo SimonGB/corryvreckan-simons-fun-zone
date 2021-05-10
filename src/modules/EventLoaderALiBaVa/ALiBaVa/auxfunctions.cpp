@@ -232,6 +232,7 @@ int ALiBaVa_loader(DataFileRoot *A,
             DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file);
             draw_gain_hist(*CalibrationPointer, "hGain");
             save_text_file((TH1 *)gDirectory->Get("hGain"), cal_f);
+            CalibrationPointer->close();
             delete CalibrationPointer;
             LOG(DEBUG) << "succesfully converted calibration file";
         }
