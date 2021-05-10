@@ -66,8 +66,7 @@ void EventLoaderALiBaVa::initialize() {
   }
 
   if(m_pedestalfilename.length() == 0) {
-      LOG(ERROR) << "No pedestal file was found." << "\n" << "Cannot continue without pedestal information.";
-      return;
+      LOG(WARNING) << "No pedestal file was found." << "\n" << "Datafile will be used for pedestal";
   }
 
   if(m_calibrationfilename.length() == 0) {
@@ -77,10 +76,11 @@ void EventLoaderALiBaVa::initialize() {
   LOG(DEBUG) << "passed file checks";
 
   // Open the ALiBaVa data
-  ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
+  // ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
+  ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str());
+  // ALiBaVaPointer = DataFileRoot::OpenFile(m_pedestalfilename.c_str());
   LOG(DEBUG) << "pointer created to alibava file";
   ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
-  LOG(DEBUG) << "Should have crashed by now";
   LOG(DEBUG) << "Initializer finished";
   nEvents = ALiBaVaPointer->nevents();
   ALiBaVaPointer->rewind();
@@ -96,7 +96,7 @@ void EventLoaderALiBaVa::initialize() {
 
   ALiBaVaPointer->rewind();
   LOG(STATUS) << "It's not stuck, it's just really slow...";
-  LOG(DEBUG) << "The reason is that reading the Alibava events doesn't happen in-order. So I'm forced to iterate over ALL Alibava events for every single Corryvreckan event...";
+  LOG(DEBUG) << "The reading out of ALiBaVa events doesn't happen in-order, so I'm forced to iterate over ALL Alibava events for every single Corryvreckan event...";
 }
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -111,14 +111,41 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     return StatusCode::EndRun;
   }
 
+  // LOG(DEBUG) << "----------DEBUG----------";
+  test=false;
+  if(test){
+    int i = 0;
+    while(i < 4){
+      ALiBaVaPointer->read_event();
+      ALiBaVaPointer->process_event(kTRUE);
+      LOG(DEBUG) << "Event: " << i;
+      LOG(DEBUG) << "nr. of channels: " << 128;
+      int activechannels = 0;
+      for(int chan = 0; chan < 128; chan++){
+        double calibration = ALiBaVaPointer->get_gain(chan);
+        if(calibration != 0){
+          double CalSignal = ALiBaVaPointer->signal(chan);
+          double ADCSignal = ALiBaVaPointer->signal(chan)*calibration;
+          double noise = ALiBaVaPointer->noise(chan);
+          double pedestal = ALiBaVaPointer->ped(chan);
+          // double AlibavaEventTime = ALiBaVaPointer->time()*billion;
+          double AlibavaEventTime = ALiBaVaPointer->time();
+          double temp = ALiBaVaPointer->temp();
+          double data = ALiBaVaPointer->data(chan);
+          LOG(DEBUG) << "\t Channel: " << chan << " \t Calibration: " << calibration << " \t Pedestal: " << pedestal << " \t Signal: " << CalSignal << " \t ADC: " << ADCSignal << " \t Timestamp: " << AlibavaEventTime << "\t Temp: " << temp << "\t Raw data: " << data;
+          activechannels++;
+        }
+      }
+      LOG(DEBUG) << "Nr. of active channels: " << activechannels;
+      i++;
+    }
+    return StatusCode::EndRun;
+  }
+  // LOG(DEBUG) << "----------DEBUG----------";
+
   while(!ALiBaVaPointer->read_event()){
-      ALiBaVaPointer->process_event();
+      ALiBaVaPointer->process_event(kTRUE);
       // LOG(STATUS) << ALiBaVaPointer->time();
-      // LOG(STATUS) << "----------";
-      // LOG(STATUS) << ALiBaVaPointer->time();
-      // LOG(STATUS) << ALiBaVaPointer->time()*billion;
-      // LOG(STATUS) << ALiBaVaPointer->time()*billion/billion;
-      // LOG(STATUS) << "----------";
       double AlibavaEventTime = ALiBaVaPointer->time()*billion;
       auto position = event->getTimestampPosition(AlibavaEventTime);
       // debug

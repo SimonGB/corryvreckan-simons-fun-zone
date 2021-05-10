@@ -30,7 +30,8 @@ ChanList::ChanList(int i1, int i2) :
         nch(0), cm(0.), noise(0.)
 {
     int i;
-    for (i = 0; i < nch; i++)
+    // for (i = 0; i < nch; i++)
+    for (i = 0; i1 + i <= i2; i++)
         ch.push_back(i1 + i);
 
     nch = ch.size();

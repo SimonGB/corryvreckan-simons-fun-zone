@@ -413,6 +413,10 @@ class DataFileRoot
         virtual TH2 *compute_pedestals(int mxevts=-1, bool do_cmmd=true);
         virtual void compute_pedestals_fast(int mxevts = -1, double ped_weight=0.01, double noise_weight=0.001);
 
+        // Alternative functions
+        virtual void compute_pedestals_alternative();
+        virtual void compute_cmmd_alternative();
+
         // Computes common mode,
         void common_mode();
         void common_mode(ChanList &C, bool correct=false);

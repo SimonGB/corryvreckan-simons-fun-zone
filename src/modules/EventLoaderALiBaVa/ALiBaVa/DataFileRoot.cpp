@@ -5,6 +5,7 @@
 #include <cmath>
 #include <csignal>
 #include <cstring>
+#include <numeric>
 #include <sys/stat.h>
 #include <TF1.h>
 #include <TH1.h>
@@ -169,6 +170,7 @@ void DataFileRoot::compute_pedestals_fast(int mxevts, double wped, double wnoise
     {
         if (!(ievt%1000))
         {
+            // std::cout << "event " << ievt << ": " << _ped[i] << "\n";
             // std::cout << "\revent " << std::setw(10) << ievt << std::flush;
         }
         common_mode();
@@ -183,6 +185,7 @@ void DataFileRoot::compute_pedestals_fast(int mxevts, double wped, double wnoise
 
             if (_ped[i]==0.)
             {
+
                 // If pedestal is not yet computed we assume the current
                 // channel value should not be too far
                 _ped[i] = _data.data[i];
@@ -216,6 +219,103 @@ void DataFileRoot::compute_pedestals_fast(int mxevts, double wped, double wnoise
     rewind();
 }
 
+void DataFileRoot::compute_pedestals_alternative()
+{
+    int mxevts = 100000000;
+    int max_nchan = 128;
+
+    int i, ievt;
+    std::vector <double> pedestal_data[max_nchan];
+    double pedestal_average[max_nchan];
+    double pedestal_stdev[max_nchan];
+
+    if (!valid())
+        return;
+
+    for (i=0;i<max_nchan;i++)
+        _ped[i] = _noise[i] = 0.;
+
+    for (ievt=0; read_data()==0 && ievt<mxevts; ievt++)
+    {
+        for (i=0; i<max_nchan; i++)
+        {
+            pedestal_data[i].push_back(_data.data[i]);
+        }
+    }
+    for (i=0;i<max_nchan;i++){
+
+      pedestal_average[i] = std::accumulate(pedestal_data[i].begin(), pedestal_data[i].end(), 0.0);
+      pedestal_average[i] = pedestal_average[i] / pedestal_data[i].size();
+
+      pedestal_stdev[i] = std::inner_product(pedestal_data[i].begin(), pedestal_data[i].end(), pedestal_data[i].begin(), 0.0);
+      pedestal_stdev[i] = std::sqrt(pedestal_stdev[i] / pedestal_data[i].size() - pedestal_average[i] * pedestal_average[i]);
+
+      _ped[i] = pedestal_average[i];
+      _noise[i] = pedestal_stdev[i];
+
+    }
+    rewind();
+}
+
+void DataFileRoot::compute_cmmd_alternative()
+{
+    int mxevts = 100000000;
+    int max_nchan = 128;
+    int nEvents;
+
+    int i, ievt;
+
+    double event_bias = 0; //common mode noise per pedestal events
+    double cmn = 0; //common mode noise averaged over all pedestal events
+
+    std::vector <double> pedestal_data[max_nchan];
+    std::vector <double> corrected_pedestal_data[max_nchan];
+    double pedestal_average[max_nchan];
+    double pedestal_stdev[max_nchan];
+
+    if (!valid())
+        return;
+
+    for (ievt=0; read_data()==0 && ievt<mxevts; ievt++)
+    {
+        for (i=0; i<max_nchan; i++)
+        {
+            pedestal_data[i].push_back(_data.data[i]);
+        }
+    }
+
+    nEvents = pedestal_data[1].size();
+
+    for (ievt=0; ievt<nEvents; ievt++){
+        double event_sum = 0;
+        for (i=0; i<max_nchan; i++)
+        {
+            event_sum += (pedestal_data[i].at(ievt) - _ped[i]);
+        }
+        event_bias = event_sum/max_nchan;
+        cmn += event_bias;
+        for (i=0; i<max_nchan; i++)
+        {
+            corrected_pedestal_data[i].push_back(pedestal_data[i].at(ievt) - event_bias);
+        }
+    }
+
+    _cmmd[0] = cmn/nEvents;
+
+    for (i=0;i<max_nchan;i++){
+
+        pedestal_average[i] = std::accumulate(corrected_pedestal_data[i].begin(), corrected_pedestal_data[i].end(), 0.0);
+        pedestal_average[i] = pedestal_average[i] / corrected_pedestal_data[i].size();
+
+        pedestal_stdev[i] = std::inner_product(corrected_pedestal_data[i].begin(), corrected_pedestal_data[i].end(), corrected_pedestal_data[i].begin(), 0.0);
+        pedestal_stdev[i] = std::sqrt(pedestal_stdev[i] / corrected_pedestal_data[i].size() - pedestal_average[i] * pedestal_average[i]);
+
+        _ped[i] = pedestal_average[i];
+        _noise[i] = pedestal_stdev[i];
+    }
+
+    rewind();
+}
 
 TH2 *DataFileRoot::compute_pedestals(int mxevts, bool do_cmmd)
 {
@@ -416,19 +516,24 @@ void DataFileRoot::load_pedestals(const char *fnam, bool show)
             break;
 
         ifile >> _ped[i] >> std::ws >> _noise[i] >> std::ws;
-        _mask[i] = (_noise[i]>20. || _noise[i]<=0.);
+        // _mask[i] = (_noise[i]>20. || _noise[i]<=0.);
     }
     ifile.close();
     if (show)
     {
         TCanvas *pedcanvas = create_canvas("Pedcanvas", "Pedestal Values", 600, 400);
-        TH1 *pedestalhisto = create_h1("pedestalhisto", "Pedestal Values", 256, -0.5, 255.5);
-        for (i=0; i<256; i++)
+        TH1 *pedestalhisto = create_h1("pedestalhisto", "Pedestal Values", 128, -0.5, 127.5);
+        for (i=0; i<128; i++)
         {
             pedestalhisto->Fill(i, _ped[i]);
         }
         pedcanvas->cd(1);
         pedestalhisto->Draw();
+
+        // for (i=0; i<256; i++)
+        // {
+          // std::cout << "channel " << i << ": " << _ped[i] << "\n";
+        // }
     }
 }
 
@@ -497,26 +602,35 @@ void DataFileRoot::process_event(bool do_cmmd)
     int i;
     for (i=0; i<nchan(); i++)
     {
+      if (do_cmmd){
+        _signal[i] = _data.data[i]-_ped[i] - _cmmd[0];
+      }
+      else{ // This part doesn't really make sense since the pedestals are always calculated considering the
+            // cmmd, but is you choose do_cmmd = kFALSE then it only doesn't subtract it here
         _signal[i] = _data.data[i]-_ped[i];
-        _sn[i] = _noise[i]>1. && !_mask[i] ? _signal[i]/_noise[i] : 0.;
+      }
+
+      // _sn[i] = _noise[i]>1. && !_mask[i] ? _signal[i]/_noise[i] : 0.;
+      _sn[i] = _signal[i]/_noise[i];
+
     }
 
-    if (do_cmmd)
-    {
-        int ichip=-1;
-        common_mode();
-
-        for (i=0; i<nchan(); i++)
-        {
-            // TODO: figure out the right chip number
-            if (!(i%128))
-                ichip ++;
-
-            _signal[i] = _data.data[i]-_ped[i] - _cmmd[ichip];
-            _sn[i] = (_noise[i] >1. && !_mask[i] ? _signal[i]/_noise[i] : 0.);
-        }
-    }
-    _hits.clear();
+    // if (do_cmmd)
+    // {
+    //     int ichip=-1;
+    //     common_mode();
+    //
+    //     for (i=0; i<nchan(); i++)
+    //     {
+    //         // TODO: figure out the right chip number
+    //         if (!(i%128))
+    //             ichip ++;
+    //
+    //         _signal[i] = _data.data[i]-_ped[i] - _cmmd[ichip];
+    //         _sn[i] = (_noise[i] >1. && !_mask[i] ? _signal[i]/_noise[i] : 0.);
+    //     }
+    // }
+    // _hits.clear();
 }
 
 void DataFileRoot::add_channel_list(const ChanList &C)
@@ -528,6 +642,7 @@ void DataFileRoot::add_channel_list(const ChanList &C)
 void DataFileRoot::common_mode()
 {
     ChanList C("0-127");
+    // ChanList C("18-122");
     common_mode(C);
 
     _cmmd[0] = C.CommonMode();
