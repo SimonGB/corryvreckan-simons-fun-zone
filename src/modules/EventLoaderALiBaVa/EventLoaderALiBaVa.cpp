@@ -80,6 +80,7 @@ void EventLoaderALiBaVa::initialize() {
   ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
   LOG(DEBUG) << "pointer created to alibava file";
   ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
+  LOG(DEBUG) << "Should have crashed by now";
   LOG(DEBUG) << "Initializer finished";
   nEvents = ALiBaVaPointer->nevents();
   ALiBaVaPointer->rewind();

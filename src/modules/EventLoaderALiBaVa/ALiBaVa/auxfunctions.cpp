@@ -257,4 +257,5 @@ int ALiBaVa_loader(DataFileRoot *A,
     LOG(DEBUG) << "load ped";
 
     LOG(DEBUG) << "Loader finished";
+    LOG(DEBUG) << "Crashes here:";
 }
