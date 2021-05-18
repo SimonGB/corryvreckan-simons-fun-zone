@@ -34,8 +34,23 @@ namespace corryvreckan {
          */
         BigPixelDetector(const Configuration& config);
 
+        void config_bigpixel(const Configuration& config);
+
+        double getRow(const PositionVector3D<Cartesian3D<double>> localPosition) const override;
+        double getColumn(const PositionVector3D<Cartesian3D<double>> localPosition) const override;
+
         // Function to get local position from column (x) and row (y) coordinates
         PositionVector3D<Cartesian3D<double>> getLocalPosition(double column, double row) const override;
+
+        ROOT::Math::XYVector inPixel(const double column, const double row) const override;
+
+        ROOT::Math::XYVector getSize() const override;
+
+    private:
+        std::vector<int> big_pixel_x{};
+        std::vector<int> big_pixel_y{};
+        std::vector<int> transformed_big_pixel_x{};
+        std::vector<int> transformed_big_pixel_y{};
     };
 
 } // namespace corryvreckan

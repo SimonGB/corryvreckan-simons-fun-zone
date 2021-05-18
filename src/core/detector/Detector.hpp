@@ -492,6 +492,10 @@ namespace corryvreckan {
         // Path of calibration file
         std::optional<std::filesystem::path> m_calibrationfile;
 
+        std::string m_coordinates;
+
+        std::vector<std::vector<int>> m_big_pixel;
+
         // List of masked channels
         std::map<int, bool> m_masked;
         std::filesystem::path m_maskfile;

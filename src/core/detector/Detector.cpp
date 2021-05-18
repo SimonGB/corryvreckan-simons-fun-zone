@@ -346,6 +346,12 @@ Configuration Detector::getConfiguration() const {
     // different for PixelDetector and StripDetector
     this->configure_pos_and_orientation(config);
 
+    config.set("coordinates", m_coordinates);
+
+    if(m_coordinates == "cartesian_big") {
+        config.setMatrix("big_pixel", m_big_pixel);
+    }
+
     // material budget
     if(m_materialBudget > std::numeric_limits<double>::epsilon()) {
         config.set("material_budget", m_materialBudget);
