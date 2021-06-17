@@ -205,10 +205,10 @@ void Tracking4D::initialize() {
         title = detectorID + "global  Residual X, cluster column width 1;x-x_{track} [mm];events";
         residualsXwidth1_global[detectorID] = new TH1F(
             "GlobalResidualsXwidth1", title.c_str(), 500, -3 * detector->getPitch().X(), 3 * detector->getPitch().X());
-        title = detectorID + "global  Residual X, cluster column width  2;x-x_{track} [mm];events";
+        title = detectorID + "global  Residual X, cluster column width 2;x-x_{track} [mm];events";
         residualsXwidth2_global[detectorID] = new TH1F(
             "GlobalResidualsXwidth2", title.c_str(), 500, -3 * detector->getPitch().X(), 3 * detector->getPitch().X());
-        title = detectorID + "global  Residual X, cluster column width  3;x-x_{track} [mm];events";
+        title = detectorID + "global  Residual X, cluster column width 3;x-x_{track} [mm];events";
         residualsXwidth3_global[detectorID] = new TH1F(
             "GlobalResidualsXwidth3", title.c_str(), 500, -3 * detector->getPitch().X(), 3 * detector->getPitch().X());
         title = detectorID + " Pull X;x-x_{track}/resolution;events";

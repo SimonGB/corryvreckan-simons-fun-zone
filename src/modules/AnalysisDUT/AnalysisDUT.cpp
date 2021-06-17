@@ -286,6 +286,40 @@ void AnalysisDUT::initialize() {
 
     associatedTracksVersusTime =
         new TH1F("associatedTracksVersusTime", "Associated tracks over time;time [s];# associated tracks", 300000, 0, 300);
+    residualsX = new TH1F("residualsX", "Residual in X;x_{track}-x_{hit}  [mm];# entries", 800, -0.1, 0.1);
+    residualsY = new TH1F("residualsY", "Residual in Y;y_{track}-y_{hit}  [mm];# entries", 800, -0.1, 0.1);
+    residualsPos = new TH1F(
+        "residualsPos", "Absolute distance between track and hit;|pos_{track}-pos_{hit}|  [mm];# entries", 800, -0.1, 0.1);
+    residualsPosVsresidualsTime =
+        new TH2F("residualsPosVsresidualsTime",
+                 "Time vs. absolute position residuals;time_{track}-time_{hit} [ns];|pos_{track}-pos_{hit}| [mm];# entries",
+                 20000,
+                 -1000,
+                 +1000,
+                 800,
+                 0.,
+                 0.2);
+
+    residualsX1pix =
+        new TH1F("residualsX1pix", "Residual for 1-pixel clusters in X;x_{track}-x_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsY1pix =
+        new TH1F("residualsY1pix", "Residual for 1-pixel clusters in Y;y_{track}-y_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsX2pix =
+        new TH1F("residualsX2pix", "Residual for 2-pixel clusters in X;x_{track}-x_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsY2pix =
+        new TH1F("residualsY2pix", "Residual for 2-pixel clusters in Y;y_{track}-y_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsX3pix =
+        new TH1F("residualsX3pix", "Residual for 3-pixel clusters in X;x_{track}-x_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsY3pix =
+        new TH1F("residualsY3pix", "Residual for 3-pixel clusters in Y;y_{track}-y_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsX4pix =
+        new TH1F("residualsX4pix", "Residual for 4-pixel clusters in X;x_{track}-x_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsY4pix =
+        new TH1F("residualsY4pix", "Residual for 4-pixel clusters in Y;y_{track}-y_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsXatLeast5pix = new TH1F(
+        "residualsXatLeast5pix", "Residual for >= 5-pixel clusters in X;x_{track}-x_{hit} [mm];# entries", 800, -0.1, 0.1);
+    residualsYatLeast5pix = new TH1F(
+        "residualsYatLeast5pix", "Residual for >= 5-pixel clusters in Y;y_{track}-y_{hit} [mm];# entries", 800, -0.1, 0.1);
 
     clusterChargeAssoc = new TH1F("clusterChargeAssociated",
                                   "Charge distribution of associated clusters;cluster charge [a.u.];# entries",
