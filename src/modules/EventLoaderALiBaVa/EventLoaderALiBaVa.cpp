@@ -129,7 +129,8 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
           double noise = ALiBaVaPointer->noise(chan);
           double pedestal = ALiBaVaPointer->ped(chan);
           // double AlibavaEventTime = ALiBaVaPointer->time()*billion;
-          double AlibavaEventTime = ALiBaVaPointer->time();
+          double AlibavaEventTime = ALiBaVaPointer->clock_counter();
+          // double AlibavaEventTime = ALiBaVaPointer->time()*billion;
           double temp = ALiBaVaPointer->temp();
           double data = ALiBaVaPointer->data(chan);
           LOG(DEBUG) << "\t Channel: " << chan << " \t Calibration: " << calibration << " \t Pedestal: " << pedestal << " \t Signal: " << CalSignal << " \t ADC: " << ADCSignal << " \t Timestamp: " << AlibavaEventTime << "\t Temp: " << temp << "\t Raw data: " << data;
@@ -146,7 +147,10 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
   while(!ALiBaVaPointer->read_event()){
       ALiBaVaPointer->process_event(kTRUE);
       // LOG(STATUS) << ALiBaVaPointer->time();
-      double AlibavaEventTime = ALiBaVaPointer->time()*billion;
+      double AlibavaEventTime = ALiBaVaPointer->clock_counter();
+      double TDCTime = ALiBaVaPointer->time();
+      if(!ALiBaVaPointer->valid_time(TDCTime)) continue;
+      // double AlibavaEventTime = ALiBaVaPointer->time()*billion;
       auto position = event->getTimestampPosition(AlibavaEventTime);
       // debug
       // LOG(STATUS) << "EVENT START " << event->start();
