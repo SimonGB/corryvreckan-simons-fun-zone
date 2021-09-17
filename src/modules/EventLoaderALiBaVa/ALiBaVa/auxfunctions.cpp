@@ -181,9 +181,9 @@ int ALiBaVa_loader(DataFileRoot *A,
     const char *ped_f = "alibava_ped.ped";
     const char *cal_f = "alibava_cal.cal";
 
-    A->set_timecut(5, 15) //does this actually do anything??
+    A->set_timecut(5, 15); //does this actually do anything??
     // something with if (A.valid_time(tval))
-    A->set_cuts(3.5, 1.5) //does this actually do anything??
+    A->set_cuts(3.5, 1.5); //does this actually do anything??
     // something with find_clusters()
 
     // LOG(DEBUG) << "Computing pedestals";

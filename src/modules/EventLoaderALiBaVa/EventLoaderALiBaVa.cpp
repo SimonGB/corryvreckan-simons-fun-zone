@@ -85,18 +85,18 @@ void EventLoaderALiBaVa::initialize() {
   nEvents = ALiBaVaPointer->nevents();
   ALiBaVaPointer->rewind();
 
-  while(!ALiBaVaPointer->read_event()){
-    ALiBaVaPointer->process_event();
-    double currentAlibavaTimeStamp = ALiBaVaPointer->time();
-    if(currentAlibavaTimeStamp > lastAlibavaTimeStamp){
-      lastAlibavaTimeStamp = currentAlibavaTimeStamp;
-    }
-  }
+  // while(!ALiBaVaPointer->read_event()){
+  //   ALiBaVaPointer->process_event(kFALSE);
+  //   double currentAlibavaTimeStamp = ALiBaVaPointer->clock_counter();
+  //   if(currentAlibavaTimeStamp > lastAlibavaTimeStamp){
+  //     lastAlibavaTimeStamp = currentAlibavaTimeStamp;
+  //   }
+  // }
   // LOG(STATUS) << lastAlibavaTimeStamp;
 
-  ALiBaVaPointer->rewind();
-  LOG(STATUS) << "It's not stuck, it's just really slow...";
-  LOG(DEBUG) << "The reading out of ALiBaVa events doesn't happen in-order, so I'm forced to iterate over ALL Alibava events for every single Corryvreckan event...";
+  // ALiBaVaPointer->rewind();
+  // LOG(STATUS) << "It's not stuck, it's just really slow...";
+  // LOG(DEBUG) << "The reading out of ALiBaVa events doesn't happen in-order, so I'm forced to iterate over ALL Alibava events for every single Corryvreckan event...";
 }
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -106,18 +106,18 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
   // LOG(STATUS) << "Corry EVENT START = " << event->start()/billion << "s";
   // LOG(STATUS) << "Corry EVENT END = "<< event->end()/billion<< "s";
 
-  if(event->getTimestampPosition(lastAlibavaTimeStamp*billion) == Event::Position::BEFORE)
+  if(event->getTimestampPosition(lastAlibavaTimeStamp) == Event::Position::BEFORE)
   {
     return StatusCode::EndRun;
   }
 
   // LOG(DEBUG) << "----------DEBUG----------";
-  test=false;
+  bool test=false;
   if(test){
     int i = 0;
     while(i < 4){
       ALiBaVaPointer->read_event();
-      ALiBaVaPointer->process_event(kTRUE);
+      ALiBaVaPointer->process_event(kFALSE);
       LOG(DEBUG) << "Event: " << i;
       LOG(DEBUG) << "nr. of channels: " << 128;
       int activechannels = 0;
@@ -145,7 +145,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
   // LOG(DEBUG) << "----------DEBUG----------";
 
   while(!ALiBaVaPointer->read_event()){
-      ALiBaVaPointer->process_event(kTRUE);
+      ALiBaVaPointer->process_event(kFALSE);
       // LOG(STATUS) << ALiBaVaPointer->time();
       double AlibavaEventTime = ALiBaVaPointer->clock_counter();
       double TDCTime = ALiBaVaPointer->time();

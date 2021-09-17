@@ -493,6 +493,7 @@ void DataFileRoot::save_pedestals(const char *fnam)
     // TODO: _nchan can be updated in an event by event basis
     //       while here we are assuming that it is the same
     //       for all the events
+    ofile << _cmmd[0] << "\n";
     int i;
     for (i=0; i<nchan(); i++)
     {
@@ -509,6 +510,9 @@ void DataFileRoot::load_pedestals(const char *fnam, bool show)
         std::cout << "Could not open " << fnam << " to load pedestals." << std::endl;
         return;
     }
+
+    ifile >> _cmmd[0] >> std::ws;
+
     int i;
     for (i=0; i<max_nchan; i++)
     {
@@ -606,7 +610,7 @@ void DataFileRoot::process_event(bool do_cmmd)
         _signal[i] = _data.data[i]-_ped[i] - _cmmd[0];
       }
       else{ // This part doesn't really make sense since the pedestals are always calculated considering the
-            // cmmd, but is you choose do_cmmd = kFALSE then it only doesn't subtract it here
+            // cmmd, but if you choose do_cmmd = kFALSE here then it only doesn't subtract it here
         _signal[i] = _data.data[i]-_ped[i];
       }
 
