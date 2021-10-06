@@ -58,10 +58,6 @@ void EventLoaderALiBaVa::initialize() {
       return;
   }
 
-  if(m_run == EMPTY){
-
-  }
-
   // Read the run-files (data, pedestal and calibration) in the folder
   dirent* entry;
   while(entry = readdir(directory)) {
@@ -85,7 +81,7 @@ void EventLoaderALiBaVa::initialize() {
       LOG(WARNING) << "No data file was found for ALiBaVa in " << m_inputDirectory;
       m_datafilename = config_.get<std::string>("filename");
       if(m_datafilename.length() == 0) {
-        LOG(ERROR) << << "No data filepath was supplied in the config. There is no data file.";
+        LOG(ERROR) << "No data filepath was supplied in the config. There is no data file.";
         return;
       }
       else{
@@ -107,13 +103,13 @@ void EventLoaderALiBaVa::initialize() {
   // For some reason in ALiBaVa's code, it needs the pointer AND the data file again: AliBaVa and the 40 redundancies?
   ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str());
   // Set the timecuts
-  ALiBaVaPointer->set_timecut(m_timecut_lower, m_timecut_upper)
+  ALiBaVaPointer->set_timecut(m_timecut_lower, m_timecut_upper);
   // Check how many events the data file contains.
   nEvents = ALiBaVaPointer->nevents();
 
 // Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
 for(int ievt = 0; ievt < m_ignore_events; ievt++){
-    ALiBaVaPointer->read_event()
+    ALiBaVaPointer->read_event();
   }
 
   // Create histograms
@@ -135,31 +131,31 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     LOG(WARNING) << "End of data file reached.";
     return StatusCode::EndRun;
   }
-  elif(return_code == 0){
-    LOG(ERROR) << "There's something wrong (0) with the datafile at event number " << iEvent-1;
+  else if(return_code == 0){
+    LOG(ERROR) << "There\'s something wrong (0) with the datafile at event number " << iEvent-1;
     LOG(ERROR) << "Terminating run";
     return StatusCode::EndRun;
   }
-  elif(return_code == 1){
+  else if(return_code == 1){
     // This means the event was read properly.
   }
-  elif(return_code == 2 ){
-    LOG(ERROR) << "There's something wrong (2) with the datafile at event number " << iEvent-1;
+  else if(return_code == 2 ){
+    LOG(ERROR) << "There\'s something wrong (2) with the datafile at event number " << iEvent-1;
     LOG(ERROR) << "Terminating run";
     return StatusCode::EndRun;
   }
-  elif(return_code == 3){
-    LOG(ERROR) << "There's something wrong (3) with the datafile at event number " << iEvent-1;
+  else if(return_code == 3){
+    LOG(ERROR) << "There\'s something wrong (3) with the datafile at event number " << iEvent-1;
     LOG(ERROR) << "Terminating run";
     return StatusCode::EndRun;
   }
-  elif(return_code == 4){
-    LOG(ERROR) << "There's something wrong (4) with the HDF5 datafile at event number " << iEvent-1;
+  else if(return_code == 4){
+    LOG(ERROR) << "There\'s something wrong (4) with the HDF5 datafile at event number " << iEvent-1;
     LOG(ERROR) << "Terminating run";
     return StatusCode::EndRun;
   }
-  else(){
-    LOG(ERROR) << "This shouldn't happen. Current event number: " << iEvent-1;";
+  else{
+    LOG(ERROR) << "This shouldn\'t happen. Current event number: " << iEvent-1;
     LOG(ERROR) << "Terminating run";
     return StatusCode::EndRun;
   }

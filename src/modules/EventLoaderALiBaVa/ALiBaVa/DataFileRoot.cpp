@@ -604,7 +604,7 @@ void DataFileRoot::load_gain(const char *fnam)
 // This function processes the event, it subtracts pedestals from data
 // and fills in the signal/noise ratio
 
-void DataFileRoot::process_event()
+void DataFileRoot::process_event(bool do_cmmd)
 {
     int i;
     for (i=0; i<nchan(); i++){

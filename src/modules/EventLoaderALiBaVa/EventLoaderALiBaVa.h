@@ -50,8 +50,16 @@ namespace corryvreckan {
         DataFileRoot * ALiBaVaPointer;
         int iEvent = 0;
         int nEvents = 0;
-        double lastAlibavaTimeStamp = 0;
-        const double billion = 1000000000;
+        TH1F * chargeHist{};
+        int m_run{};
+        int m_timecut_lower{};
+        int m_timecut_upper{};
+        int m_ignore_events{};
+        int m_lower_channel{};
+        int m_upper_channel{};
+        int m_chargecut{};
+        std::string m_inputDirectory{};
+
 
         std::string m_datafilename;
         std::string m_pedestalfilename;
