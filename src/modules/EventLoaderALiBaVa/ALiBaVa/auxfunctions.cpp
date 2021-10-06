@@ -162,114 +162,28 @@ void save_text_file(TH1 *h1, const char *name)
     ofile.close();
 }
 
-/*
- * A:          Pointer to a user supplied DataFileRoot (or descendant) object.
- * data_file:  The path of the data file.
- * cal_file:   The path of a calibration file: Either an Alibava data file
- *             produced during a calibration run, or an ASCII text file with as many
- *             lines as channels with gain and offset in each line.
- * ped_file:   The path of a pedestal file. It can be an Alibava data file from where
- *             pedestals can be computed, or an ascii text file with as many lines as
- *             channels, and pedestal and noise for each channel.
- *             If no file is given the data file will be used.
- */
 int ALiBaVa_loader(DataFileRoot *A,
                        const char *data_file, const char *ped_file, const char *cal_file)
 {
-    // LOG(DEBUG) << A->valid();
-    // LOG(DEBUG) << "TYPE OF A IN START ALIBAVA_LOADER (*)" << "->:" << A->type();
     const char *ped_f = "alibava_ped.ped";
     const char *cal_f = "alibava_cal.cal";
 
-    A->set_timecut(5, 15); //does this actually do anything??
-    // something with if (A.valid_time(tval))
-    A->set_cuts(3.5, 1.5); //does this actually do anything??
-    // something with find_clusters()
+    // Create a pointer with the pedestal file
+    DataFileRoot * PedestalPointer = DataFileRoot::OpenFile(ped_file);
 
-    // LOG(DEBUG) << "Computing pedestals";
-    // if (!ped_file)
-    // {
-    //     //############ UNCOMMENT THIS BLOCK!!!
-    //     if (A->valid())
-    //     {
-    //         A->save();
-    //         A->rewind();
-    //     }
-    //     else{
-    //         A->open(data_file);
-    //     }
-        // A->compute_pedestals();
-        // A->save_pedestals(ped_f);
-        // A->restore();
-    // }
-    // else
-    // {
-    //     if (!is_text(ped_file))
-    //     {
-    // A->load_pedestals(ped_file, kTRUE);
-    //         // DataFileRoot * PedestalPointer = DataFileRoot::OpenFile(0,ped_file,0);
-            DataFileRoot * PedestalPointer = DataFileRoot::OpenFile(ped_file);
-    //         // PedestalPointer->open(ped_file);
-    //         // LOG(DEBUG) << "A";
-            PedestalPointer->compute_pedestals_alternative();
-            PedestalPointer->compute_cmmd_alternative();
-    //         // PedestalPointer->compute_pedestals();
-    //         PedestalPointer->compute_pedestals_fast(-1, 0.001, 0.0001);
-    //         // LOG(DEBUG) << "B";
+    // Calculate the pedestals, and compute and apply the common mode noise correction
+    PedestalPointer->compute_pedestals_alternative();
+    PedestalPointer->compute_cmmd_alternative();
 
-            PedestalPointer->save_pedestals(ped_f);
-    //         // LOG(DEBUG) << "C";
-            PedestalPointer->close();
-    //         // LOG(DEBUG) << "D";
-            delete PedestalPointer;
-    //         }
-    //     else
-    //         ped_f = ped_file;
-    // }
-    LOG(DEBUG) << "Computing calibration";
-    // Get the calibration (i.e. if necessary, convert HDF5/binary to text)
-    // If none given, no calibration will be applied
-    // if (cal_file)
-    // {
-    //     if (is_text(cal_file))
-    //     {
-    //         LOG(DEBUG) << "Calibration already available";
-    //         cal_f = cal_file;
-    //     }
-    //     else
-    //     {
-            // LOG(DEBUG) << "Calibration file is HDF5 or ASCII";
-            // // DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file, ped_f, 0);
-            // DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file);
-            // draw_gain_hist(*CalibrationPointer, "hGain");
-            // save_text_file((TH1 *)gDirectory->Get("hGain"), cal_f);
-            // CalibrationPointer->close();
-            // // delete CalibrationPointer;
-            // LOG(DEBUG) << "succesfully converted calibration file";
-    //     }
-    // }
-    // else
-    //     cal_f = 0;
-    // LOG(DEBUG) << "Calibration loaded succesfully";
+    // Save the calculated pedestal information in a temporary file
+    PedestalPointer->save_pedestals(ped_f);
+    PedestalPointer->close();
+    delete PedestalPointer;
 
-    // LOG(DEBUG) << "TYPE OF A IN END ALIBAVA_LOADER (*)" << "->:" << A->type();
+    // INSERT CALIBRATION here
 
-    // Load the data, pedestal, and calibration
-    // if (data_file && !A->valid())
-    //     A->open(data_file);
-    // LOG(DEBUG) << "load data";
-    //
-    // if (cal_f)
-    //     A->load_gain(cal_f);
-    // LOG(DEBUG) << "load cal";
-    //
-    // if (ped_f)
-        A->load_pedestals(ped_f, kTRUE);
-    // LOG(DEBUG) << "load ped";
-    //
-    // LOG(DEBUG) << "Loader finished";
-    //
-    // LOG(DEBUG) << "Crashes here:";
+    // Load the calculated pedestal info into the original datafile
+    A->load_pedestals(ped_f, kTRUE);
+
     return -1;
-
 }

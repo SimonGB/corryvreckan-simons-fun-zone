@@ -235,7 +235,7 @@ int AsciiRoot::read_event()
                 {
                     priv->ifile->read((char *)&header, sizeof(unsigned int));
                     if (priv->ifile->bad() || priv->ifile->eof())
-                        return -1;
+                        return 3;
 
                     code = (header>>16) & 0xFFFF;
                 } while ( code != 0xcafe );
@@ -322,22 +322,22 @@ int AsciiRoot::read_event()
 
         if (priv->ifile->eof())
         {
-            std::cout << "End of file" << std::endl;
+            // std::cout << "End of file" << std::endl;
             return -1;
         }
         else if (priv->ifile->bad())
         {
-            std::cout << "Problems with data file" << std::endl;
-            return -1;
+            //std::cout << "Problems with data file" << std::endl;
+            return 0;
         }
         else
         {
             //process_event();
-            return 0;
+            return 1;
         }
     }
     else
-        return -1;
+        return 2;
 }
 
 double AsciiRoot::time() const

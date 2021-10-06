@@ -327,40 +327,44 @@ int HDFRoot::read_event()
     herr_t rc;
     if (priv->ievt >= priv->nevts)
         return -1;
-
+        // End of file reached
 
     rc = read_file_data(priv->clockID, priv->ievt, 1, &priv->data.clock);
     if (rc<0)
-        return rc;
+        //return rc;
+        return 4;
 
     rc = read_file_data(priv->tempID, priv->ievt, 1, &priv->data.temp);
     if (rc<0)
-        return rc;
+        //return rc;
+        return 4;
 
     rc = read_file_data(priv->timeID, priv->ievt, 1, &priv->data.time);
     if (rc<0)
-        return rc;
+        //return rc;
+        return 4;
+
     rc = read_file_data(priv->headerID, priv->ievt, 16*_nchips, &priv->data.header);
     if (rc<0)
-        return rc;
+        //return rc;
+        return 4;
+
     rc = read_file_data(priv->dataID, priv->ievt, _nchan, &_data.data); //priv->data.data);
     if (rc<0)
-        return rc;
+        //return rc;
+        return 4;
 
     int ij = 0, nm=0;
     for (int ichip=0; ichip<_nchips; ichip++)
     {
         for (int ih=0; ih<16; ih++, ij++)
             _header[ichip][ih] = priv->data.header[ij];
-
-//        for (int ic=0; ic<128; ic++, nm++)
-//            _data.data[nm] = priv->data.data[nm];
     }
     priv->ievt++;
     if ( priv->ievt >= priv->scan.end )
         next_scan_point();
 
-    return 0;
+    return 1;
 }
 
 

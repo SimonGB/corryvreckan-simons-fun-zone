@@ -601,40 +601,16 @@ void DataFileRoot::load_gain(const char *fnam)
     ifile.close();
 }
 
-void DataFileRoot::process_event(bool do_cmmd)
+// This function processes the event, it subtracts pedestals from data
+// and fills in the signal/noise ratio
+
+void DataFileRoot::process_event()
 {
     int i;
-    for (i=0; i<nchan(); i++)
-    {
-      if (do_cmmd){
-        _signal[i] = _data.data[i]-_ped[i] - _cmmd[0];
-      }
-      else{ // This part doesn't really make sense since the pedestals are always calculated considering the
-            // cmmd, but if you choose do_cmmd = kFALSE here then it only doesn't subtract it here
-        _signal[i] = _data.data[i]-_ped[i];
-      }
-
-      // _sn[i] = _noise[i]>1. && !_mask[i] ? _signal[i]/_noise[i] : 0.;
+    for (i=0; i<nchan(); i++){
+      _signal[i] = _data.data[i]-_ped[i];
       _sn[i] = _signal[i]/_noise[i];
-
     }
-
-    // if (do_cmmd)
-    // {
-    //     int ichip=-1;
-    //     common_mode();
-    //
-    //     for (i=0; i<nchan(); i++)
-    //     {
-    //         // TODO: figure out the right chip number
-    //         if (!(i%128))
-    //             ichip ++;
-    //
-    //         _signal[i] = _data.data[i]-_ped[i] - _cmmd[ichip];
-    //         _sn[i] = (_noise[i] >1. && !_mask[i] ? _signal[i]/_noise[i] : 0.);
-    //     }
-    // }
-    // _hits.clear();
 }
 
 void DataFileRoot::add_channel_list(const ChanList &C)
