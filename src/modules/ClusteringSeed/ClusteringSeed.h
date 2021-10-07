@@ -1,18 +1,21 @@
 /**
  * @file
- * @brief Definition of module EventLoaderALiBaVa
+ * @brief Definition of module ClusteringSeed
  *
  * @copyright Copyright (c) 2020 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
  */
-
- #ifndef EventLoaderALiBaVa_H
- #define EventLoaderALiBaVa_H 1
-
+//test
+#include <TCanvas.h>
+#include <TH1F.h>
+#include <TH2F.h>
+#include <iostream>
 #include "core/module/Module.hpp"
-#include "ALiBaVa/DataFileRoot.h"
+#include "objects/Cluster.hpp"
+#include "objects/Pixel.hpp"
+#include "objects/Track.hpp"
 
 namespace corryvreckan {
     /** @ingroup Modules
@@ -20,7 +23,7 @@ namespace corryvreckan {
      *
      * More detailed explanation of module
      */
-    class EventLoaderALiBaVa : public Module {
+    class ClusteringSeed : public Module {
 
     public:
         /**
@@ -28,7 +31,8 @@ namespace corryvreckan {
          * @param config Configuration object for this module as retrieved from the steering file
          * @param detector Pointer to the detector for this module instance
          */
-        EventLoaderALiBaVa(Configuration& config, std::shared_ptr<Detector> detector);
+        ClusteringSeed(Configuration& config, std::shared_ptr<Detector> detector);
+        ~ClusteringSeed() {}
 
         /**
          * @brief [Initialise this module]
@@ -46,32 +50,17 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
+        int m_eventNumber;
+        double m_neighbourThreshold;
+        double m_seedThreshold;
+
         std::shared_ptr<Detector> m_detector;
-        DataFileRoot * ALiBaVaPointer;
-        int iEvent = 0;
-        int nEvents = 0;
-        TH1F * chargeHist{};
-        TH1F * pedestalValues{};
-        TH1F * noiseValues{};
-        TH1F * correctedPedestalValues{};
-        TH1F * correctedNoiseValues{};
 
-        int m_run{};
-        double m_timecut_lower{};
-        double m_timecut_upper{};
-        int m_ignore_events{};
-        int m_lower_channel{};
-        int m_upper_channel{};
-        double m_chargecut{};
-        std::string m_inputDirectory{};
-        bool m_correct_crosstalk{};
-        double m_calibration_constant{};
-
-
-        std::string m_datafilename;
-        std::string m_pedestalfilename;
-        std::string m_calibrationfilename;
+        TH1F* clusterSize;
+        TH1F* clusterSeedCharge;
+        TH1F* clusterCharge;
+        TH1F* clusterPosition;
+        TH1F* etaDistribution;
     };
 
 } // namespace corryvreckan
-#endif

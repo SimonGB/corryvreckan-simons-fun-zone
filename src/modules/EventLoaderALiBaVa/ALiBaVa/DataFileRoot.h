@@ -243,6 +243,11 @@ class DataFileRoot
             return _signal[i]/_gain[i];
         }
 
+        double ADC_signal(int i) const
+        {
+            return _signal[i];
+        }
+
         // return the scan value
         double value() const
         {
@@ -404,18 +409,18 @@ class DataFileRoot
         bool valid_time(double time) const;
 
         // Returns a histogram with the pedestals
-        TH1 *show_pedestals();
+        TH1F *show_pedestals(const int lowerChannel, const int upperChannel, bool corrected);
 
         // Returns a histogram with the noise
-        TH1 *show_noise();
+        TH1F *show_noise(const int lowerChannel, const int upperChannel, bool corrected);
 
         // Computes pedestals from the data of the file
         virtual TH2 *compute_pedestals(int mxevts=-1, bool do_cmmd=true);
         virtual void compute_pedestals_fast(int mxevts = -1, double ped_weight=0.01, double noise_weight=0.001);
 
         // Alternative functions
-        virtual void compute_pedestals_alternative();
-        virtual void compute_cmmd_alternative();
+        virtual void compute_pedestals_alternative(const int lowerChannel, const int upperChannel);
+        virtual void compute_cmmd_alternative(const int lowerChannel, const int upperChannel);
 
         // Computes common mode,
         void common_mode();

@@ -163,7 +163,9 @@ void save_text_file(TH1 *h1, const char *name)
 }
 
 int ALiBaVa_loader(DataFileRoot *A,
-                       const char *data_file, const char *ped_file, const char *cal_file)
+                       const char *data_file, const char *ped_file, const char *cal_file,
+                       TH1F* & pedestalValues, TH1F* & noiseValues, TH1F* & correctedPedestalValues, TH1F* & correctedNoiseValues,
+                       const int lowerChannel, const int upperChannel)
 {
     const char *ped_f = "alibava_ped.ped";
     const char *cal_f = "alibava_cal.cal";
@@ -172,18 +174,44 @@ int ALiBaVa_loader(DataFileRoot *A,
     DataFileRoot * PedestalPointer = DataFileRoot::OpenFile(ped_file);
 
     // Calculate the pedestals, and compute and apply the common mode noise correction
-    PedestalPointer->compute_pedestals_alternative();
-    PedestalPointer->compute_cmmd_alternative();
+    PedestalPointer->compute_pedestals_alternative(lowerChannel, upperChannel);
+    pedestalValues = PedestalPointer->show_pedestals(lowerChannel, upperChannel, false);
+    noiseValues = PedestalPointer->show_noise(lowerChannel, upperChannel, false);
+    PedestalPointer->compute_cmmd_alternative(lowerChannel, upperChannel);
+    correctedPedestalValues = PedestalPointer->show_pedestals(lowerChannel, upperChannel, true);
+    correctedNoiseValues = PedestalPointer->show_noise(lowerChannel, upperChannel, true);
 
     // Save the calculated pedestal information in a temporary file
     PedestalPointer->save_pedestals(ped_f);
     PedestalPointer->close();
     delete PedestalPointer;
 
-    // INSERT CALIBRATION here
+    // INSERT CALIBRATION
+    // Still in testing phase, non functional!
+    if(false){
+    DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file);
+    short delay, charge;
+    for(int testevts = 0; CalibrationPointer->read_event()!=-1 && testevts<10; testevts++)
+    {
+        CalibrationPointer->load_pedestals(ped_f, kTRUE);
+        CalibrationPointer->process_event();
+        CalibrationPointer->get_scan_values(delay,charge);
+        std::cout << "Event: " << testevts << "   Delay: " << delay << "   Charge: " << charge << std::endl;
+
+        // for(int testchan = 0; testchan < 128; testchan++){
+          // std::cout << "Channel: " << testchan << "   Raw data: " << CalibrationPointer->data(testchan) << std::endl;
+        //}
+    }
+    }
+
 
     // Load the calculated pedestal info into the original datafile
     A->load_pedestals(ped_f, kTRUE);
+    //A->load_gain(cal_f);
 
     return -1;
+}
+
+void crosstalk_correction(){
+
 }

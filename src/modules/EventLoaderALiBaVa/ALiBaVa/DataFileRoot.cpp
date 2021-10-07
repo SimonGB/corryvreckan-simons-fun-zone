@@ -121,22 +121,36 @@ void DataFileRoot::set_data(int nchan, const unsigned short int *data)
 }
 
 
-TH1 *DataFileRoot::show_pedestals()
+TH1F *DataFileRoot::show_pedestals(const int lowerChannel, const int upperChannel, bool corrected)
 {
     int ic;
-    TH1 *hst = create_h1("hPed","Pedestals",nchan(),-0.5, nchan()-0.5);
+    std::string title = "Pedestals";
+    if(corrected) title = "Corrected pedestals";
+    TH1F *hst = new TH1F(title.c_str(),"pedestals",128, 0, 128);
     hst->SetYTitle("ADCs");
     hst->SetXTitle("Channel no.");
-    for (ic=0; ic<nchan(); ic++)
+    for (ic=lowerChannel; ic<=upperChannel; ic++)
+        // std::cout<< ic << " " << _ped[ic] << "\n";
         hst->SetBinContent(ic+1, _ped[ic]);
+
+    for (ic=0; ic<=128; ic++){
+        if(ic>=lowerChannel && ic<=upperChannel) hst->SetBinContent(ic+1, _ped[ic]);
+        else hst->SetBinContent(ic+1, 0);
+    }
+
+    hst->GetXaxis()->SetRangeUser(0, 128);
+    hst->SetMaximum(570);
+    hst->SetMinimum(0);
 
     return hst;
 }
 
-TH1 *DataFileRoot::show_noise()
+TH1F *DataFileRoot::show_noise(const int lowerChannel, const int upperChannel, bool corrected)
 {
     int ic;
-    TH1 *hst = create_h1("hNoise","Noise",nchan(),-0.5, nchan()-0.5);
+    std::string title = "Noise";
+    if(corrected) title = "Corrected noise";
+    TH1F *hst = new TH1F(title.c_str(),"noise",128, 0, 128);
     if (gain()==1)
     {
         hst->SetYTitle("ADCs");
@@ -146,8 +160,13 @@ TH1 *DataFileRoot::show_noise()
         hst->SetYTitle("e^{-} ENC");
     }
     hst->SetXTitle("Channel no.");
-    for (ic=0; ic<nchan(); ic++)
-        hst->SetBinContent(ic+1, noise(ic));
+    for (ic=0; ic<=128; ic++){
+      if(ic>=lowerChannel && ic<=upperChannel) hst->SetBinContent(ic+1, _noise[ic]);
+      else hst->SetBinContent(ic+1, 0);
+    }
+    hst->GetXaxis()->SetRangeUser(0, 128);
+    hst->SetMaximum(12);
+    hst->SetMinimum(0);
 
     return hst;
 }
@@ -219,10 +238,10 @@ void DataFileRoot::compute_pedestals_fast(int mxevts, double wped, double wnoise
     rewind();
 }
 
-void DataFileRoot::compute_pedestals_alternative()
+void DataFileRoot::compute_pedestals_alternative(const int lowerChannel, const int upperChannel)
 {
     int mxevts = 100000000;
-    int max_nchan = 128;
+    // int max_nchan = 128;
 
     int i, ievt;
     std::vector <double> pedestal_data[max_nchan];
@@ -232,36 +251,44 @@ void DataFileRoot::compute_pedestals_alternative()
     if (!valid())
         return;
 
-    for (i=0;i<max_nchan;i++)
+    for (i=lowerChannel;i<=upperChannel;i++)
         _ped[i] = _noise[i] = 0.;
 
-    for (ievt=0; read_data()==0 && ievt<mxevts; ievt++)
+    for (ievt=0; read_data()==1 && ievt<mxevts; ievt++)
     {
-        for (i=0; i<max_nchan; i++)
+        // std::cout << "IT DOESN'T GET TO THIS LOOP?";
+        // now it does, read_data() return value needs to be checked, different for HDF5 and binary
+        for (i=lowerChannel;i<=upperChannel;i++)
         {
             pedestal_data[i].push_back(_data.data[i]);
+            // std::cout << _data.data[i] << "\n";
         }
     }
-    for (i=0;i<max_nchan;i++){
-
+    // std::cout << pedestal_data[0][0] << "\n";
+    for (i=lowerChannel;i<=upperChannel;i++){
+      // for(int test=0;test<101;test++){ std::cout << pedestal_data[i][test] << "\n";}
       pedestal_average[i] = std::accumulate(pedestal_data[i].begin(), pedestal_data[i].end(), 0.0);
+      // std::cout << pedestal_average[i] << "\n";
+
       pedestal_average[i] = pedestal_average[i] / pedestal_data[i].size();
+      // std::cout << pedestal_average[i] << "\n";
 
       pedestal_stdev[i] = std::inner_product(pedestal_data[i].begin(), pedestal_data[i].end(), pedestal_data[i].begin(), 0.0);
       pedestal_stdev[i] = std::sqrt(pedestal_stdev[i] / pedestal_data[i].size() - pedestal_average[i] * pedestal_average[i]);
 
       _ped[i] = pedestal_average[i];
       _noise[i] = pedestal_stdev[i];
+      // std::cout << _ped[i] << "\n"
 
     }
     rewind();
 }
 
-void DataFileRoot::compute_cmmd_alternative()
+void DataFileRoot::compute_cmmd_alternative(const int lowerChannel, const int upperChannel)
 {
     int mxevts = 100000000;
     int max_nchan = 128;
-    int nEvents;
+    int nEvents = 0;
 
     int i, ievt;
 
@@ -276,33 +303,46 @@ void DataFileRoot::compute_cmmd_alternative()
     if (!valid())
         return;
 
-    for (ievt=0; read_data()==0 && ievt<mxevts; ievt++)
+    for (ievt=0; read_data()==1 && ievt<mxevts; ievt++)
     {
-        for (i=0; i<max_nchan; i++)
+        nEvents++;
+        for (i=lowerChannel;i<=upperChannel;i++)
         {
+            // std::cout << _data.data[i] << "\n";
             pedestal_data[i].push_back(_data.data[i]);
         }
     }
 
-    nEvents = pedestal_data[1].size();
+    // std::cout << "######################################" << "\n";
+
+    // nEvents = pedestal_data[1].size();
+    std::cout << "\n" << pedestal_data[75].size() << "\n";
+    // for(int test = 0; test < pedestal_data[1].size(); test++){
+      // std::cout << "\n" << pedestal_data[1][i]<< "\n";
+    // }
+    // std::cout << nEvents << "\n";
 
     for (ievt=0; ievt<nEvents; ievt++){
+        // std::cout << ievt << "\n";
         double event_sum = 0;
-        for (i=0; i<max_nchan; i++)
+        for (i=lowerChannel;i<=upperChannel;i++)
         {
             event_sum += (pedestal_data[i].at(ievt) - _ped[i]);
         }
-        event_bias = event_sum/max_nchan;
+        event_bias = event_sum/(upperChannel-lowerChannel+1);
         cmn += event_bias;
-        for (i=0; i<max_nchan; i++)
+        // std::cout << cmn << "\n";
+        for (i=lowerChannel;i<=upperChannel;i++)
         {
             corrected_pedestal_data[i].push_back(pedestal_data[i].at(ievt) - event_bias);
+            // std::cout << pedestal_data[i].at(ievt) << "\n";
+
         }
     }
 
     _cmmd[0] = cmn/nEvents;
 
-    for (i=0;i<max_nchan;i++){
+    for (i=lowerChannel;i<=upperChannel;i++){
 
         pedestal_average[i] = std::accumulate(corrected_pedestal_data[i].begin(), corrected_pedestal_data[i].end(), 0.0);
         pedestal_average[i] = pedestal_average[i] / corrected_pedestal_data[i].size();
@@ -312,6 +352,9 @@ void DataFileRoot::compute_cmmd_alternative()
 
         _ped[i] = pedestal_average[i];
         _noise[i] = pedestal_stdev[i];
+
+        // std::cout << _ped[i] << "\n";
+        // std::cout << _noise[i] << "\n";
     }
 
     rewind();
@@ -523,22 +566,22 @@ void DataFileRoot::load_pedestals(const char *fnam, bool show)
         // _mask[i] = (_noise[i]>20. || _noise[i]<=0.);
     }
     ifile.close();
-    if (show)
-    {
-        TCanvas *pedcanvas = create_canvas("Pedcanvas", "Pedestal Values", 600, 400);
-        TH1 *pedestalhisto = create_h1("pedestalhisto", "Pedestal Values", 128, -0.5, 127.5);
-        for (i=0; i<128; i++)
-        {
-            pedestalhisto->Fill(i, _ped[i]);
-        }
-        pedcanvas->cd(1);
-        pedestalhisto->Draw();
+    //if (show)
+    //{
+        //TCanvas *pedcanvas = create_canvas("Pedcanvas", "Pedestal Values", 600, 400);
+        //TH1 *pedestalhisto = create_h1("pedestalhisto", "Pedestal Values", 128, -0.5, 127.5);
+        //for (i=0; i<128; i++)
+        //{
+            //pedestalhisto->Fill(i, _ped[i]);
+        //}
+        //pedcanvas->cd(1);
+        //pedestalhisto->Draw();
 
         // for (i=0; i<256; i++)
         // {
           // std::cout << "channel " << i << ": " << _ped[i] << "\n";
         // }
-    }
+    //}
 }
 
 void DataFileRoot::load_masking(const char *fnam)

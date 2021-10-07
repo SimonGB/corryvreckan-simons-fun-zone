@@ -235,7 +235,7 @@ int AsciiRoot::read_event()
                 {
                     priv->ifile->read((char *)&header, sizeof(unsigned int));
                     if (priv->ifile->bad() || priv->ifile->eof())
-                        return 3;
+                        return -1;
 
                     code = (header>>16) & 0xFFFF;
                 } while ( code != 0xcafe );
