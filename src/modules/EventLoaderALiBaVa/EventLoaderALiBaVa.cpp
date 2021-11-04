@@ -207,7 +207,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     // The chargecut is applied here
     // std::cout << CalSignal << " smaller than " << m_chargecut << "?\n";
-    if(CalSignal < m_chargecut && CalSignal > 0){
+    if(CalSignal < m_chargecut){
     // if(true){
       // Create a pixel for every channel in this event with all the information and put it in the vector.
       // The value in the pixel reserved for the ADC value is used for the S/N ratio multiplied by 100000.

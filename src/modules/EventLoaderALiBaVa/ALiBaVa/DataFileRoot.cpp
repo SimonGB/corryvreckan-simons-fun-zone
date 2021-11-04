@@ -140,7 +140,7 @@ TH1F *DataFileRoot::show_pedestals(const int lowerChannel, const int upperChanne
 
     hst->GetXaxis()->SetRangeUser(0, 128);
     hst->SetMaximum(570);
-    hst->SetMinimum(0);
+    hst->SetMinimum(400);
 
     return hst;
 }

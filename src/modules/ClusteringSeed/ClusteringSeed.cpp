@@ -55,75 +55,77 @@ StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard) {
       return StatusCode::Success;
   }
 
-  // Prepare variables for the seed and neighbours
-  std::shared_ptr<Pixel> left_neighbour ;
-  std::shared_ptr<Pixel> seed;
-  std::shared_ptr<Pixel> right_neighbour;
-
-  // Prepare cluster
+  // Prepare cluster vector and clusters
+  // For strip detectors we only define 1 cluster at most per events
+  // Strictly speaking the vector is not necessary, but it's easier to work like this
   ClusterVector deviceClusters;
   auto cluster = std::make_shared<Cluster>();
+  PixelVector neighbourCandidates; // for the neighbours
+  std::shared_ptr<Pixel> seed;
 
-  // Prepare variables for finding the pixels in the cluster
-  std::shared_ptr<Pixel> previousPixel;
-  double greatestSeedSNRatio = 0;
-  bool pixelWasSeed = false;
-  bool seedFound = false;
-  bool left_neighbourFound = false;
-  bool right_neighbourFound = false;
-  bool firstChannel = true;
+  double greatestSeedSNRatio = 0.;
+  int seedCoordinate = -1;
+  int nChannels = 0;
 
-  // Find the seed and direct neighbours (to the left or right)
-  // We only define up to one cluster per event
   // The seed and neighbours have a signal-noise ratio requirement
   // The SNratio*100000 should be saved as the raw pixel value in the eventLoader
   // Which is the case for the ALiBaVa eventLoader
-  for(auto pixel : pixels) {
+  for(auto pixel : pixels){
+    neighbourCandidates.push_back(pixel);
     double pixelSNRatio = pixel->raw()/100000.0;
-    if(pixelWasSeed){
-      if(pixelSNRatio > m_neighbourThreshold){
-        right_neighbour = pixel;
-        right_neighbourFound = true;
-      }
-      pixelWasSeed = false;
-    }
     if(pixelSNRatio > m_seedThreshold && pixelSNRatio > greatestSeedSNRatio){
-      seed = pixel;
-      seedFound = true;
-      left_neighbourFound = false;
-      right_neighbourFound = false;
-      if(!firstChannel && previousPixel->charge() > m_neighbourThreshold){
-         left_neighbour = previousPixel;
-         left_neighbourFound = true;
-       }
       greatestSeedSNRatio = pixelSNRatio;
-      pixelWasSeed = true;
+      seedCoordinate = nChannels;
+      seed = pixel;
     }
-    previousPixel = pixel;
-    firstChannel = false;
+    nChannels++;
   }
 
-  // If a seed was found, add it to the cluster
-  // Cluster timestamp = seed timestamp
-  // Left or right neighbours aren't strictly necessary to form a cluster
-  if(seedFound){
+  if(seedCoordinate != -1){ // i.e. if a seed is found
     cluster->addPixel(&*seed);
-    cluster->setTimestamp(seed->timestamp());
+    bool right_neighbourFound = false;
+    bool left_neighbourFound = false;
+
+    bool clusterContact = true;
+    for(int rightChan = seedCoordinate+1; rightChan < nChannels; rightChan++){
+      if(!clusterContact) break;
+      clusterContact = false;
+      std::shared_ptr<Pixel> rNeighbourCandidate = neighbourCandidates[rightChan];
+      double rNeighCandSNRatio = rNeighbourCandidate->raw()/100000.0;
+      if(rNeighCandSNRatio > m_neighbourThreshold){
+        right_neighbourFound = true;
+        clusterContact = true;
+        cluster->addPixel(&*rNeighbourCandidate);
+      }
+    }
+
+    clusterContact = true;
+    for(int leftChan = seedCoordinate-1; leftChan >= 0; leftChan--){
+      if(!clusterContact) break;
+      clusterContact = false;
+      std::shared_ptr<Pixel> lNeighbourCandidate = neighbourCandidates[leftChan];
+      double lNeighCandSNRatio = lNeighbourCandidate->raw()/100000.0;
+      if(lNeighCandSNRatio > m_neighbourThreshold){
+        left_neighbourFound = true;
+        clusterContact = true;
+        cluster->addPixel(&*lNeighbourCandidate);
+      }
+    }
 
     // This is for the calculation of the eta distribution
     // and to add the neighbours to the cluster
-    double seedCharge=seed->charge();;
-    double leftNeighbourCharge=0.0;
-    double rightNeighbourCharge=0.0;
+    double seedCharge=seed->charge();
+    double leftNeighbourCharge=-9999999.;
+    double rightNeighbourCharge=-9999999.;
     double eta=0.0;
+
     if(left_neighbourFound){
-      cluster->addPixel(&*left_neighbour);
-      leftNeighbourCharge = left_neighbour->charge();
-    };
+      leftNeighbourCharge = neighbourCandidates[seedCoordinate-1]->charge();
+    }
     if(right_neighbourFound){
-       cluster->addPixel(&*right_neighbour);
-       rightNeighbourCharge = right_neighbour->charge();
-     };
+       rightNeighbourCharge = neighbourCandidates[seedCoordinate+1]->charge();
+     }
+
      if(leftNeighbourCharge > rightNeighbourCharge){
        eta = leftNeighbourCharge/(leftNeighbourCharge+seedCharge);
      }
@@ -136,14 +138,17 @@ StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     // Fill the histograms
     clusterSize->Fill(static_cast<double>(cluster->size()));
-    clusterSeedCharge->Fill(cluster->getSeedPixel()->charge());
-    clusterCharge->Fill(seedCharge+leftNeighbourCharge+rightNeighbourCharge);
-    clusterPosition->Fill(seed->column());
+    clusterSeedCharge->Fill(seedCharge);
+    clusterCharge->Fill(static_cast<double>(cluster->charge()));
+    clusterPosition->Fill(seedCoordinate);
     if(right_neighbourFound || left_neighbourFound) etaDistribution->Fill(eta);
+    // If there are values of -1 in the eta distribution, this means that
+    // there are neighbours on both sides with the exact same charge
     // Put the cluster on the clipboard
     deviceClusters.push_back(cluster);
     clipboard->putData(deviceClusters, m_detector->getName());
   }
+
   return StatusCode::Success;
 }
 
