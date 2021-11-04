@@ -35,24 +35,30 @@ void EventLoaderALiBaVa::initialize() {
 
   config_.setDefault<int>("run", 0);
   config_.setDefault<double>("LowerTimecut", 0);
-  config_.setDefault<double>("UpperTimecut", std::numeric_limits<int>::max());
+  config_.setDefault<double>("UpperTimecut", std::numeric_limits<double>::max());
   config_.setDefault<int>("IgnoreEvents", 1);
   config_.setDefault<int>("LowerChannel", 0);
-  config_.setDefault<int>("UpperChannel", 255);
-  config_.setDefault<double>("Chargecut", std::numeric_limits<int>::max());
-  config_.setDefault<bool>("CrosstalkCorrection", true);
+  config_.setDefault<int>("UpperChannel", 127);
+  config_.setDefault<double>("Chargecut", std::numeric_limits<double>::max());
   config_.setDefault<double>("CalibrationConstant", 1.0);
+  config_.setDefault<bool>("CrosstalkCorrection", false);
 
   m_inputDirectory = config_.getPath("input_directory");
   m_run = config_.get<int>("run");
-  m_timecut_lower = config_.get<int>("LowerTimecut");
-  m_timecut_upper = config_.get<int>("UpperTimecut");
+  m_timecut_lower = config_.get<double>("LowerTimecut");
+  m_timecut_upper = config_.get<double>("UpperTimecut");
   m_ignore_events = config_.get<int>("IgnoreEvents");
   m_lower_channel = config_.get<int>("LowerChannel");
   m_upper_channel = config_.get<int>("UpperChannel");
-  m_chargecut = config_.get<int>("Chargecut");
-  m_correct_crosstalk = config_.get<bool>("CrosstalkCorrection");
+  m_chargecut = config_.get<double>("Chargecut");
   m_calibration_constant = config_.get<double>("CalibrationConstant");
+  m_correct_crosstalk = config_.get<bool>("CrosstalkCorrection");
+  if(!m_correct_crosstalk){
+    config_.setDefault<double>("b_one", 0.);
+    config_.setDefault<double>("b_two", 0.);
+  }
+  m_b_one = config_.get<double>("b_one");
+  m_b_two = config_.get<double>("b_two");
 
   // Open the input directory
   DIR* directory = opendir(m_inputDirectory.c_str());
@@ -109,7 +115,9 @@ for(int ievt = 0; ievt < m_ignore_events; ievt++){
   }
 
   // Create histograms
-  chargeHist = new TH1F("charge","charge", 50, 0, m_chargecut);
+  chargeHist = new TH1F("chargeSignal","Charge;Charge [e];events", 100, -96000, 32000);
+  ADCHist = new TH1F("ADCSignal","Signal;(-1) Signal [ADC];events", 100, -200, 600);
+  SNRHist = new TH1F("SNRatio","SNRatio;(-1) SNRatio;events", 100, -50, 200);
 }
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -171,28 +179,21 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     return StatusCode::NoData;
   }
 
-//// THIS STUFF NEEDS TO MOVE TO SEPARATE MODULES (?)
+  double channels_Sig_corrected[m_upper_channel-m_lower_channel+1];
+  if(m_correct_crosstalk){
+    double channels_Sig[m_upper_channel-m_lower_channel+1];
+    double b_one = m_b_one;
+    double b_two = m_b_two;
 
-
-
-  if(false){//crosstalk AFTER clustering and calibration
-    double channels_CalSig[m_upper_channel-m_lower_channel+1];
-    double channels_CalSig_corrected[m_upper_channel-m_lower_channel+1];
-    double b_one;
-    double b_two;
-    if(m_correct_crosstalk){
-      for(int chan = m_lower_channel; chan <= m_upper_channel; chan++){
-        channels_CalSig[chan-m_lower_channel] = ALiBaVaPointer->get_gain(chan);
-      }
-      channels_CalSig_corrected[0] = (1+b_one+b_two)*channels_CalSig[0];
-      channels_CalSig_corrected[1] = (1+b_one+b_two)*channels_CalSig[1]-b_one*channels_CalSig[0];
-      for(int chan = m_lower_channel+2; chan <= m_upper_channel; chan++){
-        channels_CalSig_corrected[chan-m_lower_channel] = (1+b_one+b_two)*channels_CalSig[chan-m_lower_channel]-b_one*channels_CalSig[chan-m_lower_channel-1]-b_two*channels_CalSig[chan-m_lower_channel-2];
-      }
+    for(int chan = m_lower_channel; chan <= m_upper_channel; chan++){
+      channels_Sig[chan-m_lower_channel] = ALiBaVaPointer->ADC_signal(chan);
     }
-  }
-
-////
+    channels_Sig_corrected[0] = (1+b_one+b_two)*channels_Sig[0];
+    channels_Sig_corrected[1] = (1+b_one+b_two)*channels_Sig[1]-b_one*channels_Sig[0];
+    for(int chan = m_lower_channel+2; chan <= m_upper_channel; chan++){
+      channels_Sig_corrected[chan-m_lower_channel] = (1+b_one+b_two)*channels_Sig[chan-m_lower_channel]-b_one*channels_Sig[chan-m_lower_channel-1]-b_two*channels_Sig[chan-m_lower_channel-2];
+    }
+  } 
 
   // This loops over the channels in the current ALiBaVa event
   for(int chan = m_lower_channel; chan <= m_upper_channel; chan++){
@@ -202,8 +203,18 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // double CalSignal = ALiBaVaPointer->signal(chan);
     // double ADCSignal = ALiBaVaPointer->signal(chan)*calibration;
     // double SNRatio = ALiBaVaPointer->sn(chan);
-    double CalSignal = ALiBaVaPointer->ADC_signal(chan)*m_calibration_constant;
-    double SNRatio = ALiBaVaPointer->sn(chan);
+    double ADCSignal = 0;
+    double SNRatio = 0;
+
+    if(m_correct_crosstalk){
+      ADCSignal = channels_Sig_corrected[chan];
+      SNRatio = channels_Sig_corrected[chan]/ALiBaVaPointer->noise(chan);
+    }
+    else{
+      ADCSignal = ALiBaVaPointer->ADC_signal(chan);
+      SNRatio = ALiBaVaPointer->sn(chan);
+    }
+    double CalSignal = ADCSignal*m_calibration_constant;
 
     // The chargecut is applied here
     // std::cout << CalSignal << " smaller than " << m_chargecut << "?\n";
@@ -216,6 +227,8 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
       // Fill the histograms
       chargeHist->Fill(CalSignal);
+      ADCHist->Fill(-ADCSignal);
+      SNRHist->Fill(-SNRatio);
     }
   }
 

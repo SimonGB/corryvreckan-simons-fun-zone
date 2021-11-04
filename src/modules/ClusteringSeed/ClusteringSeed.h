@@ -43,6 +43,7 @@ namespace corryvreckan {
          * @brief [Run the function of this module]
          */
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
+        StatusCode runTEMP(const std::shared_ptr<Clipboard>& clipboard);
 
         /**
          * @brief [Finalise module]
@@ -53,6 +54,15 @@ namespace corryvreckan {
         int m_eventNumber;
         double m_neighbourThreshold;
         double m_seedThreshold;
+        int m_lower_channel;
+        int m_upper_channel;
+        bool m_calculate_crosstalk;
+
+        double QLeftOverQSeed = 0;
+        double QRightOverQSeed = 0;
+        double QLeftBOOverQSeed = 0;
+        double QRightBOOverQSeed = 0;
+        int debugVar = 0;
 
         std::shared_ptr<Detector> m_detector;
 
@@ -61,6 +71,13 @@ namespace corryvreckan {
         TH1F* clusterCharge;
         TH1F* clusterPosition;
         TH1F* etaDistribution;
+        TH1F* leftSignal;
+        TH1F* rightSignal;
+        TH1F* leftBOSignal;
+        TH1F* rightBOSignal;
+
+        TH1F* DEBUG_event_SNR;
+        TH1F* DEBUG_event_charge;
     };
 
 } // namespace corryvreckan

@@ -199,14 +199,25 @@ class DataFileRoot
         // returns the pedestal value of channel i
         double ped(int i) const
         {
-            return _ped[i]/_gain[i];
+            return _ped[i];
         }
 
+        // double ped(int i) const
+        // {
+        //     return _ped[i]/_gain[i];
+        // }
+
         // returns the noise value of channel i
+        
         double noise(int i) const
         {
-            return _noise[i]/_gain[i];
+            return _noise[i];
         }
+
+        // double noise(int i) const
+        // {
+        //     return _noise[i]/_gain[i];
+        // }
 
         // returns the signal over noise ratio of channel i
         double sn(int i) const

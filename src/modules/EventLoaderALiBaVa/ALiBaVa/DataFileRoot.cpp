@@ -129,13 +129,13 @@ TH1F *DataFileRoot::show_pedestals(const int lowerChannel, const int upperChanne
     TH1F *hst = new TH1F(title.c_str(),"pedestals",128, 0, 128);
     hst->SetYTitle("ADCs");
     hst->SetXTitle("Channel no.");
-    for (ic=lowerChannel; ic<=upperChannel; ic++)
+    // for (ic=lowerChannel; ic<=upperChannel; ic++)
         // std::cout<< ic << " " << _ped[ic] << "\n";
-        hst->SetBinContent(ic+1, _ped[ic]);
+        // hst->SetBinContent(ic+1, _ped[ic]);
 
     for (ic=0; ic<=128; ic++){
-        if(ic>=lowerChannel && ic<=upperChannel) hst->SetBinContent(ic+1, _ped[ic]);
-        else hst->SetBinContent(ic+1, 0);
+        if(ic>lowerChannel && ic<=upperChannel+1) hst->SetBinContent(ic, _ped[ic-1]);
+        else hst->SetBinContent(ic, 0);
     }
 
     hst->GetXaxis()->SetRangeUser(0, 128);
@@ -161,8 +161,8 @@ TH1F *DataFileRoot::show_noise(const int lowerChannel, const int upperChannel, b
     }
     hst->SetXTitle("Channel no.");
     for (ic=0; ic<=128; ic++){
-      if(ic>=lowerChannel && ic<=upperChannel) hst->SetBinContent(ic+1, _noise[ic]);
-      else hst->SetBinContent(ic+1, 0);
+      if(ic>lowerChannel && ic<=upperChannel+1) hst->SetBinContent(ic, _noise[ic-1]);
+      else hst->SetBinContent(ic, 0);
     }
     hst->GetXaxis()->SetRangeUser(0, 128);
     hst->SetMaximum(12);
@@ -316,7 +316,7 @@ void DataFileRoot::compute_cmmd_alternative(const int lowerChannel, const int up
     // std::cout << "######################################" << "\n";
 
     // nEvents = pedestal_data[1].size();
-    std::cout << "\n" << pedestal_data[75].size() << "\n";
+    // std::cout << "\n" << pedestal_data[75].size() << "\n";
     // for(int test = 0; test < pedestal_data[1].size(); test++){
       // std::cout << "\n" << pedestal_data[1][i]<< "\n";
     // }

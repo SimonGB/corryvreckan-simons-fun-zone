@@ -186,23 +186,90 @@ int ALiBaVa_loader(DataFileRoot *A,
     PedestalPointer->close();
     delete PedestalPointer;
 
+
+
+
+
+
+
     // INSERT CALIBRATION
     // Still in testing phase, non functional!
-    if(false){
     DataFileRoot * CalibrationPointer = DataFileRoot::OpenFile(cal_file);
-    short delay, charge;
-    for(int testevts = 0; CalibrationPointer->read_event()!=-1 && testevts<10; testevts++)
+    CalibrationPointer->load_pedestals(ped_f, kTRUE);
+    double channelCalVal[upperChannel-lowerChannel+1];
+    double channelCalValNeg[upperChannel-lowerChannel+1];
+    int posChargeEventCount[upperChannel-lowerChannel+1];
+    int negChargeEventCount[upperChannel-lowerChannel+1];
+    int nCalEvents=0;
+    int DebugCOUNT = 0;
+    int DebugCHARGE = -1;
+
+    for(int chan = 0; chan <= upperChannel-lowerChannel; chan++){
+        channelCalVal[chan] = 0.;
+        channelCalValNeg[chan] = 0.;
+        posChargeEventCount[chan] = 0;
+        negChargeEventCount[chan] = 0;
+    }
+
+    while(CalibrationPointer->read_event()==1)
     {
-        CalibrationPointer->load_pedestals(ped_f, kTRUE);
+        short delay, charge; // delay is pointless in this context
         CalibrationPointer->process_event();
         CalibrationPointer->get_scan_values(delay,charge);
-        std::cout << "Event: " << testevts << "   Delay: " << delay << "   Charge: " << charge << std::endl;
 
-        // for(int testchan = 0; testchan < 128; testchan++){
-          // std::cout << "Channel: " << testchan << "   Raw data: " << CalibrationPointer->data(testchan) << std::endl;
-        //}
+        if(DebugCHARGE != (int)charge){
+          DebugCHARGE = (int)charge;
+          std::cout << DebugCHARGE << "\n";
+        //   DebugCOUNT++;
+        }
+
+        if(charge <= 5) continue;
+        double actualCharge = (double)charge * 1025 * 2;
+        nCalEvents++;
+        // if(nCalEvents == 10) break;
+
+        // std::cout << "Event " << nCalEvents-1 << " with charge " << charge << "\n";
+        for(int chan = 0; chan <= upperChannel-lowerChannel; chan++){
+          double CalADC = CalibrationPointer->ADC_signal(chan);
+
+          if(CalADC>0){
+            // if(charge == 10 && chan == 0) DebugCOUNT++;
+            channelCalVal[chan] = channelCalVal[chan] + actualCharge/CalADC;
+            // std::cout << "      " << " Pos Channel " << chan << " ADC " << CalADC << "  summed_constant = " << channelCalVal[chan] << "\n";
+            posChargeEventCount[chan]++;
+            // std::cout << "      " << "             " << "count = " << posChargeEventCount[chan] << "\n";
+          }
+          else if(CalADC<0){
+            channelCalValNeg[chan] = channelCalValNeg[chan] - actualCharge/CalADC;
+            // std::cout << "      " << " Neg Channel " << chan << " ADC " << CalADC << "  summed_constant = " << channelCalValNeg[chan] << "\n";
+            negChargeEventCount[chan]++;
+            // std::cout << "      " << "             " << "  count = " << negChargeEventCount[chan] << "\n";
+
+          }
+          // std::cout << "          Channel " << chan+lowerChannel << " ADC = " << CalADC << "\n";
+        }
     }
+
+    double average = 0;
+    for(int chan = 0; chan <= upperChannel-lowerChannel; chan++){
+      channelCalVal[chan] = channelCalVal[chan]/posChargeEventCount[chan];
+      channelCalValNeg[chan] = channelCalValNeg[chan]/negChargeEventCount[chan];
+      std::cout << "Channel " << lowerChannel+chan << " cal-val= " << (channelCalVal[chan]+channelCalValNeg[chan])/2 << "\n";
+      average+=(channelCalVal[chan]+channelCalValNeg[chan])/2;
     }
+    average = average/(upperChannel-lowerChannel+1);
+    std::cout << "Average " << average << "\n" << DebugCOUNT<< "\n";
+      //   std::cout << "Event " << nCalEvents-1 << " with charge " << charge << "\n";
+        // for(int chan = 0; chan <= upperChannel-lowerChannel; chan++){
+        //   std::cout << "Channel " << chan+lowerChannel << " ADC = " << CalibrationPointer->ADC_signal(chan) << "\n";
+        // }
+
+
+
+
+
+
+
 
 
     // Load the calculated pedestal info into the original datafile

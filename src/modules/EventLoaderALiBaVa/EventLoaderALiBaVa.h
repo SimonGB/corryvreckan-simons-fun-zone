@@ -51,12 +51,14 @@ namespace corryvreckan {
         int iEvent = 0;
         int nEvents = 0;
         TH1F * chargeHist{};
+        TH1F * ADCHist{};
+        TH1F * SNRHist{};
         TH1F * pedestalValues{};
         TH1F * noiseValues{};
         TH1F * correctedPedestalValues{};
         TH1F * correctedNoiseValues{};
 
-        int m_run{};
+        int m_run{}; 
         double m_timecut_lower{};
         double m_timecut_upper{};
         int m_ignore_events{};
@@ -66,7 +68,8 @@ namespace corryvreckan {
         std::string m_inputDirectory{};
         bool m_correct_crosstalk{};
         double m_calibration_constant{};
-
+        double m_b_one{};
+        double m_b_two{};
 
         std::string m_datafilename;
         std::string m_pedestalfilename;
