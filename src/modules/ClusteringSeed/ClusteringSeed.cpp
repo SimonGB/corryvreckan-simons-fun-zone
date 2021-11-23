@@ -65,7 +65,7 @@ void ClusteringSeed::initialize() {
     DEBUG_event_charge = new TH1F("DEBUG_event_charge", title.c_str(), 128, 0, 128);
 }
 
-StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard) {
+StatusCode ClusteringSeed::runOLD(const std::shared_ptr<Clipboard>& clipboard) {
 
   // Get the pixels in the strip
   auto pixels = clipboard->getData<Pixel>(m_detector->getName());
@@ -245,8 +245,7 @@ StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard) {
 }
 
 
-StatusCode ClusteringSeed::runTEMP(const std::shared_ptr<Clipboard>& clipboard){
-if(false){
+StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard){
   // Get the pixels in the strip
   auto pixels = clipboard->getData<Pixel>(m_detector->getName());
   if(pixels.empty()) {
@@ -258,34 +257,166 @@ if(false){
   // The seed and neighbours have a signal-noise ratio requirement
   // The SNratio*100000 should be saved as the raw pixel value in the eventLoader
   // Which is the case for the ALiBaVa eventLoader
+
+  // This algorithm assumes that there is no limit to the size of clusters and
+  // No limit to the amount of clusters
+
+  // Take all pixels and put them in an ordered (by channel) array
   for(auto pixel : pixels){
     orderedStrip[pixel->column()] = pixel;
   }
-
+  // Create a collection of pixelchains
+  // A bool to remember if the previous pixel in the loop passed the neighbourcut
+  // A bool to see if a seed was found for the current chain of pixels
+  // A chain of pixels that pass at least the neighbour cut
   std::vector<PixelVector> pixelChainCollection;
   bool lastPixelNeighbour = false;
   bool seedFound = false;
   PixelVector pixelChain;
+  // This loops over all possible channels for one chip
   for(int ichan = 0; ichan < 128; ichan++){
+    // Check if the previous pixel in the loop was NOT a neighbour
     if(!lastPixelNeighbour){
+      // If a seed was found and the last pixel was NOT a neighbour
+      // this means we have a cluster and have identified it from beginning to end.
+      // Add it to the collection of pixelChains (i.e. essentially clusters)
       if(seedFound){
         pixelChainCollection.push_back(pixelChain);
       }
+      // Reset the bool that identifies if a seed was found
+      // since we're now looking for a new cluster.
+      // Clear the current pixelChain variable (i.e. cluster)
       seedFound = false;
       pixelChain.clear();
     }
+    // Reset the bool for identifying if the last pixel passed the neighbourcut
+    // since it has served its purpose here and will now save the status of the current pixel
+    // for the next part of the loop.
     lastPixelNeighbour = false;
+    // Get the pixel signal-noise ratio
     double pixelSNRatio = orderedStrip[ichan]->raw()/100000.0;
+    // If the ratio passes the threshold, put the pixel in the pixelchain and update
+    // the bool for identifying if the pixel passes the neighbourcut
     if(pixelSNRatio > m_neighbourThreshold){
+      clusterSizeVal
       pixelChain.push_back(orderedStrip[ichan]);
+      // Additionally, check if the current pixel is a seed.
+      // If so, update the corresponding bool, which is relevant not just for one loop iteration
+      // but for as long as there is an unbroken chain of pixels that pass at least the
+      // neighbourcut, i.e. as long as we are in a pixelChain or (if there's a seed) cluster.
       if(pixelSNRatio > m_seedThreshold){
         seedFound = true;
+
       }
       lastPixelNeighbour = true;
     }
   }
+  // After this loop, we should end up with a vector (pixelChainCollection) containing vectors (pixelchains).
+  // The latter objects contain clusters, i.e. unbroken chains of pixels that all pass the neighbour cut AND
+  // have at least one seed.
+
+
+  for(auto cluster : pixelChainCollection){
+    int clusterSizeVal = 0;
+    double clusterSeedChargeVal = 0;
+    double clusterChargeVal = 0;
+    double seedPositionVal = -1;
+    for(auto pixel : cluster){
+      double pixelSNRatio = pixel->raw()/100000.0;
+      double pixelCharge = pixel->charge();
+      clusterSizeVal++;
+      clusterChargeVal += pixelCharge;
+      if(pixelSNRatio > m_seedThreshold && pixelSNRatio > clusterSeedChargeVal){
+          clusterSeedChargeVal = pixelCharge;
+          seedPositionVal = pixel->column();
+      }
+    }
+    clusterSize->Fill(clusterSizeVal);
+    clusterSeedCharge->Fill(clusterSeedChargeVal);
+    clusterCharge->Fill(clusterChargeVal);
+    clusterPosition->Fill(seedPositionVal);
+    etaDistribution->Fill(0);
+  }
+
+/*
+  // This part deals with clusters that have multiple seeds.
+  // Generally, I wouldn't expect there to be more than 2 seeds per cluster.
+  // If there are, then you probably haven't set reasonable neighbour and seed cuts.
+  // It could probably be integrated into the above algorithm, but it would be messy.
+  // Maybe do that later for optimisation/speed-up
+  for(auto cluster : pixelChainCollection){
+    int seedCount = 0;
+    double firstSeedSNR = 0;
+    double secondSeedSNR = 0;
+    int squeezedNeighbourCount = 0;
+    bool firstSeedAhead = true;
+    bool secondSeedAhead = true;
+    for(auto pixel : cluster){
+      double pixelSNRatio = pixel->raw()/100000.0;
+      if(pixelSNRatio > m_seedThreshold){
+        if(firstSeedAhead){
+          firstSeedSNR = pixelSNRatio;
+          firstSeedAhead = false;
+        }
+        if(secondSeedAhead && !firstSeedAhead){
+          secondSeedSNR = pixelSNRatio;
+          secondSeedAhead = false;
+        }
+        seedCount++
+      }
+      else if(pixelSNRatio > m_neighbourThreshold){
+        if(!firstSeedAhead && secondSeedAhead) squeezedNeighbourCount++;
+      }
+    }
+
+    if(seedCount == 2){
+      if(squeezedNeighbourCount == 0){
+        for(auto pixel : cluster){
+          // Make highest SNratio pixel the seed
+          // Keep the cluster, just turn the other seed into a neighbour
+          // This should happen automatically in Corryvreckan though...
+        }
+      }
+      else if(squeezedNeighbourCount == 1){
+        PixelVector newCluster_one;
+        PixelVector newCluster_two;
+        for(auto pixel : cluster){
+          // Give the neighbour to the highest SNratio seed
+          bool firstSeedAhead = true;
+          bool secondSeedAhead = true;
+          if(firstSeedSNR > secondSeedSNR){
+            double pixelSNRatio = pixel->raw()/100000.0;
+
+            if(firstSeedAhead && secondSeedAhead){
+              newCluster_one.push_back(pixel)
+            }
+            if(pixelSNRatio > m_seedThreshold){
+
+            }
+            newCluster_one.push_back(pixel)
+          }
+          else{}
+        }
+        cluster = pixelChainCollection.erase(cluster);
+      }
+      else if(squeezedNeighbourCount == 2){
+        for(auto pixel : cluster){
+          // Split into two clusters
+        }
+        cluster = pixelChainCollection.erase(cluster);
+      }
+      else if(squeezedNeighbourCount > 2){
+        LOG(WARNING) << "There are more than 2 neighbours in between 2 seeds in the same cluster, change your neighbour- and seedcuts";
+      }
+    }
+    else if(seedCount > 2){
+      LOG(WARNING) << "There are clusters with more than 2 seeds, change your neighbour- and seedcuts";
+      return StatusCode::Failure;
+    }
+  }
+*/
 }
-}
+
 
 
 void ClusteringSeed::finalize(const std::shared_ptr<ReadonlyClipboard>&) {

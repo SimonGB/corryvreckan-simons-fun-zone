@@ -42,8 +42,8 @@ namespace corryvreckan {
         /**
          * @brief [Run the function of this module]
          */
+        StatusCode runOLD(const std::shared_ptr<Clipboard>& clipboard);
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
-        StatusCode runTEMP(const std::shared_ptr<Clipboard>& clipboard);
 
         /**
          * @brief [Finalise module]

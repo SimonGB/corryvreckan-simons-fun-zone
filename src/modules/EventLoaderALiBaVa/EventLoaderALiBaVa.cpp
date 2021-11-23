@@ -188,12 +188,15 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     for(int chan = m_lower_channel; chan <= m_upper_channel; chan++){
       channels_Sig[chan-m_lower_channel] = ALiBaVaPointer->ADC_signal(chan);
     }
+
     channels_Sig_corrected[0] = (1+b_one+b_two)*channels_Sig[0];
     channels_Sig_corrected[1] = (1+b_one+b_two)*channels_Sig[1]-b_one*channels_Sig[0];
-    for(int chan = m_lower_channel+2; chan <= m_upper_channel; chan++){
+    for(int chan = m_lower_channel+2; chan <= m_upper_channel-2; chan++){
       channels_Sig_corrected[chan-m_lower_channel] = (1+b_one+b_two)*channels_Sig[chan-m_lower_channel]-b_one*channels_Sig[chan-m_lower_channel-1]-b_two*channels_Sig[chan-m_lower_channel-2];
     }
-  } 
+    channels_Sig_corrected[m_upper_channel-1] = (1+b_one)*channels_Sig[m_upper_channel-1]-b_one*channels_Sig[m_upper_channel-2]-b_two*channels_Sig[m_upper_channel-3];
+    channels_Sig_corrected[m_upper_channel] = (1)*channels_Sig[m_upper_channel]-b_one*channels_Sig[m_upper_channel-1]-b_two*channels_Sig[m_upper_channel-2];
+  }
 
   // This loops over the channels in the current ALiBaVa event
   for(int chan = m_lower_channel; chan <= m_upper_channel; chan++){
