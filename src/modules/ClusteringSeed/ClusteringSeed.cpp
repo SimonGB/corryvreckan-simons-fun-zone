@@ -298,7 +298,6 @@ StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard){
     // If the ratio passes the threshold, put the pixel in the pixelchain and update
     // the bool for identifying if the pixel passes the neighbourcut
     if(pixelSNRatio > m_neighbourThreshold){
-      clusterSizeVal
       pixelChain.push_back(orderedStrip[ichan]);
       // Additionally, check if the current pixel is a seed.
       // If so, update the corresponding bool, which is relevant not just for one loop iteration
