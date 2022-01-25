@@ -284,6 +284,7 @@ TrackVector TrackingMultiplet::refit(MultipletVector multiplets) {
             track->addCluster(cluster);
         }
         track->fit();
+        track->setTimestamp(m->timestamp());
         gblTracks.emplace_back(track);
     }
     return gblTracks;
