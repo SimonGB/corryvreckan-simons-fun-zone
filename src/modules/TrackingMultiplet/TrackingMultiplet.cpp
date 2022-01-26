@@ -283,8 +283,16 @@ TrackVector TrackingMultiplet::refit(MultipletVector multiplets) {
         for(auto cluster : m->getClusters()) {
             track->addCluster(cluster);
         }
+        track->setParticleMomentum(momentum_);
         track->fit();
         track->setTimestamp(m->timestamp());
+
+        LOG(TRACE) << "before refit: track type " << m->getType() << ", chi2ndf " << m->getChi2ndof() << ", NClusters "
+                   << m->getNClusters() << ", direction at z=10 " << m->getDirection(10.0);
+        LOG(TRACE) << "after refit: track type " << track->getType() << ", chi2ndf " << track->getChi2ndof()
+                   << ", NClusters " << track->getNClusters() << ", direction at z=10 " << track->getDirection(10.0);
+        LOG(TRACE) << "track particle momentum set to " << momentum_;
+
         gblTracks.emplace_back(track);
     }
     return gblTracks;
@@ -323,7 +331,7 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
             for(auto& det : cluster_trees) {
                 auto detector = det.first.get();
                 trackletCandidate->registerPlane(
-                    detector->getName(), detector->displacement().x(), detector->materialBudget(), detector->toLocal());
+                    detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
             }
             trackletCandidate->addCluster(clusterFirst.get());
             trackletCandidate->addCluster(clusterLast.get());
