@@ -61,6 +61,7 @@ namespace corryvreckan {
 
         std::vector<std::shared_ptr<Detector>> m_upstream_detectors;
         std::vector<std::shared_ptr<Detector>> m_downstream_detectors;
+        std::vector<std::shared_ptr<Detector>> m_require_detectors;
 
         double scatterer_position_;
         double scatterer_matching_cut_;
@@ -72,6 +73,8 @@ namespace corryvreckan {
 
         // track model for up/downstream fit
         std::string track_model_;
+        std::string timestamp_from_;
+        std::vector<std::string> require_detectors_;
 
         // Member histograms
         std::map<streams, TH1F*> trackletMultiplicity;

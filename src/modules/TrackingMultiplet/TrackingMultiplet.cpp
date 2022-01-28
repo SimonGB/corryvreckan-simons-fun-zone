@@ -53,6 +53,15 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
     config_.setDefault<bool>("refit_gbl", false);
     refit_gbl_ = config_.get<bool>("refit_gbl");
 
+    require_detectors_ = config_.getArray<std::string>("require_detectors", {});
+    timestamp_from_ = config_.get<std::string>("timestamp_from", {});
+    if(!timestamp_from_.empty() &&
+       std::find(require_detectors_.begin(), require_detectors_.end(), timestamp_from_) == require_detectors_.end()) {
+        LOG(WARNING) << "Adding detector " << timestamp_from_
+                     << " to list of required detectors as it provides the timestamp";
+        require_detectors_.push_back(timestamp_from_);
+    }
+
     config_.setDefaultArray<std::string>("upstream_detectors", default_upstream_detectors);
     config_.setDefaultArray<std::string>("downstream_detectors", default_downstream_detectors);
 
@@ -65,6 +74,9 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
     }
     for(auto detectorID : downstream_detectors_str) {
         m_downstream_detectors.push_back(get_detector(detectorID));
+    }
+    for(auto detectorID : require_detectors_) {
+        m_require_detectors.push_back(get_detector(detectorID));
     }
 
     if(m_upstream_detectors.size() < 2) {
@@ -114,6 +126,24 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
         throw InvalidCombinationError(config_,
                                       {"upstream_detectors", "downstream_detectors"},
                                       "Last upstream detector is located behind first downstream detector.");
+    }
+
+    // check if required detectors are included either upstream or downstream
+    for(auto detector : m_require_detectors) {
+        auto includedUpstream =
+            (std::find(m_upstream_detectors.begin(), m_upstream_detectors.end(), detector) != m_upstream_detectors.end());
+        auto includedDownstream =
+            (std::find(m_upstream_detectors.begin(), m_upstream_detectors.end(), detector) != m_upstream_detectors.end());
+        if(includedUpstream) {
+            LOG(DEBUG) << detector->getName() << " is required and listed as upstream.";
+        } else if(includedDownstream) {
+            LOG(DEBUG) << detector->getName() << " is required and listed as downstream.";
+        } else {
+            throw InvalidCombinationError(config_,
+                                          {"upstream_detectors", "downstream_detectors", "require_detectors"},
+                                          "Detector " + detector->getName() +
+                                              " is listed as required but not found either upstream nor downstream.");
+        }
     }
 
     config_.setDefault<size_t>("min_hits_upstream", m_upstream_detectors.size());
@@ -652,8 +682,33 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         }
 
         LOG(DEBUG) << "Multiplet found";
-        multiplet->setTimestamp(
-            (multiplet->getUpstreamTracklet()->timestamp() + multiplet->getDownstreamTracklet()->timestamp()) / 2.);
+
+        // check if track has required detector(s):
+        auto foundRequiredDetector = [this](Track* t) {
+            for(auto& requireDet : require_detectors_) {
+                if(!requireDet.empty() && !t->hasDetector(requireDet)) {
+                    LOG(DEBUG) << "No cluster from required detector " << requireDet << " on the track.";
+                    return false;
+                }
+            }
+            return true;
+        };
+        if(!foundRequiredDetector(multiplet.get())) {
+            continue;
+        }
+
+        if(timestamp_from_.empty()) {
+            double average_timestamp =
+                (multiplet->getUpstreamTracklet()->timestamp() + multiplet->getDownstreamTracklet()->timestamp()) / 2.;
+            multiplet->setTimestamp(average_timestamp);
+            LOG(DEBUG) << "Using average timestamp of " << Units::display(average_timestamp, "us") << " as track timestamp.";
+        } else {
+            auto* cluster = multiplet->getClusterFromDetector(timestamp_from_);
+            double det_timestamp = cluster->timestamp();
+            LOG(DEBUG) << "Using timestamp of detector " << timestamp_from_
+                       << " as track timestamp: " << Units::display(det_timestamp, "us");
+            multiplet->setTimestamp(det_timestamp);
+        }
 
         LOG(DEBUG) << "Deleting downstream tracklet";
         downstream_tracklets.erase(used_downtracklet);
