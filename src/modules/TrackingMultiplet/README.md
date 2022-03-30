@@ -37,6 +37,7 @@ For each upstream tracklet, the downstream tracklet with the lowest matching dis
 * `require_detectors`: Names of detectors which are required to have a cluster on the track. If a track does not have a cluster from all detectors listed here, it is rejected. If empty, no detector is required. Default is empty.
 * `timestamp_from`: Defines the detector which provides the track timestamp. This detector is by default added to `required_detector`. If empty, the average timestamp of upstream and downstream tracklet will be used. Empty by default.
 * `refit_gbl`: Refit the multiplet tracks with GBL. Defaults to false.
+* `unique_cluster_usage`: Only use a cluster for one track - in the case of multiple assignments, the track with the best chi2/ndof is kept. Defaults to `false`
 
 ### Plots produced
 

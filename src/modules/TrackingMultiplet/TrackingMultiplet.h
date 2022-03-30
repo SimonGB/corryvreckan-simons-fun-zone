@@ -70,6 +70,7 @@ namespace corryvreckan {
         size_t min_hits_upstream_;
         size_t min_hits_downstream_;
         bool refit_gbl_{};
+        bool unique_cluster_usage_{};
 
         // track model for up/downstream fit
         std::string track_model_;
@@ -107,6 +108,9 @@ namespace corryvreckan {
         double calculate_average_timestamp(const Track* track);
 	// Function to refit the multiplet tracks at the end, using GBL
         TrackVector refit(MultipletVector multiplets);
+
+        bool duplicated_hit(const Track* a, const Track* b);
+        template <class T> T remove_duplicate(T tracks);
     };
 
 } // namespace corryvreckan

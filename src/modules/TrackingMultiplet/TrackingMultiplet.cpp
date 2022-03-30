@@ -15,6 +15,7 @@
 #include "tools/cuts.h"
 
 using namespace corryvreckan;
+using namespace std;
 
 TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::shared_ptr<Detector>> detectors)
     : Module(config, std::move(detectors)) {
@@ -187,6 +188,9 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
         config_.setDefault("momentum", 5000);
     }
     momentum_ = config_.get<double>("momentum");
+
+    config_.setDefault<bool>("unique_cluster_usage", false);
+    unique_cluster_usage_ = config_.get<bool>("unique_cluster_usage");
 }
 
 void TrackingMultiplet::initialize() {
@@ -296,6 +300,43 @@ double TrackingMultiplet::calculate_average_timestamp(const Track* track) {
         sum_weighted_time += (static_cast<double>(Units::convert(cluster->timestamp(), "ns")) - time_of_flight) * weight;
     }
     return (sum_weighted_time / sum_weights);
+}
+
+bool TrackingMultiplet::duplicated_hit(const Track* a, const Track* b) {
+    for(auto d : get_regular_detectors(false)) { // get_regular_detectors(bool include_duts)
+        if(a->getClusterFromDetector(d->getName()) == b->getClusterFromDetector(d->getName()) &&
+           !(b->getClusterFromDetector(d->getName()) == nullptr)) {
+            LOG(DEBUG) << "Duplicated hit on " << d->getName() << ": rejecting track";
+            return true;
+        }
+    }
+    return false;
+}
+
+template <class T> T TrackingMultiplet::remove_duplicate(T tracks) {
+
+    // sort by chi2:
+    LOG_ONCE(WARNING) << "Rejecting tracks with same hits";
+    std::sort(tracks.begin(), tracks.end(), [](const shared_ptr<Track> a, const shared_ptr<Track> b) {
+        return (a->getChi2() / static_cast<double>(a->getNdof())) < (b->getChi2() / static_cast<double>(b->getNdof()));
+    });
+    // remove tracks with hit that is used twice
+    auto track1 = tracks.begin();
+    while(track1 != tracks.end()) {
+        auto track2 = track1 + 1;
+        while(track2 != tracks.end()) {
+            // if hit is used twice delete the track
+            if(duplicated_hit(track2->get(), track1->get())) {
+                track2 = tracks.erase(track2);
+                LOG(DEBUG) << "Rejecting tracks because of duplicate hits";
+            } else {
+                track2++;
+            }
+        }
+        track1++;
+    }
+
+    return tracks;
 }
 
 TrackVector TrackingMultiplet::refit(MultipletVector multiplets) {
@@ -431,7 +472,7 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
                                   (distanceY * distanceY) / (spatial_cuts_[detector].y() * spatial_cuts_[detector].y());
 
                     if(norm > 1) {
-                        LOG(DEBUG) << "Cluster outside the cuts. Normalized distance: " << norm;
+                        LOG(TRACE) << "Cluster outside the cuts. Normalized distance: " << norm;
                         continue;
                     }
 
@@ -735,9 +776,18 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
     multipletMultiplicity->Fill(static_cast<double>(multiplets.size()));
 
     if(multiplets.size() > 0 && !refit_gbl_) {
+        // if requested ensure unique usage of clusters
+        if(unique_cluster_usage_ && multiplets.size() > 1) {
+            multiplets = remove_duplicate(multiplets);
+        }
         clipboard->putData(multiplets);
     } else if(multiplets.size() > 0 && refit_gbl_) {
-        clipboard->putData(refit(multiplets));
+        auto gbltracks = refit(multiplets);
+        // refit can change chi2, so if unique cluster usage requested, decide what to keep after refitting
+        if(unique_cluster_usage_ && gbltracks.size() > 1) {
+            gbltracks = remove_duplicate(gbltracks);
+        }
+        clipboard->putData(gbltracks);
     }
 
     // Return value telling analysis to keep running
