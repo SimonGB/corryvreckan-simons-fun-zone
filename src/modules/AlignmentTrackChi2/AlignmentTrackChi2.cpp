@@ -44,6 +44,7 @@ AlignmentTrackChi2::AlignmentTrackChi2(Configuration& config, std::vector<std::s
 
     m_maxAssocClusters = config_.get<size_t>("max_associated_clusters");
     m_maxTrackChi2 = config_.get<double>("max_track_chi2ndof");
+    fixed_plane_ = config_.getArray<std::string>("fixed_plane", {});
     LOG(INFO) << "Aligning telescope";
 }
 
@@ -181,9 +182,15 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
         int det = 0;
         for(auto& detector : get_regular_detectors(false)) {
             string detectorID = detector->getName();
+            bool is_fixed = false;
 
             // Do not align the reference plane
-            if(detector->isReference()) {
+            for(const auto& fixed_plane : fixed_plane_) {
+                if(detectorID == fixed_plane) {
+                    is_fixed = true;
+                }
+            }
+            if(detector->isReference() || is_fixed == true) {
                 LOG(DEBUG) << "Skipping detector " << detector->getName();
                 continue;
             }
@@ -276,8 +283,17 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
 
     // Now list the new alignment parameters
     for(auto& detector : get_regular_detectors(false)) {
+        string detectorID = detector->getName();
+        bool is_fixed = false;
+
         // Do not align the reference plane
-        if(detector->isReference()) {
+        for(const auto& fixed_plane : fixed_plane_) {
+            if(detectorID == fixed_plane) {
+                LOG(INFO) << "Skipping user fixed detector " << detectorID;
+                is_fixed = true;
+            }
+        }
+        if(detector->isReference() || is_fixed) {
             continue;
         }
 
