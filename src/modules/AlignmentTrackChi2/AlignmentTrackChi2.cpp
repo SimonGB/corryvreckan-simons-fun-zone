@@ -190,7 +190,7 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
                     is_fixed = true;
                 }
             }
-            if(detector->isReference() || is_fixed == true) {
+            if(detector->isReference() || is_fixed) {
                 LOG(DEBUG) << "Skipping detector " << detector->getName();
                 continue;
             }
