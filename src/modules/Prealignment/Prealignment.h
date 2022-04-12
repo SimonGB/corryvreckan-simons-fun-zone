@@ -59,6 +59,7 @@ namespace corryvreckan {
         double range_abs;
         PrealignMethod method;
         int fit_range_rel;
+        std::vector<std::string> fixed_plane_;
     };
 } // namespace corryvreckan
 #endif // PREALIGNMENT_H
