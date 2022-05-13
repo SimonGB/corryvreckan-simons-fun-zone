@@ -95,8 +95,10 @@ std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& c
         return std::make_shared<HexagonalPixelDetector>(config);
     } else if(coordinates == "cartesian_module") {
         return std::make_shared<PixelModuleDetector>(config);
+    } else if (coordinates == "polar") {
+        return std::make_shared<PolarDetector>(config);
     } else {
-        throw InvalidValueError(config, "coordinates", "Coordinates can only set to be cartesian now");
+        throw InvalidValueError(config, "coordinates", "Coordinates can only set to be cartesian or polar now");
     }
 }
 

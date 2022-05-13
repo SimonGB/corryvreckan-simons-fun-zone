@@ -500,4 +500,5 @@ namespace corryvreckan {
 
 #include "PixelDetector.hpp"
 //#include "HexagonalPixelDetector.hpp"
+#include "PolarDetector.hpp"
 #endif // CORRYVRECKAN_DETECTOR_H
