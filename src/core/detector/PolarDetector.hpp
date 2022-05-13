@@ -57,7 +57,7 @@ namespace corryvreckan {
         /**
          * @brief Set position and orientation from configuration file
          */
-        void SetPostionAndOrientation(const Configuration& config);
+        void SetPositionAndOrientation(const Configuration& config);
 
         /**
          * @brief Update detector position in the world
@@ -187,14 +187,16 @@ namespace corryvreckan {
          *  - R is measured from the local coordinate center
          *  - Phi is measured from the strip focal point
          */
-        ROOT::Math::Polar2DPoint getPositionPolar(const ROOT::Math::XYZPoint& local_pos) const;
+        PositionVector3D<Polar3D<double>> getPositionPolar(const PositionVector3D<Cartesian3D<double>> localPosition) const;
 
         /**
          * @brief Converts the position in polar coordinates to cartesian coordinates in the local frame.
          * @param polar_pos Position in local polar coordinates of the detector model
          * @return Local position in cartesian coordinates
          */
-        ROOT::Math::XYPoint getPositionCartesian(const ROOT::Math::Polar2DPoint& polar_pos) const;
+        PositionVector3D<Cartesian3D<double>> getPositionCartesian(const PositionVector3D<Polar3D<double>> localPosition) const;
+
+        double getCenterRadius() const { return (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2; }
 
     private:
         // Initialize coordinate transformations
@@ -232,10 +234,10 @@ namespace corryvreckan {
 
         std::vector<unsigned int> number_of_strips{};
         unsigned int max_strips{};
-        std::vector<double> row_radii{};
+        std::vector<double> row_radius{};
         std::vector<double> angular_pitch{};
         double stereo_angle;
-        ROOT::Math::XYZVector focus_translation_;
+        ROOT::Math::XYZVector focus_translation;
     };
 } // namespace corryvreckan
 

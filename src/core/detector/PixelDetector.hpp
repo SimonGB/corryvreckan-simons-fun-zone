@@ -58,7 +58,7 @@ namespace corryvreckan {
         /**
          * @brief Set position and orientation from configuration file
          */
-        void SetPostionAndOrientation(const Configuration& config);
+        void SetPositionAndOrientation(const Configuration& config);
 
         /**
          * @brief Checks if a given pixel index lies within the pixel matrix of the detector

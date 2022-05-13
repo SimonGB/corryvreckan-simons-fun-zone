@@ -28,7 +28,9 @@ using namespace corryvreckan;
 
 PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
 
-    m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
+    // Set detector position and direction from configuration file
+    SetPositionAndOrientation(config);
+
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         build_axes(config);
@@ -74,6 +76,20 @@ void PixelDetector::build_axes(const Configuration& config) {
         maskFile(mask_file);
         process_mask_file();
     }
+}
+
+void PixelDetector::SetPositionAndOrientation(const Configuration& config) {
+    // Detector position and orientation
+    m_displacement = config.get<ROOT::Math::XYZPoint>("position", ROOT::Math::XYZPoint());
+    m_orientation = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
+    m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
+
+    if(m_orientation_mode != "xyz" && m_orientation_mode != "zyx" && m_orientation_mode != "zxz") {
+        throw InvalidValueError(config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
+    }
+
+    LOG(TRACE) << "  Position:    " << Units::display(m_displacement, {"mm", "um"});
+    LOG(TRACE) << "  Orientation: " << Units::display(m_orientation, {"deg"}) << " (" << m_orientation_mode << ")";
 }
 
 void PixelDetector::process_mask_file() {
