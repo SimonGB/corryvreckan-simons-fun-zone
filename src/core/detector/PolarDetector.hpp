@@ -237,6 +237,7 @@ namespace corryvreckan {
         ROOT::Math::XYZVector m_orientation;
         std::string m_orientation_mode;
 
+        // For polar detectors
         std::vector<unsigned int> number_of_strips{};
         std::vector<double> row_radius{};
         std::vector<double> angular_pitch{};
