@@ -434,6 +434,15 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     double distanceY = interceptY - newCluster->local().y();
                     double distance = sqrt(distanceX * distanceX + distanceY * distanceY);
 
+                    // Recalculate for polar detectors
+                    auto polar_det = dynamic_pointer_cast<PolarDetector>(detector);
+                    if (polar_det != nullptr) {
+                        auto cluster_polar = polar_det->getPositionPolar(newCluster->local());
+                        auto intercept_polar = polar_det->getPositionPolar(polar_det->globalToLocal(interceptPoint));
+                        // Interpreting (X,Y) as (Phi,R)
+                        distanceX = intercept_polar.phi() - cluster_polar.phi();
+                        distanceY = intercept_polar.r() - cluster_polar.r();
+                    }
                     // Check if newCluster lies within ellipse defined by spatial cuts around intercept,
                     // following this example:
                     // https://www.geeksforgeeks.org/check-if-a-point-is-inside-outside-or-on-the-ellipse/
