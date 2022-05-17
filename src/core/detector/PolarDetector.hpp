@@ -37,8 +37,7 @@ namespace corryvreckan {
      */
     class PolarDetector : public Detector {
     public:
-    
-          /**
+        /**
          * Delete default constructor
          */
         PolarDetector() = delete;
@@ -168,8 +167,10 @@ namespace corryvreckan {
          * @brief Get number of pixels in x and y
          * @return Number of two dimensional pixels
          */
-        ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> nPixels() const override { return {static_cast<int>(*std::max_element(number_of_strips.begin(), number_of_strips.end())),
-                static_cast<int>(number_of_strips.size())} ; }
+        ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> nPixels() const override {
+            return {static_cast<int>(*std::max_element(number_of_strips.begin(), number_of_strips.end())),
+                    static_cast<int>(number_of_strips.size())};
+        }
 
         /**
          * @brief Test whether one pixel touches the cluster
@@ -195,7 +196,8 @@ namespace corryvreckan {
          * @param polarPosition Position in local polar coordinates of the detector model
          * @return Local position in cartesian coordinates
          */
-        PositionVector3D<Cartesian3D<double>> getPositionCartesian(const PositionVector3D<Polar3D<double>> polarPosition) const;
+        PositionVector3D<Cartesian3D<double>>
+        getPositionCartesian(const PositionVector3D<Polar3D<double>> polarPosition) const;
 
         /**
          * @brief Get the radius of the strip sensor center
@@ -236,7 +238,6 @@ namespace corryvreckan {
         std::string m_orientation_mode;
 
         std::vector<unsigned int> number_of_strips{};
-        unsigned int max_strips{};
         std::vector<double> row_radius{};
         std::vector<double> angular_pitch{};
         double stereo_angle{};
