@@ -27,15 +27,15 @@ PolarDetector::PolarDetector(const Configuration& config) : Detector(config) {
     // Set detector position and direction from configuration file
     SetPositionAndOrientation(config);
 
-    // initialize transform
-    this->initialise();
-
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         build_axes(config);
     }
 
-    // Control printouts
+    // initialize transform
+    this->initialise();
+
+    // Control printouts for testing purposes
     LOG(TRACE) << "== CONTROL PRINTOUTS FOR RADIAL DETECTORS:";
     LOG(TRACE) << "====> Numbers of strips:";
     for (const auto val : number_of_strips) {
@@ -50,27 +50,37 @@ PolarDetector::PolarDetector(const Configuration& config) : Detector(config) {
     for (const auto val : angular_pitch) {
         LOG(TRACE) << "====> " << val;
     }
-    
     LOG(TRACE) << "===> Spatial res.: " << m_spatial_resolution;
-
     LOG(TRACE) << "===> Stereo angle: " << stereo_angle;
+    LOG(TRACE) << "===> Focus shift: " << focus_translation;
 
 }
 
 void PolarDetector::build_axes(const Configuration& config) {
 
+    // Get numbers of strips
     number_of_strips = config.getArray<unsigned int>("number_of_strips");
-    
+
+    // Get angular pitches
     angular_pitch = config.getArray<double>("angular_pitch");
 
+    // Get row radii
     row_radius = config.getArray<double>("row_radius");
 
+    // Get stereo angle 
     stereo_angle = config.get<double>("stereo_angle", 0.0);
+
+    // Calculate translation from sensor origin to its focal point
+    focus_translation = {getCenterRadius() * sin(stereo_angle), getCenterRadius() * (1 - cos(stereo_angle)), 0};
+
+    // Set reasonable pixel pitch placeholders - length of the strip edge and strip length
+    m_pitch = {row_radius.at(3) * angular_pitch.at(3), row_radius.at(3) - row_radius.at(2)};
 
     LOG(TRACE) << "Initialized \"" << m_detectorType;
 
-
     // Intrinsic spatial resolution, defaults to pitch/sqrt(12):
+    // Resolution in X direction: maximum strip pitch / sqrt(12)
+    // Resolution in Y direction: length of the first strip row / sqrt(12)
     m_spatial_resolution = config.get<ROOT::Math::XYVector>("spatial_resolution", {*std::max_element(angular_pitch.begin(), angular_pitch.end())/sqrt(12), (row_radius.at(1) - row_radius.at(0))/sqrt(12) });
     if(!config.has("spatial_resolution")) {
         LOG(WARNING) << "Spatial resolution for detector '" << m_detectorName << "' not set." << std::endl
@@ -162,8 +172,7 @@ bool PolarDetector::masked(int chX, int chY) const {
 // Function to initialise transforms
 void PolarDetector::initialise() {
 
-    // Make the local to global transform, built from a displacement and
-    // rotation
+    // Make the local to global transform, built from a displacement and rotation
     Translation3D translations = Translation3D(m_displacement.X(), m_displacement.Y(), m_displacement.Z());
 
     Rotation3D rotations;
@@ -183,14 +192,16 @@ void PolarDetector::initialise() {
         throw InvalidSettingError(this, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
     }
 
-    m_localToGlobal = Transform3D(rotations, translations);
+    // Additional translation to have local coordinates calculated from the sensor origin
+    auto origin_trf = Translation3D(0, -getCenterRadius(), 0);
+    m_localToGlobal = Transform3D(rotations, translations * origin_trf);
     m_globalToLocal = m_localToGlobal.Inverse();
 
     // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
     // transform these points to the global coordinate frame and then make a vector pointing between them
-    m_origin = PositionVector3D<Cartesian3D<double>>(0., 0., 0.);
+    m_origin = PositionVector3D<Cartesian3D<double>>(0., getCenterRadius(), 0.);
     m_origin = m_localToGlobal * m_origin;
-    PositionVector3D<Cartesian3D<double>> localZ(0., 0., 1.);
+    PositionVector3D<Cartesian3D<double>> localZ(0., getCenterRadius(), 1.);
     localZ = m_localToGlobal * localZ;
     m_normal = PositionVector3D<Cartesian3D<double>>(
         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
@@ -262,7 +273,6 @@ bool PolarDetector::hasIntercept(const Track* track, double pixelTolerance) cons
 
     // First, get the track intercept in global coordinates with the plane
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
-
     // Convert to local coordinates
     PositionVector3D<Cartesian3D<double>> localIntercept = this->m_globalToLocal * globalIntercept;
 
@@ -273,10 +283,10 @@ bool PolarDetector::hasIntercept(const Track* track, double pixelTolerance) cons
     // Check if the row and column are outside of the chip
     // Chip reaches from -0.5 to nPixels-0.5
     bool intercept = true;
-    // if(row < pixelTolerance - 0.5 || row > (this->m_nPixels.Y() - pixelTolerance - 0.5) || column < pixelTolerance - 0.5 ||
-    //    column > (this->m_nPixels.X() - pixelTolerance - 0.5)) {
-    //     intercept = false;
-    // }
+    if(row < pixelTolerance - 0.5 || row > (static_cast<double>(number_of_strips.size()) - pixelTolerance - 0.5) || column < pixelTolerance - 0.5 ||
+       column > (number_of_strips.at(static_cast<unsigned int>(floor(row + 0.5))) - pixelTolerance - 0.5)) {
+        intercept = false;
+    }
 
     return intercept;
 }
@@ -312,30 +322,32 @@ double PolarDetector::getRow(const PositionVector3D<Cartesian3D<double>> localPo
     // Convert local position to polar coordinates
     auto polar_pos = getPositionPolar(localPosition);
 
-    // Get row index
-    int strip_y{};
+    // Assign to a strip row
+    unsigned int strip_y{};
     for(unsigned int row = 0; row < number_of_strips.size(); row++) {
         // Find the correct strip row by comparing to inner and outer row radii
         if(polar_pos.r() > row_radius.at(row) && polar_pos.r() <= row_radius.at(row + 1)) {
-            strip_y = static_cast<int>(row);
+            strip_y = row;
             break;
         }
     }
 
-    return strip_y;  
+    // Calculate the fraction of the strip row
+    auto fract = (polar_pos.r() - row_radius.at(strip_y) - 0.5) / (row_radius.at(strip_y+1) + row_radius.at(strip_y));
+
+    return static_cast<double>(strip_y) + fract;  
 }
 
 double PolarDetector::getColumn(const PositionVector3D<Cartesian3D<double>> localPosition) const {
     // Convert local position to polar coordinates
     auto polar_pos = getPositionPolar(localPosition);
     
-    auto strip_y = getRow(localPosition);
+    auto strip_y = static_cast<unsigned int>(getRow(localPosition));
 
     // Get the strip pitch in the correct strip row
-    auto pitch = angular_pitch.at(static_cast<unsigned int>(strip_y));
+    auto pitch = angular_pitch.at(strip_y);
     // Calculate the strip x-index
-    auto strip_x = static_cast<int>(std::floor(
-        (polar_pos.phi() + stereo_angle + pitch * number_of_strips.at(static_cast<unsigned int>(strip_y)) / 2) / pitch));
+    auto strip_x = (polar_pos.phi() + stereo_angle + pitch * number_of_strips.at(strip_y) / 2) / pitch;
 
     return strip_x;
 }
@@ -367,25 +379,38 @@ PositionVector3D<Cartesian3D<double>> PolarDetector::getPositionCartesian(const 
 
 // Function to get local position from row and column
 PositionVector3D<Cartesian3D<double>> PolarDetector::getLocalPosition(double column, double row) const {
+    // Whole and decimal part of the column and row
+    unsigned int column_base = static_cast<unsigned int>(floor(column + 0.5));
+    auto column_dec = column - column_base;
+    unsigned int row_base = static_cast<unsigned int>(floor(row + 0.5)); 
+    auto row_dec = row - row_base;
+   
     // Calculate the radial coordinate of the strip center
-    auto local_r = (row_radius.at(static_cast<unsigned int>(row)) + row_radius.at(static_cast<unsigned int>(row + 1))) / 2;
+    auto local_r = (row_radius.at(row_base) + row_radius.at(row_base + 1)) / 2;
+    // Adjust for in-strip position
+    local_r += row_dec * (row_radius.at(row_base + 1) - row_radius.at(row_base));
+
     // Calculate the angular coordinate of the strip center
     auto local_phi =
-        -angular_pitch.at(static_cast<unsigned int>(row)) * number_of_strips.at(static_cast<unsigned int>(row)) / 2 +
-        (column + 0.5) * angular_pitch.at(static_cast<unsigned int>(row)) - stereo_angle;
+        -angular_pitch.at(row_base) * number_of_strips.at(row_base) / 2 +
+        (column_base + 0.5) * angular_pitch.at(row_base) - stereo_angle;
+    local_phi += column_dec * angular_pitch.at(row_base);
 
-    // Convert strip center position to cartesian coordinates
-    auto center = getPositionCartesian({local_r, 0, local_phi});
-    auto local_x = center.x();
-    auto local_y = center.y();
+    // Convert polar coordinates to cartesian
+    auto pos = getPositionCartesian({local_r, 0, local_phi});
 
-    return PositionVector3D<Cartesian3D<double>>(local_x, local_y, 0.0);
+    return PositionVector3D<Cartesian3D<double>>(pos.x(), pos.y(), 0.0);
 }
 
 // Function to get in-pixel position
 ROOT::Math::XYVector PolarDetector::inPixel(const double column, const double row) const {
-    // a pixel ranges from (col-0.5) to (col+0.5)
-    return XYVector(m_pitch.X() * (column - floor(column + 0.5)), m_pitch.Y() * (row - floor(row + 0.5)));
+    // Transform received position to polar coordinates and get the coordinates of the strip center
+    auto local_polar = getPositionPolar(getLocalPosition(column, row));
+    auto strip_polar = getPositionPolar(getLocalPosition(floor(column + 0.5), floor(row + 0.5)));
+    
+    auto delta_phi = local_polar.phi() - strip_polar.phi();
+
+    return {local_polar.r() * sin(delta_phi), local_polar.r() * cos(delta_phi) - strip_polar.r()};
 }
 
 ROOT::Math::XYVector PolarDetector::inPixel(const PositionVector3D<Cartesian3D<double>> localPosition) const {
@@ -431,9 +456,9 @@ bool PolarDetector::isWithinROI(Cluster* cluster) const {
 }
 
 XYVector PolarDetector::getSize() const {
-    auto max_y = number_of_strips.size();
-    return {angular_pitch.at(max_y) * number_of_strips.at(max_y) * row_radius.at(max_y),
-    row_radius.at(max_y) - row_radius.at(0)};
+    auto max_row = number_of_strips.size() - 1;
+    return {angular_pitch.at(max_row) * number_of_strips.at(max_row) * row_radius.at(max_row),
+    row_radius.at(max_row) - row_radius.at(0)};
 }
 
 /* Winding number test for a point in a polygon

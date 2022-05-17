@@ -168,7 +168,8 @@ namespace corryvreckan {
          * @brief Get number of pixels in x and y
          * @return Number of two dimensional pixels
          */
-        ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> nPixels() const override { return {static_cast<int>(max_strips), static_cast<int>(number_of_strips.size())} ; }
+        ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> nPixels() const override { return {static_cast<int>(*std::max_element(number_of_strips.begin(), number_of_strips.end())),
+                static_cast<int>(number_of_strips.size())} ; }
 
         /**
          * @brief Test whether one pixel touches the cluster
@@ -180,7 +181,7 @@ namespace corryvreckan {
 
         /**
          * @brief Converts the local position in cartesian coordinates to polar coordinates
-         * @param local_pos Position in local cartesian coordinates of the detector model
+         * @param localPosition Position in local cartesian coordinates of the detector model
          * @return Local position in polar coordinates
          *
          * @note The polar coordinates are defined in a system where:
@@ -191,11 +192,15 @@ namespace corryvreckan {
 
         /**
          * @brief Converts the position in polar coordinates to cartesian coordinates in the local frame.
-         * @param polar_pos Position in local polar coordinates of the detector model
+         * @param polarPosition Position in local polar coordinates of the detector model
          * @return Local position in cartesian coordinates
          */
-        PositionVector3D<Cartesian3D<double>> getPositionCartesian(const PositionVector3D<Polar3D<double>> localPosition) const;
+        PositionVector3D<Cartesian3D<double>> getPositionCartesian(const PositionVector3D<Polar3D<double>> polarPosition) const;
 
+        /**
+         * @brief Get the radius of the strip sensor center
+         * @return Radius of the strip sensor center
+         */
         double getCenterRadius() const { return (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2; }
 
     private:
@@ -221,8 +226,6 @@ namespace corryvreckan {
         inline static int isLeft(std::pair<int, int> pt0, std::pair<int, int> pt1, std::pair<int, int> pt2);
         static int winding_number(std::pair<int, int> probe, std::vector<std::vector<int>> polygon);
 
-
-
         // For planar detector
         XYVector m_pitch{};
         XYVector m_spatial_resolution{};
@@ -236,8 +239,8 @@ namespace corryvreckan {
         unsigned int max_strips{};
         std::vector<double> row_radius{};
         std::vector<double> angular_pitch{};
-        double stereo_angle;
-        ROOT::Math::XYZVector focus_translation;
+        double stereo_angle{};
+        PositionVector3D<Cartesian3D<double>> focus_translation;
     };
 } // namespace corryvreckan
 
