@@ -190,6 +190,18 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
             //                                       > 1: outside,
             //                                       < 1: inside
             // Discard track if outside of ellipse:
+
+            auto polar_det = dynamic_pointer_cast<PolarDetector>(m_detector);
+            if (polar_det != nullptr) {
+                LOG(TRACE) << "Recalculating for polar det";
+                auto cluster_polar = polar_det->getPositionPolar(cluster->local());
+                auto intercept_polar = polar_det->getPositionPolar(interceptLocal);
+                xdistance = intercept_polar.phi() - cluster_polar.phi();
+                ydistance = intercept_polar.r() - cluster_polar.r();
+                LOG(TRACE) << " Distance r: " << intercept_polar.r() << " - " << cluster_polar.r() << " = " << ydistance << "   [Spatial cut:" << spatial_cut_.y() << "]";
+                LOG(TRACE) << " Distance phi: " << intercept_polar.phi() << " - " << cluster_polar.phi() << " = " << xdistance << "   [Spatial cut:" << spatial_cut_.x() << "]";
+            }
+
             auto norm = (xdistance * xdistance) / (spatial_cut_.x() * spatial_cut_.x()) +
                         (ydistance * ydistance) / (spatial_cut_.y() * spatial_cut_.y());
             if(norm > 1) {
