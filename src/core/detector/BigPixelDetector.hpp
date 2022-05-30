@@ -47,10 +47,10 @@ namespace corryvreckan {
         ROOT::Math::XYVector getSize() const override;
 
     private:
-        std::vector<int> big_pixel_x{};
-        std::vector<int> big_pixel_y{};
-        std::vector<int> transformed_big_pixel_x{};
-        std::vector<int> transformed_big_pixel_y{};
+        std::vector<unsigned int> big_pixel_x{};
+        std::vector<unsigned int> big_pixel_y{};
+        std::vector<unsigned int> transformed_big_pixel_x{};
+        std::vector<unsigned int> transformed_big_pixel_y{};
     };
 
 } // namespace corryvreckan
