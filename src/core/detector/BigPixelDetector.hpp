@@ -42,8 +42,6 @@ namespace corryvreckan {
         // Function to get local position from column (x) and row (y) coordinates
         PositionVector3D<Cartesian3D<double>> getLocalPosition(double column, double row) const override;
 
-        ROOT::Math::XYVector inPixel(const double column, const double row) const override;
-
         ROOT::Math::XYVector getSize() const override;
 
     private:

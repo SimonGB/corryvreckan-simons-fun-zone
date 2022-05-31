@@ -164,13 +164,6 @@ PositionVector3D<Cartesian3D<double>> BigPixelDetector::getLocalPosition(double 
         0.);
 }
 
-// Function to get in-pixel position
-ROOT::Math::XYVector BigPixelDetector::inPixel(const double column, const double row) const {
-    // FIXME: Replace with new coordinate transformation
-    // a pixel ranges from (col-0.5) to (col+0.5)
-    return XYVector(m_pitch.X() * (column - floor(column + 0.5)), m_pitch.Y() * (row - floor(row + 0.5)));
-}
-
 ROOT::Math::XYVector BigPixelDetector::getSize() const {
     return XYVector(m_pitch.X() * (m_nPixels.X() + static_cast<double>(big_pixel_x.size())),
                     m_pitch.Y() * (m_nPixels.Y() + static_cast<double>(big_pixel_y.size())));
