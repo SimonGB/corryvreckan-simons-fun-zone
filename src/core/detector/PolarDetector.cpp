@@ -201,9 +201,9 @@ void PolarDetector::initialise() {
 
     // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
     // transform these points to the global coordinate frame and then make a vector pointing between them
-    m_origin = PositionVector3D<Cartesian3D<double>>(0., getCenterRadius(), 0.);
+    m_origin = PositionVector3D<Cartesian3D<double>>(0., 0., 0.);
     m_origin = m_localToGlobal * m_origin;
-    PositionVector3D<Cartesian3D<double>> localZ(0., getCenterRadius(), 1.);
+    PositionVector3D<Cartesian3D<double>> localZ(0., 0., 1.);
     localZ = m_localToGlobal * localZ;
     m_normal = PositionVector3D<Cartesian3D<double>>(
         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
