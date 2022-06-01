@@ -15,18 +15,26 @@
 
 using namespace corryvreckan;
 
-ROOT::Math::XYPoint StraightLineTrack::distance(const Cluster* cluster) const {
+ROOT::Math::XYPoint StraightLineTrack::distance(const Cluster* cluster) {
 
-    // Get the StraightLineTrack X and Y at the cluster z position
-    double StraightLineTrackX = m_state.X() + m_direction.X() * cluster->global().z();
-    double StraightLineTrackY = m_state.Y() + m_direction.Y() * cluster->global().z();
+    if(get_plane(cluster->detectorID()) != nullptr) {
+        auto TrackIntercept = get_plane(cluster->detectorID())->getToLocal() * getIntercept(cluster->global().z());
 
-    // Calculate the 1D residuals
-    double dx = (StraightLineTrackX - cluster->global().x());
-    double dy = (StraightLineTrackY - cluster->global().y());
+        auto dist = cluster->local() - TrackIntercept;
 
-    // Return the distance^2
-    return ROOT::Math::XYPoint(dx, dy);
+        // Return the distance^2
+        return ROOT::Math::XYPoint(dist.x(), dist.y());
+    } else {
+        // Get the StraightLineTrack X and Y at the cluster z position
+        double StraightLineTrackX = m_state.X() + m_direction.X() * cluster->global().z();
+        double StraightLineTrackY = m_state.Y() + m_direction.Y() * cluster->global().z();
+
+        // Calculate the 1D residuals
+        double dx = (StraightLineTrackX - cluster->global().x());
+        double dy = (StraightLineTrackY - cluster->global().y());
+
+        return ROOT::Math::XYPoint(dx, dy);
+    }
 }
 
 ROOT::Math::XYPoint StraightLineTrack::getKinkAt(const std::string&) const {
