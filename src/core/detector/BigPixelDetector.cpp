@@ -155,11 +155,9 @@ PositionVector3D<Cartesian3D<double>> BigPixelDetector::getLocalPosition(double 
     // LOG(INFO) << "is big pixel?: " << is_big_y_pixel;
 
     return PositionVector3D<Cartesian3D<double>>(
-        m_pitch.X() * (column + 0.5 + n_big_x_left +
-                       static_cast<double>(is_big_x_pixel ? std::modf((column + 0.5), &col_integer) : 0)) -
+        m_pitch.X() * (column + 0.5 + n_big_x_left + (is_big_x_pixel ? std::modf((column + 0.5), &col_integer) : 0)) -
             getSize().X() / 2.,
-        m_pitch.Y() *
-                (row + 0.5 + n_big_y_left + static_cast<double>(is_big_y_pixel ? std::modf((row + 0.5), &row_integer) : 0)) -
+        m_pitch.Y() * (row + 0.5 + n_big_y_left + (is_big_y_pixel ? std::modf((row + 0.5), &row_integer) : 0)) -
             getSize().Y() / 2.,
         0.);
 }
