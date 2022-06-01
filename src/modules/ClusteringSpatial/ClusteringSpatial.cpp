@@ -259,6 +259,7 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
 
     // Set uncertainty on position from intrinstic detector spatial resolution:
     cluster->setError(m_detector->getSpatialResolution());
+    cluster->setErrorGlobal(m_detector->getSpatialResolutionGlobal());
 
     cluster->setDetectorID(detectorID);
     cluster->setClusterCentre(positionGlobal);

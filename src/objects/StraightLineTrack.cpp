@@ -116,8 +116,8 @@ void StraightLineTrack::fit() {
         double x = cluster->global().x();
         double y = cluster->global().y();
         double z = cluster->global().z();
-        double ex2 = cluster->errorX() * cluster->errorX();
-        double ey2 = cluster->errorY() * cluster->errorY();
+        double ex2 = cluster->errorGlobalX() * cluster->errorGlobalX();
+        double ey2 = cluster->errorGlobalY() * cluster->errorGlobalY();
 
         // Fill the matrices
         vec += Eigen::Vector4d((x / ex2), (x * z / ex2), (y / ey2), (y * z / ey2));

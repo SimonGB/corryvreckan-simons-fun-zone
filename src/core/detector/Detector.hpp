@@ -164,6 +164,12 @@ namespace corryvreckan {
         virtual XYVector getSpatialResolution() const = 0;
 
         /**
+         * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @return Intrinsic spatial resolution in global X and Y
+         */
+        virtual XYVector getSpatialResolutionGlobal() const = 0;
+
+        /**
          * @brief Get number of pixels in x and y
          * @return Number of two dimensional pixels
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type

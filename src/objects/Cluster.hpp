@@ -52,6 +52,9 @@ namespace corryvreckan {
         double error() const;
         double errorX() const { return m_error.X(); }
         double errorY() const { return m_error.Y(); }
+        double errorGlobal() const;
+        double errorGlobalX() const { return m_error_global.X(); }
+        double errorGlobalY() const { return m_error_global.Y(); }
 
         bool isSplit() const { return m_split; }
         void setSplit(bool split);
@@ -90,6 +93,10 @@ namespace corryvreckan {
         void setErrorX(double error) { m_error.SetX(error); }
         void setErrorY(double error) { m_error.SetY(error); }
         void setError(ROOT::Math::XYVector error) { m_error = std::move(error); }
+        void setErrorGlobalX(double error) { m_error_global.SetX(error); }
+        void setErrorGlobalY(double error) { m_error_global.SetY(error); }
+        void setErrorGlobal(ROOT::Math::XYVector error) { m_error_global = std::move(error); }
+
 
         /**
          * @brief Print an ASCII representation of Cluster to the given stream
@@ -107,6 +114,7 @@ namespace corryvreckan {
         double m_row;
         double m_charge;
         ROOT::Math::XYVector m_error;
+        ROOT::Math::XYVector m_error_global;
         size_t m_columnWidth{0};
         size_t m_rowWidth{0};
         bool m_split{false};

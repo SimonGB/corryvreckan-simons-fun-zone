@@ -31,6 +31,10 @@ double Cluster::error() const {
     return sqrt(m_error.X() * m_error.X() + m_error.Y() * m_error.Y());
 }
 
+double Cluster::errorGlobal() const {
+    return sqrt(m_error_global.X() * m_error_global.X() + m_error_global.Y() * m_error_global.Y());
+}
+
 void Cluster::setSplit(bool split) {
     m_split = split;
 }
