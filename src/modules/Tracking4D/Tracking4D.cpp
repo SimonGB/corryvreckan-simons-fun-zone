@@ -439,7 +439,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     if(polar_det != nullptr) {
 
                         auto cluster_polar = polar_det->getPositionPolar(newCluster->local());
-                        auto intercept_polar = polar_det->getPositionPolar(polar_det->globalToLocal(interceptPoint));
+                        auto intercept_polar = polar_det->getPositionPolar(interceptPoint);
                         LOG(TRACE) << "Positions for polar: ";
                         LOG(TRACE) << "--> Cluster: ";
                         LOG(TRACE) << "----> Global: " << newCluster->global();
@@ -449,8 +449,8 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                         LOG(TRACE) << "----> Error: "
                                    << "(" << newCluster->errorX() << ", " << newCluster->errorY() << ")";
                         LOG(TRACE) << "--> Intercept: ";
-                        LOG(TRACE) << "----> Global: " << interceptPoint;
-                        LOG(TRACE) << "----> Local: " << polar_det->globalToLocal(interceptPoint);
+                        LOG(TRACE) << "----> Global: " << polar_det->localToGlobal(interceptPoint);
+                        LOG(TRACE) << "----> Local: " << interceptPoint;
                         LOG(TRACE) << "----> Polar: "
                                    << "(" << intercept_polar.phi() << ", " << intercept_polar.r() << ")";
 
@@ -465,8 +465,10 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                                    << " (spatial cut: " << spatial_cuts_[detector].x() << ")";
                         LOG(TRACE) << "--> Distance Y:  (=r) : " << distanceY
                                    << " (spatial cut: " << spatial_cuts_[detector].y() << ")";
-                        LOG(TRACE) << "--> Spatial res X (=phi) : " << polar_det->getSpatialResolution().x();
-                        LOG(TRACE) << "--> Spatial res Y (  =r) : " << polar_det->getSpatialResolution().y();
+                        LOG(TRACE) << "--> Spatial res X (=phi) : "
+                                   << polar_det->getSpatialResolution(newCluster->column(), newCluster->row()).x();
+                        LOG(TRACE) << "--> Spatial res Y (  =r) : "
+                                   << polar_det->getSpatialResolution(newCluster->column(), newCluster->row()).y();
                     }
                     // Check if newCluster lies within ellipse defined by spatial cuts around intercept,
                     // following this example:

@@ -161,7 +161,7 @@ namespace corryvreckan {
          * @brief Get intrinsic spatial resolution of the detector
          * @return Intrinsic spatial resolution in X and Y
          */
-        XYVector getSpatialResolution() const override { return m_spatial_resolution; }
+        XYVector getSpatialResolution(double column, double row) const override;
 
         /*
          * @brief Get number of pixels in x and y

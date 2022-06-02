@@ -201,9 +201,9 @@ void PolarDetector::initialise() {
 
     // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
     // transform these points to the global coordinate frame and then make a vector pointing between them
-    m_origin = PositionVector3D<Cartesian3D<double>>(0., 0., 0.);
+    m_origin = PositionVector3D<Cartesian3D<double>>(0., getCenterRadius(), 0.);
     m_origin = m_localToGlobal * m_origin;
-    PositionVector3D<Cartesian3D<double>> localZ(0., 0., 1.);
+    PositionVector3D<Cartesian3D<double>> localZ(0., getCenterRadius(), 1.);
     localZ = m_localToGlobal * localZ;
     m_normal = PositionVector3D<Cartesian3D<double>>(
         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
@@ -240,6 +240,7 @@ void PolarDetector::configure_pos_and_orientation(Configuration& config) const {
     config.set("position", m_displacement, {"um", "mm"});
     config.set("orientation_mode", m_orientation_mode);
     config.set("orientation", m_orientation, {{"deg"}});
+    config.set("coordinates", "polar");
 }
 
 // Function to get global intercept with a track
@@ -397,7 +398,7 @@ PositionVector3D<Cartesian3D<double>> PolarDetector::getLocalPosition(double col
 
     // Calculate the angular coordinate of the strip center
     auto local_phi = -angular_pitch.at(row_base) * number_of_strips.at(row_base) / 2 +
-                     (column_base + 0.5) * angular_pitch.at(row_base) - stereo_angle;
+                     (column_base)*angular_pitch.at(row_base) - stereo_angle;
     local_phi += column_dec * angular_pitch.at(row_base);
 
     // Convert polar coordinates to cartesian
@@ -542,4 +543,17 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
         }
     }
     return false;
+}
+
+XYVector PolarDetector::getSpatialResolution(double, double row) const {
+    // Outer edge arc
+    auto row_base = static_cast<unsigned int>(floor(row + 0.5));
+    LOG(TRACE) << "[polarDet-getSpatialResolution] called for row " << row;
+    LOG(TRACE) << "--> strip pitch kinda: " << row_radius.at(row_base + 1) * angular_pitch.at(row_base);
+    LOG(TRACE) << "--> strip length: " << (row_radius.at(row_base + 1) - row_radius.at(row_base));
+    double resolution_x = row_radius.at(row_base + 1) * angular_pitch.at(row_base) / sqrt(12);
+
+    double resolution_y = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);
+    LOG(TRACE) << "--> Resolution: (" << resolution_x << ", " << resolution_y << ")";
+    return {resolution_x, resolution_y};
 }

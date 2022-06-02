@@ -82,6 +82,8 @@ StatusCode AlignmentTrackChi2::run(const std::shared_ptr<Clipboard>& clipboard) 
         LOG(TRACE) << "Storing track with track model \"" << track->getType() << "\" for alignment";
         alignmenttracks.push_back(track);
         for(auto& cluster : track->getClusters()) {
+            // if cluster->isValid()
+            LOG(TRACE) << "==> Cluster " << cluster->column() << ", " << cluster->row();
             alignmentclusters[cluster->detectorID()].push_back(cluster);
         }
     }
@@ -246,7 +248,7 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
                 residualFitter->SetParameter(
                     det * 6 + 0, (detectorID + "_displacementX").c_str(), detector->displacement().X(), 0.01, -50, 50);
                 residualFitter->SetParameter(
-                    det * 6 + 1, (detectorID + "_displacementY").c_str(), detector->displacement().Y(), 0.01, -50, 50);
+                    det * 6 + 1, (detectorID + "_displacementY").c_str(), detector->displacement().Y(), 0.0, -50, 50);
 
             } else {
                 residualFitter->SetParameter(

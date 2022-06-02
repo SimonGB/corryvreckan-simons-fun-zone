@@ -158,6 +158,36 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             double residualX = formula_residual_x->Eval(intercept.X(), position.X());
             double residualY = formula_residual_y->Eval(intercept.Y(), position.Y());
 
+            // Recalculate for polar detectors
+            auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
+            if(polar_det != nullptr) {
+                auto cluster_polar = polar_det->getPositionPolar(position);
+                auto intercept_polar = polar_det->getPositionPolar(intercept);
+                LOG(TRACE) << "Alignment recalc for for polar: ";
+                LOG(TRACE) << "--> Cluster: ";
+                LOG(TRACE) << "----> Global: " << associated_cluster->global();
+                LOG(TRACE) << "----> Local: " << position;
+                LOG(TRACE) << "----> Polar: "
+                           << "(" << cluster_polar.phi() << ", " << cluster_polar.r() << ")";
+                LOG(TRACE) << "----> Error: "
+                           << "(" << associated_cluster->errorX() << ", " << associated_cluster->errorY() << ")";
+                LOG(TRACE) << "--> Intercept: ";
+                LOG(TRACE) << "----> Global: " << trackIntercept;
+                LOG(TRACE) << "----> Local: " << intercept;
+                LOG(TRACE) << "----> Polar: "
+                           << "(" << intercept_polar.phi() << ", " << intercept_polar.r() << ")";
+
+                // Interpreting (X,Y) as (Phi,R)
+                residualX = intercept_polar.phi() - cluster_polar.phi();
+                residualY = intercept_polar.r() - cluster_polar.r();
+                // spatial_cuts_[detector] = polar_det->getSpatialResolution();
+                LOG(TRACE) << "Recalculate for polar:";
+                LOG(TRACE) << "--> Intercept : [" << intercept_polar.phi() << ", " << intercept_polar.r() << "]";
+                LOG(TRACE) << "--> Cluster   : [" << cluster_polar.phi() << ", " << cluster_polar.r() << "]";
+                LOG(TRACE) << "--> Residual X (=phi) : " << residualX;
+                LOG(TRACE) << "--> Residual Y:  (=r) : " << residualY;
+            }
+
             // Fill the alignment residual profile plots
             residualsXPlot->Fill(static_cast<double>(Units::convert(residualX, "um")));
             residualsYPlot->Fill(static_cast<double>(Units::convert(residualY, "um")));
