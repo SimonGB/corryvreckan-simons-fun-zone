@@ -224,8 +224,8 @@ namespace corryvreckan {
 
         /**
          * @brief Get intrinsic spatial resolution of the detector
-         * @param column (X-) Column index of the pixel to calculate the spatial resolution from
-         * @param row (Y-) Row index of the pixel to calculate the spatial resolution from
+         * @param column Column (x-) index of the pixel to calculate the spatial resolution from
+         * @param row Row (y-) index of the pixel to calculate the spatial resolution from
          * @return Intrinsic spatial resolution in X and Y
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
          */
