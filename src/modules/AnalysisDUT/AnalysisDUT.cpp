@@ -889,6 +889,13 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             residualsY_local->Fill(local_y_distance_um);
             residualsPos_local->Fill(local_pos_diff_um);
             residualsPosVsresidualsTime_local->Fill(time_distance, local_pos_diff_um);
+(track->timestamp() / 1e9); // convert ns -> s
+	    residualsRVsTime_local->Fill(
+                track->timestamp() / 1e9,
+                std::sqrt(local_y_distance_um * local_y_distance_um + local_x_distance_um * local_x_distance_um));
+            residualsXVsTime_local->Fill(track->timestamp() / 1e9, local_x_distance_um);
+            residualsYVsTime_local->Fill(track->timestamp() / 1e9, local_y_distance_um);
+            
 
             // fill resolution depending on cluster size (max 4, everything higher in last plot)
             (assoc_cluster->columnWidth() < residualsXclusterColLocal.size())
@@ -1105,6 +1112,16 @@ void AnalysisDUT::createLocalResidualPlots() {
         new TH1F("residualsX", "Residual in local X;x_{track}-x_{hit}  [#mum];# entries", 4000, -500.5, 499.5);
     residualsY_local =
         new TH1F("residualsY", "Residual in local Y;y_{track}-y_{hit}  [#mum];# entries", 4000, -500.5, 499.5);
+    residualsRVsTime_local =
+        new TProfile("residualsRVsTime",
+                     "sqrt(#Deltax^{2}+#Deltay^{2}) vs time; time [s]; sqrt(#Deltax^{2}+#Deltay^{2}) [#mum]",
+                     3000000, 0, 3000);
+    residualsXVsTime_local =
+        new TProfile("residualsXVsEventTime",
+                     "#Deltax vs time; time [ns]; #Deltax [#mum]", 3000000, 0, 3000);
+    residualsYVsTime_local =
+        new TProfile("residualsYVsEventNumber",
+		     "#Deltay vs time; time [ns]; #Deltay [#mum]", 3000000, 0, 3000);
     residualsPos_local =
         new TH1F("residualsPos",
                  "Absolute distance between track and hit in local coordinates;|pos_{track}-pos_{hit}|  [#mum];# entries",
