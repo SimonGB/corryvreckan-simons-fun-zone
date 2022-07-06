@@ -27,8 +27,6 @@ BigPixelDetector::BigPixelDetector(const Configuration& config) : PixelDetector(
         build_axes(config);
     }
 
-    // Printing out some test point for debugging BigPixel conversion
-
     m_coordinates = "cartesian_big";
 }
 
@@ -40,6 +38,10 @@ void BigPixelDetector::config_bigpixel(const Configuration& config) {
 
     LOG(INFO) << "Numbers of Big Pixels in X : " << big_pixel_x.size();
     LOG(INFO) << "Numbers of Big Pixels in Y : " << big_pixel_y.size();
+
+    // sort big_pixel
+    sort(big_pixel_x.begin(), big_pixel_x.end());
+    sort(big_pixel_y.begin(), big_pixel_y.end());
 
     // transformed big pixel : treating big pixel as 2 regular pixels
     for(unsigned int i = 0; i < big_pixel_x.size(); i++) {
