@@ -50,15 +50,15 @@ void BigPixelDetector::config_bigpixel(const Configuration& config) {
         transformed_big_pixel_y.push_back(big_pixel_y[i] + i);
         transformed_big_pixel_y.push_back(big_pixel_y[i] + i + 1);
     }
-    LOG(INFO) << "Numbers of transformed Big Pixels in X : " << transformed_big_pixel_x.size();
-    LOG(INFO) << "Numbers of transformed Big Pixels in Y : " << transformed_big_pixel_y.size();
+    LOG(DEBUG) << "Numbers of transformed Big Pixels in X : " << transformed_big_pixel_x.size();
+    LOG(DEBUG) << "Numbers of transformed Big Pixels in Y : " << transformed_big_pixel_y.size();
 
     for(auto i = transformed_big_pixel_x.begin(); i != transformed_big_pixel_x.end(); ++i) {
-        LOG(DEBUG) << "Transform big pixel vector in X : " << *i << ' ';
+        LOG(DEBUG) << "Transform big pixel vector in X : " << *i;
     }
 
     for(auto i = transformed_big_pixel_y.begin(); i != transformed_big_pixel_y.end(); ++i) {
-        LOG(DEBUG) << "Transform big pixel vector in Y : " << *i << ' ';
+        LOG(DEBUG) << "Transform big pixel vector in Y : " << *i;
     }
 }
 
@@ -76,7 +76,7 @@ double BigPixelDetector::getRow(const PositionVector3D<Cartesian3D<double>> loca
             n_big_y_left += 1;
         }
         if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_y[i])) < 0.5) {
-            is_big_y_pixel += 1;
+            is_big_y_pixel = true;
         }
     }
 
@@ -89,7 +89,6 @@ double BigPixelDetector::getRow(const PositionVector3D<Cartesian3D<double>> loca
     } else {
         row = tempPosition - n_big_y_left / 2.;
     }
-    // LOG(INFO) << "Pos: " << localPosition << "; row : " << row ;
 
     return row;
 }
@@ -107,7 +106,7 @@ double BigPixelDetector::getColumn(const PositionVector3D<Cartesian3D<double>> l
             n_big_x_left += 1;
         }
         if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_x[i])) < 0.5) {
-            is_big_x_pixel += 1;
+            is_big_x_pixel = true;
         }
     }
 
@@ -134,25 +133,22 @@ PositionVector3D<Cartesian3D<double>> BigPixelDetector::getLocalPosition(double 
     double col_integer, row_integer;
 
     for(unsigned int i = 0; i < big_pixel_x.size(); i++) {
-        if(big_pixel_x[i] + 1 <= column + 0.5) {
+        if(big_pixel_x[i] <= column - 0.5) {
             n_big_x_left += 1;
         }
         if(fabs(column - big_pixel_x[i]) < 0.5) {
-            is_big_x_pixel += 1;
+            is_big_x_pixel = true;
         }
     }
 
     for(unsigned int i = 0; i < big_pixel_y.size(); i++) {
-        if(big_pixel_y[i] + 1 <= row + 0.5) {
+        if(big_pixel_y[i] <= row - 0.5) {
             n_big_y_left += 1;
         }
         if(fabs(row - big_pixel_y[i]) < 0.5) {
-            is_big_y_pixel += 1;
+            is_big_y_pixel = true;
         }
     }
-
-    // LOG(INFO) << "n_big_left: "<<n_big_y_left;
-    // LOG(INFO) << "is big pixel?: " << is_big_y_pixel;
 
     return PositionVector3D<Cartesian3D<double>>(
         m_pitch.X() * (column + 0.5 + n_big_x_left + (is_big_x_pixel ? std::modf((column + 0.5), &col_integer) : 0)) -
