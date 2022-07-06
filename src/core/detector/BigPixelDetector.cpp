@@ -76,9 +76,14 @@ double BigPixelDetector::getRow(const PositionVector3D<Cartesian3D<double>> loca
     for(unsigned int i = 0; i < transformed_big_pixel_y.size(); i++) {
         if(transformed_big_pixel_y[i] <= tempPosition) {
             n_big_y_left += 1;
-        }
-        if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_y[i])) < 0.5) {
-            is_big_y_pixel = true;
+            if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_y[i])) < 0.5) {
+                is_big_y_pixel = true;
+            }
+        } else {
+            if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_y[i])) < 0.5) {
+                is_big_y_pixel = true;
+            }
+            break;
         }
     }
 
@@ -106,9 +111,14 @@ double BigPixelDetector::getColumn(const PositionVector3D<Cartesian3D<double>> l
     for(unsigned int i = 0; i < transformed_big_pixel_x.size(); i++) {
         if(transformed_big_pixel_x[i] <= tempPosition) {
             n_big_x_left += 1;
-        }
-        if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_x[i])) < 0.5) {
-            is_big_x_pixel = true;
+            if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_x[i])) < 0.5) {
+                is_big_x_pixel = true;
+            }
+        } else {
+            if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_x[i])) < 0.5) {
+                is_big_x_pixel = true;
+            }
+            break;
         }
     }
 
@@ -137,18 +147,28 @@ PositionVector3D<Cartesian3D<double>> BigPixelDetector::getLocalPosition(double 
     for(unsigned int i = 0; i < big_pixel_x.size(); i++) {
         if(big_pixel_x[i] <= column - 0.5) {
             n_big_x_left += 1;
-        }
-        if(fabs(column - big_pixel_x[i]) < 0.5) {
-            is_big_x_pixel = true;
+            if(fabs(column - big_pixel_x[i]) < 0.5) {
+                is_big_x_pixel = true;
+            }
+        } else {
+            if(fabs(column - big_pixel_x[i]) < 0.5) {
+                is_big_x_pixel = true;
+            }
+            break;
         }
     }
 
     for(unsigned int i = 0; i < big_pixel_y.size(); i++) {
         if(big_pixel_y[i] <= row - 0.5) {
             n_big_y_left += 1;
-        }
-        if(fabs(row - big_pixel_y[i]) < 0.5) {
-            is_big_y_pixel = true;
+            if(fabs(row - big_pixel_y[i]) < 0.5) {
+                is_big_y_pixel = true;
+            }
+        } else {
+            if(fabs(row - big_pixel_y[i]) < 0.5) {
+                is_big_y_pixel = true;
+            }
+            break;
         }
     }
 
