@@ -112,9 +112,33 @@ namespace corryvreckan {
                 py = std::make_shared<TFormula>("py", position_functions.at(1).c_str(), false);
                 pz = std::make_shared<TFormula>("pz", position_functions.at(2).c_str(), false);
 
+                // Check that the formulae could correctly be compiled
+                if(!(px->IsValid() && py->IsValid() && pz->IsValid())) {
+                    throw InvalidValueError(config, "position", "Invalid formulae");
+                }
+
+                // Check that we have the correct number of dimensions
+                if(px->GetNdim() > 1 || py->GetNdim() > 1 || pz->GetNdim() > 1) {
+                    throw InvalidValueError(config, "position", "Invalid number of dimensions, only 1d is supported");
+                }
+
+                // We have constant values, no update needed
+                if(px->GetNdim() == 0 && py->GetNdim() == 0 && pz->GetNdim() == 0) {
+                    needs_update_ = false;
+                } else {
+                    needs_update_ = true;
+                }
+
+                // Check if we expect parameters
+                auto allpars = static_cast<size_t>(px->GetNpar() + py->GetNpar() + pz->GetNpar());
+                if(allpars == 0) {
+                    LOG(DEBUG) << "No parameters.";
+                    return;
+                }
+
                 // Parse parameters:
                 auto position_parameters = config.getArray<double>("position_parameters");
-                if(static_cast<size_t>(px->GetNpar() + py->GetNpar() + pz->GetNpar()) != position_parameters.size()) {
+                if(allpars != position_parameters.size()) {
                     throw InvalidValueError(
                         config,
                         "position_parameters",
@@ -157,7 +181,7 @@ namespace corryvreckan {
         private:
             void update(double time) {
                 // Check if we need to update already
-                if(time < last_time_ + granularity_) {
+                if(time < last_time_ + granularity_ || !needs_update_) {
                     return;
                 }
 
@@ -184,6 +208,7 @@ namespace corryvreckan {
             // Cache for last time the transformations were renewed, in ns:
             double last_time_{};
             double granularity_{};
+            bool needs_update_{false};
 
             // Cache for calculated transformations
             ROOT::Math::XYZPoint origin_;
