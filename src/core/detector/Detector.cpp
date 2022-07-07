@@ -100,24 +100,33 @@ Detector::WhereIsThatThing::WhereIsThatThing(const Configuration& config) {
     granularity_ = config.get<double>("alignment_update_granularity", 1000000000);
 
     // Get the orientation right - we keep this constant:
-    auto orientation = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
+    orientation_ = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
     auto mode = config.get<std::string>("orientation_mode", "xyz");
 
     if(mode == "xyz") {
         LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
         // First angle given in the configuration file is around x, second around y, last around z:
-        rotation_ = RotationZ(orientation.Z()) * RotationY(orientation.Y()) * RotationX(orientation.X());
+        rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
+            return static_cast<ROOT::Math::Rotation3D>(RotationZ(rot.Z()) * RotationY(rot.Y()) * RotationX(rot.X()));
+        };
     } else if(mode == "zyx") {
         LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
         // First angle given in the configuration file is around z, second around y, last around x:
-        rotation_ = RotationZYX(orientation.x(), orientation.y(), orientation.z());
+        rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
+            return static_cast<ROOT::Math::Rotation3D>(RotationZYX(rot.x(), rot.y(), rot.z()));
+        };
     } else if(mode == "zxz") {
         LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
         // First angle given in the configuration file is around z, second around x, last around z:
-        rotation_ = EulerAngles(orientation.x(), orientation.y(), orientation.z());
+        rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
+            return static_cast<ROOT::Math::Rotation3D>(EulerAngles(rot.x(), rot.y(), rot.z()));
+        };
     } else {
         throw InvalidValueError(config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
     }
+
+    // Calculate rotation matrix:
+    rotation_ = rotation_fct_(orientation_);
 
     // Let's get the formulae for the positions:
     auto position_functions = config.getArray<std::string>("position");
@@ -188,6 +197,27 @@ void Detector::WhereIsThatThing::update(double time, bool force) {
     // Calculate current translation from formulae
     displacement_ = ROOT::Math::XYZVector(px->Eval(time), py->Eval(time), pz->Eval(time));
     LOG(TRACE) << "Displacement " << displacement_;
+
+    recalculate();
+
+    // Update time
+    last_time_ = time;
+}
+
+void Detector::WhereIsThatThing::update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation) {
+
+    LOG(DEBUG) << "Calculating updated transformations with external displacment and orientation";
+    LOG(TRACE) << "Displacement " << displacement;
+    displacement_ = displacement;
+    LOG(TRACE) << "Orientation " << orientation;
+    orientation_ = orientation;
+    rotation_ = rotation_fct_(orientation_);
+
+    recalculate();
+}
+
+void Detector::WhereIsThatThing::recalculate() {
+
     auto translations = Translation3D(displacement_.X(), displacement_.Y(), displacement_.Z());
 
     // Calculate current local-to-global transformation and its inverse:
@@ -203,9 +233,6 @@ void Detector::WhereIsThatThing::update(double time, bool force) {
     auto local_z = local2global_ * ROOT::Math::XYZPoint(0., 0., 1.);
     normal_ = ROOT::Math::XYZVector(local_z.X() - origin_.X(), local_z.Y() - origin_.Y(), local_z.Z() - origin_.Z());
     LOG(TRACE) << "Normal " << normal_;
-
-    // Update time
-    last_time_ = time;
 }
 
 double Detector::getTimeResolution() const {

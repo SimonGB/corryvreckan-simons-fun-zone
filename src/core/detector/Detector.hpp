@@ -90,9 +90,15 @@ namespace corryvreckan {
 
             const ROOT::Math::XYZPoint& displacement() const { return displacement_; };
 
+            const ROOT::Math::XYZVector& orientation() const { return orientation_; };
+
             void update(double time, bool force = false);
 
+            void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
+
         private:
+            void recalculate();
+
             // Cache for last time the transformations were renewed, in ns:
             double last_time_{};
             double granularity_{};
@@ -100,8 +106,11 @@ namespace corryvreckan {
 
             // Cache for calculated transformations
             ROOT::Math::XYZPoint displacement_;
+            ROOT::Math::XYZVector orientation_;
+
             ROOT::Math::XYZPoint origin_;
             ROOT::Math::XYZVector normal_;
+            ROOT::Math::Rotation3D rotation_;
             ROOT::Math::Transform3D local2global_;
             ROOT::Math::Transform3D global2local_;
 
@@ -110,8 +119,8 @@ namespace corryvreckan {
             std::shared_ptr<TFormula> py;
             std::shared_ptr<TFormula> pz;
 
-            // Constants
-            Rotation3D rotation_;
+            // Function to generate rotation matrix, depending on mode
+            std::function<ROOT::Math::Rotation3D(const ROOT::Math::XYZVector& rot)> rotation_fct_;
         };
 
     public:
