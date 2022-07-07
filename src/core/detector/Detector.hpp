@@ -74,13 +74,12 @@ namespace corryvreckan {
      * etc.
      */
     class Detector {
-    public:
         class WhereIsThatThing {
         public:
             explicit WhereIsThatThing(const Configuration& config) {
 
                 // Set upate granularity for alignment transformations
-                granularity_ = config.get<uint64_t>("alignment_update_granularity", 1000000000);
+                granularity_ = config.get<double>("alignment_update_granularity", 1000000000);
 
                 // Get the orientation right - we keep this constant:
                 auto orientation = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
@@ -134,8 +133,29 @@ namespace corryvreckan {
                 }
             };
 
+            // Transforms from local to global and back
+            const Transform3D& local2global(double time) {
+                update(time);
+                return local2global_;
+            };
+
+            const Transform3D& global2local(double time) {
+                update(time);
+                return global2local_;
+            };
+
+            // Normal to the detector surface and point on the surface
+            const ROOT::Math::XYZVector& normal(double time) {
+                update(time);
+                return normal_;
+            };
+            const ROOT::Math::XYZPoint& origin(double time) {
+                update(time);
+                return origin_;
+            };
+
         private:
-            void update(uint64_t time) {
+            void update(double time) {
                 // Check if we need to update already
                 if(time < last_time_ + granularity_) {
                     return;
@@ -151,22 +171,22 @@ namespace corryvreckan {
 
                 // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
                 // transform these points to the global coordinate frame and then make a vector pointing between them
-                origin_ = local2global_ * PositionVector3D<Cartesian3D<double>>(0., 0., 0.);
+                origin_ = local2global_ * ROOT::Math::XYZVector(0., 0., 0.);
 
                 auto local_z = local2global_ * unit_z_;
-                normal_ = PositionVector3D<Cartesian3D<double>>(
-                    local_z.X() - origin_.X(), local_z.Y() - origin_.Y(), local_z.Z() - origin_.Z());
+                normal_ =
+                    ROOT::Math::XYZVector(local_z.X() - origin_.X(), local_z.Y() - origin_.Y(), local_z.Z() - origin_.Z());
 
                 // Update time
                 last_time_ = time;
             }
 
             // Cache for last time the transformations were renewed, in ns:
-            uint64_t last_time_{};
-            uint64_t granularity_{};
+            double last_time_{};
+            double granularity_{};
 
             // Cache for calculated transformations
-            ROOT::Math::XYZVector origin_;
+            ROOT::Math::XYZPoint origin_;
             ROOT::Math::XYZVector normal_;
             ROOT::Math::Transform3D local2global_;
             ROOT::Math::Transform3D global2local_;
@@ -181,6 +201,7 @@ namespace corryvreckan {
             Rotation3D rotation_;
         };
 
+    public:
         /**
          * Delete default constructor
          */
