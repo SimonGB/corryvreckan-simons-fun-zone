@@ -124,6 +124,7 @@ namespace corryvreckan {
 
                 // We have constant values, no update needed
                 if(px->GetNdim() == 0 && py->GetNdim() == 0 && pz->GetNdim() == 0) {
+                    LOG(DEBUG) << "Constant functions, no updates needed";
                     needs_update_ = false;
                 } else {
                     needs_update_ = true;
@@ -131,30 +132,32 @@ namespace corryvreckan {
 
                 // Check if we expect parameters
                 auto allpars = static_cast<size_t>(px->GetNpar() + py->GetNpar() + pz->GetNpar());
-                if(allpars == 0) {
-                    LOG(DEBUG) << "No parameters.";
-                    return;
+                if(allpars != 0) {
+                    LOG(DEBUG) << "Formulae require " << allpars << " parameters.";
+
+                    // Parse parameters:
+                    auto position_parameters = config.getArray<double>("position_parameters");
+                    if(allpars != position_parameters.size()) {
+                        throw InvalidValueError(config,
+                                                "position_parameters",
+                                                "The number of position parameters does not line up with the sum of "
+                                                "parameters in all functions.");
+                    }
+
+                    // Apply parameters to the functions
+                    for(auto n = 0; n < px->GetNpar(); ++n) {
+                        px->SetParameter(n, position_parameters.at(static_cast<size_t>(n)));
+                    }
+                    for(auto n = 0; n < py->GetNpar(); ++n) {
+                        py->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar())));
+                    }
+                    for(auto n = 0; n < pz->GetNpar(); ++n) {
+                        pz->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar() + py->GetNpar())));
+                    }
                 }
 
-                // Parse parameters:
-                auto position_parameters = config.getArray<double>("position_parameters");
-                if(allpars != position_parameters.size()) {
-                    throw InvalidValueError(
-                        config,
-                        "position_parameters",
-                        "The number of position parameters does not line up with the sum of parameters in all functions.");
-                }
-
-                // Apply parameters to the functions
-                for(auto n = 0; n < px->GetNpar(); ++n) {
-                    px->SetParameter(n, position_parameters.at(static_cast<size_t>(n)));
-                }
-                for(auto n = 0; n < py->GetNpar(); ++n) {
-                    py->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar())));
-                }
-                for(auto n = 0; n < pz->GetNpar(); ++n) {
-                    pz->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar() + py->GetNpar())));
-                }
+                // Force first calculation at t = 0
+                update(0., true);
             };
 
             // Transforms from local to global and back
@@ -179,11 +182,13 @@ namespace corryvreckan {
             };
 
         private:
-            void update(double time) {
+            void update(double time, bool force = false) {
                 // Check if we need to update already
-                if(time < last_time_ + granularity_ || !needs_update_) {
+                if(!force && (time < last_time_ + granularity_ || !needs_update_)) {
                     return;
                 }
+
+                LOG(DEBUG) << "Calculating updated transformations at t = " << Units::display(time, {"ns", "us", "ms", "s"});
 
                 // Calculate current translation from formulae
                 auto displacement = ROOT::Math::XYZVector(px->Eval(time), py->Eval(time), pz->Eval(time));
