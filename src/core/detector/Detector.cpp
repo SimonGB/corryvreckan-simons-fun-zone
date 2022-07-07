@@ -76,6 +76,9 @@ Detector::Detector(const Configuration& config) : m_role(DetectorRole::NONE) {
         m_calibrationfile = config.getPath("calibration_file", true);
         LOG(DEBUG) << "Found calibration file for detector " << getName() << " at " << m_calibrationfile.value_or("");
     }
+
+    // Get alignment done:
+    alignment_ = std::make_shared<WhereIsThatThing>(config);
 }
 
 std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& config) {

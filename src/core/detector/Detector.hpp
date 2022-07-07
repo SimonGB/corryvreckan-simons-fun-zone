@@ -226,6 +226,12 @@ namespace corryvreckan {
         static std::shared_ptr<Detector> factory(const Configuration& config);
 
         /**
+         * @brief Set current time of the run
+         * @param time  Time of the run in framework units
+         */
+        void setTime(double time) { time_ = time; };
+
+        /**
          * @brief Get type of the detector
          * @return Type of the detector model
          */
@@ -566,6 +572,10 @@ namespace corryvreckan {
         // Normal to the detector surface and point on the surface
         PositionVector3D<Cartesian3D<double>> m_normal;
         PositionVector3D<Cartesian3D<double>> m_origin;
+
+        // Alignment and coordinate transofrmation information:
+        std::shared_ptr<WhereIsThatThing> alignment_;
+        double time_;
 
         // Path of calibration file
         std::optional<std::filesystem::path> m_calibrationfile;

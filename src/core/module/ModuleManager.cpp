@@ -560,9 +560,18 @@ void ModuleManager::run() {
 
     while(1) {
         bool run = true;
+        bool detectors_updated = false;
 
         // Run all modules
         for(auto& module : m_modules) {
+            // Check if we should already update the detectors:
+            if(m_clipboard->isEventDefined() && !detectors_updated) {
+                for(auto& det : m_detectors) {
+                    det->setTime(m_clipboard->getEvent()->start());
+                }
+                detectors_updated = true;
+            }
+
             // Get current time
             auto start = std::chrono::steady_clock::now();
 
