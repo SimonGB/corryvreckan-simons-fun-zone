@@ -97,7 +97,7 @@ std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& c
 Detector::Alignment::Alignment(const Configuration& config) {
 
     // Set update granularity for alignment transformations
-    granularity_ = config.get<double>("alignment_update_granularity", 1000000000);
+    granularity_ = config.get<double>("alignment_update_granularity", 1e9);
 
     // Get the orientation right - we keep this constant:
     orientation_ = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
