@@ -180,8 +180,9 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
                   << Units::display(m_detector->displacement().X() + damping_factor * shift_X, {"mm", "um"})
                   << " , and in y = "
                   << Units::display(m_detector->displacement().Y() + damping_factor * shift_Y, {"mm", "um"});
-        m_detector->displacement(XYZPoint(m_detector->displacement().X() + damping_factor * shift_X,
-                                          m_detector->displacement().Y() + damping_factor * shift_Y,
-                                          m_detector->displacement().Z()));
+        m_detector->update(XYZPoint(m_detector->displacement().X() + damping_factor * shift_X,
+                                    m_detector->displacement().Y() + damping_factor * shift_Y,
+                                    m_detector->displacement().Z()),
+                           m_detector->rotation());
     }
 }

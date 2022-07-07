@@ -164,12 +164,8 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 
     static size_t fitIterations = 0;
 
-    // Pick up new alignment conditions
-    AlignmentDUTResidual::globalDetector->displacement(XYZPoint(par[0], par[1], par[2]));
-    AlignmentDUTResidual::globalDetector->rotation(XYZVector(par[3], par[4], par[5]));
-
     // Apply new alignment conditions
-    AlignmentDUTResidual::globalDetector->update();
+    AlignmentDUTResidual::globalDetector->update(XYZPoint(par[0], par[1], par[2]), XYZVector(par[3], par[4], par[5]));
     LOG(DEBUG) << "Updated parameters for " << AlignmentDUTResidual::globalDetector->getName();
 
     // The chi2 value to be returned
@@ -350,11 +346,9 @@ void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& cl
         residualFitter->ExecuteCommand("MIGRAD", arglist, 2);
 
         // Set the alignment parameters of this plane to be the optimised values from the alignment
-        m_detector->displacement(
-            XYZPoint(residualFitter->GetParameter(0), residualFitter->GetParameter(1), residualFitter->GetParameter(2)));
-        m_detector->rotation(
+        m_detector->update(
+            XYZPoint(residualFitter->GetParameter(0), residualFitter->GetParameter(1), residualFitter->GetParameter(2)),
             XYZVector(residualFitter->GetParameter(3), residualFitter->GetParameter(4), residualFitter->GetParameter(5)));
-        m_detector->update();
 
         // Store corrections:
         shiftsX.push_back(static_cast<double>(Units::convert(m_detector->displacement().X() - old_position.X(), "um")));

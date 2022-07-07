@@ -103,13 +103,10 @@ void AlignmentTrackChi2::MinimiseTrackChi2(Int_t&, Double_t*, Double_t& result, 
     static size_t fitIterations = 0;
     static string detName = "";
     LOG(DEBUG) << AlignmentTrackChi2::globalDetector->displacement() << "' " << globalDetector->rotation();
-    // Pick up new alignment conditions
-    AlignmentTrackChi2::globalDetector->displacement(
-        XYZPoint(par[detNum * 6 + 0], par[detNum * 6 + 1], par[detNum * 6 + 2]));
-    AlignmentTrackChi2::globalDetector->rotation(XYZVector(par[detNum * 6 + 3], par[detNum * 6 + 4], par[detNum * 6 + 5]));
 
     // Apply new alignment conditions
-    AlignmentTrackChi2::globalDetector->update();
+    AlignmentTrackChi2::globalDetector->update(XYZPoint(par[detNum * 6 + 0], par[detNum * 6 + 1], par[detNum * 6 + 2]),
+                                               XYZVector(par[detNum * 6 + 3], par[detNum * 6 + 4], par[detNum * 6 + 5]));
 
     // The chi2 value to be returned
     result = 0.;
@@ -302,11 +299,9 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
             residualFitter->SetParameter(det * 6 + 4, (detectorID + "_rotationY").c_str(), rotationY, 0, -6.30, 6.30);
             residualFitter->SetParameter(det * 6 + 5, (detectorID + "_rotationZ").c_str(), rotationZ, 0, -6.30, 6.30);
 
-            // Set the alignment parameters of this plane to be the optimised values
-            // from the alignment
-            detector->displacement(XYZPoint(displacementX, displacementY, displacementZ));
-            detector->rotation(XYZVector(rotationX, rotationY, rotationZ));
-            detector->update();
+            // Set the alignment parameters of this plane to be the optimised values from the alignment
+            detector->update(XYZPoint(displacementX, displacementY, displacementZ),
+                             XYZVector(rotationX, rotationY, rotationZ));
             det++;
         }
     }
