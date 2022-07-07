@@ -17,10 +17,9 @@
 #include <string>
 
 #include <Math/DisplacementVector2D.h>
+#include <Math/Transform3D.h>
 #include <Math/Vector2D.h>
 #include <Math/Vector3D.h>
-#include "Math/Transform3D.h"
-#include "Math/Vector3D.h"
 
 #include "Detector.hpp"
 #include "core/config/Configuration.hpp"
@@ -199,9 +198,6 @@ namespace corryvreckan {
         getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
 
     protected:
-        // Initialize coordinate transformations
-        void initialise() override;
-
         // Build axis, for devices which are not auxiliary
         // Different in Pixel/Strip Detector
         void build_axes(const Configuration& config) override;

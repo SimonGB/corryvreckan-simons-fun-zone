@@ -364,13 +364,13 @@ namespace corryvreckan {
          * @brief Get normal vector to sensor surface
          * @return Normal vector to sensor surface
          */
-        PositionVector3D<Cartesian3D<double>> normal() const { return m_normal; }
+        ROOT::Math::XYZVector normal() const { return alignment_->normal(time_); }
 
         /**
          * @brief Get origin vector to sensor surface
          * @return Origin vector to sensor surface
          */
-        PositionVector3D<Cartesian3D<double>> origin() const { return m_origin; }
+        ROOT::Math::XYZPoint origin() const { return alignment_->origin(time_); }
 
         /**
          * @brief Get path of the file with calibration information
@@ -456,14 +456,14 @@ namespace corryvreckan {
          * @param  local Local coordinates in the reference frame of this detector
          * @return       Global coordinates
          */
-        XYZPoint localToGlobal(const XYZPoint& local) const { return m_localToGlobal * local; };
+        XYZPoint localToGlobal(const XYZPoint& local) const { return alignment_->local2global(time_) * local; };
 
         /**
          * @brief Transform global coordinates into detector-local coordinates
          * @param  global Global coordinates
          * @return        Local coordinates in the reference frame of this detector
          */
-        XYZPoint globalToLocal(const XYZPoint& global) const { return m_globalToLocal * global; };
+        XYZPoint globalToLocal(const XYZPoint& global) const { return alignment_->global2local(time_) * global; };
 
         /**
          * @brief Check whether given track is within the detector's region-of-interest
@@ -489,13 +489,13 @@ namespace corryvreckan {
          * @brief toGlobal Get the transformation from local to global coordinates
          * @return Transform3D local to global
          */
-        Transform3D toGlobal() const { return m_localToGlobal; }
+        Transform3D toGlobal() const { return alignment_->local2global(time_); }
 
         /**
          * @brief toLocal Get the transformation from global to local coordinates
          * @return Transform3D global to local
          */
-        Transform3D toLocal() const { return m_globalToLocal; }
+        Transform3D toLocal() const { return alignment_->global2local(time_); }
 
         /**
          * @brief Test whether one pixel touches the cluster
@@ -540,9 +540,6 @@ namespace corryvreckan {
         // Roles of the detector
         DetectorRole m_role;
 
-        // Initialize coordinate transformations
-        virtual void initialise() = 0;
-
         // Build axis, for devices which are not auxiliary
         // Different in Pixel/Strip Detector
         virtual void build_axes(const Configuration& config) = 0;
@@ -564,14 +561,6 @@ namespace corryvreckan {
         double m_timeOffset;
         double m_timeResolution;
         double m_materialBudget;
-
-        // Transforms from local to global and back
-        Transform3D m_localToGlobal;
-        Transform3D m_globalToLocal;
-
-        // Normal to the detector surface and point on the surface
-        PositionVector3D<Cartesian3D<double>> m_normal;
-        PositionVector3D<Cartesian3D<double>> m_origin;
 
         // Alignment and coordinate transofrmation information:
         std::shared_ptr<WhereIsThatThing> alignment_;
