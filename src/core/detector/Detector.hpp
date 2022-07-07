@@ -253,13 +253,6 @@ namespace corryvreckan {
         double getTimeResolution() const;
 
         /**
-         * @brief Update detector position in the world
-         * @param displacement Vector with three position coordinates
-         */
-        void displacement(XYZPoint) { /* FIXME */
-        }
-
-        /**
          * @brief Get position in the world
          * @return Global position in Cartesian coordinates
          */
@@ -269,13 +262,7 @@ namespace corryvreckan {
          * @brief Get orientation in the world
          * @return Vector with three rotation angles
          */
-        virtual XYZVector rotation() const = 0;
-
-        /**
-         * @brief Update detector orientation in the world
-         * @param rotation Vector with three rotation angles
-         */
-        virtual void rotation(XYZVector rotation) = 0;
+        XYZVector rotation() const { return alignment_->orientation(); };
 
         /**
          * @brief Get normal vector to sensor surface
@@ -332,7 +319,7 @@ namespace corryvreckan {
          */
         void update(double time);
 
-        void update();
+        void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
 
         // Function to get global intercept with a track
         virtual PositionVector3D<Cartesian3D<double>> getIntercept(const Track* track) const = 0;

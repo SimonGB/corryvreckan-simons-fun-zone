@@ -67,18 +67,6 @@ namespace corryvreckan {
         bool isWithinMatrix(const int col, const int row) const override;
 
         /**
-         * @brief Get orientation in the world
-         * @return Vector with three rotation angles
-         */
-        XYZVector rotation() const override { return m_orientation; }
-
-        /**
-         * @brief Update detector orientation in the world
-         * @param rotation Vector with three rotation angles
-         */
-        void rotation(XYZVector rotation) override { m_orientation = rotation; }
-
-        /**
          * @brief Mark a detector channel as masked
          * @param chX X coordinate of the pixel to be masked
          * @param chY Y coordinate of the pixel to be masked

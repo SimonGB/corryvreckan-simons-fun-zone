@@ -285,7 +285,9 @@ void Detector::update(double time) {
     alignment_->update(time);
 }
 
-void Detector::update() {}
+void Detector::update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation) {
+    alignment_->update(displacement, orientation);
+}
 
 Configuration Detector::getConfiguration() const {
 
