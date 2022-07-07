@@ -74,9 +74,9 @@ namespace corryvreckan {
      * etc.
      */
     class Detector {
-        class WhereIsThatThing {
+        class Alignment {
         public:
-            explicit WhereIsThatThing(const Configuration& config);
+            explicit Alignment(const Configuration& config);
 
             // Transforms from local to global and back
             const Transform3D& local2global() const { return local2global_; };
@@ -104,13 +104,13 @@ namespace corryvreckan {
             double granularity_{};
             bool needs_update_{false};
 
-            // Cache for calculated transformations
+            // Cached position and orientation
             ROOT::Math::XYZPoint displacement_;
             ROOT::Math::XYZVector orientation_;
 
+            // Cache for calculated transformations
             ROOT::Math::XYZPoint origin_;
             ROOT::Math::XYZVector normal_;
-            ROOT::Math::Rotation3D rotation_;
             ROOT::Math::Transform3D local2global_;
             ROOT::Math::Transform3D global2local_;
 
@@ -469,7 +469,7 @@ namespace corryvreckan {
         double m_materialBudget;
 
         // Alignment and coordinate transofrmation information:
-        std::shared_ptr<WhereIsThatThing> alignment_;
+        std::shared_ptr<Alignment> alignment_;
 
         // Path of calibration file
         std::optional<std::filesystem::path> m_calibrationfile;

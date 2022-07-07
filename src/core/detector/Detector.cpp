@@ -78,7 +78,7 @@ Detector::Detector(const Configuration& config) : m_role(DetectorRole::NONE) {
     }
 
     // Get alignment done:
-    alignment_ = std::make_shared<WhereIsThatThing>(config);
+    alignment_ = std::make_shared<Alignment>(config);
 }
 
 std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& config) {
@@ -94,7 +94,7 @@ std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& c
     }
 }
 
-Detector::WhereIsThatThing::WhereIsThatThing(const Configuration& config) {
+Detector::Alignment::Alignment(const Configuration& config) {
 
     // Set update granularity for alignment transformations
     granularity_ = config.get<double>("alignment_update_granularity", 1000000000);
@@ -124,9 +124,6 @@ Detector::WhereIsThatThing::WhereIsThatThing(const Configuration& config) {
     } else {
         throw InvalidValueError(config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
     }
-
-    // Calculate rotation matrix:
-    rotation_ = rotation_fct_(orientation_);
 
     // Let's get the formulae for the positions:
     auto position_functions = config.getArray<std::string>("position");
@@ -186,7 +183,7 @@ Detector::WhereIsThatThing::WhereIsThatThing(const Configuration& config) {
     update(0., true);
 }
 
-void Detector::WhereIsThatThing::update(double time, bool force) {
+void Detector::Alignment::update(double time, bool force) {
     // Check if we need to update already
     if(!force && (time < last_time_ + granularity_ || !needs_update_)) {
         return;
@@ -204,24 +201,24 @@ void Detector::WhereIsThatThing::update(double time, bool force) {
     last_time_ = time;
 }
 
-void Detector::WhereIsThatThing::update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation) {
+void Detector::Alignment::update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation) {
 
     LOG(DEBUG) << "Calculating updated transformations with external displacment and orientation";
     LOG(TRACE) << "Displacement " << displacement;
     displacement_ = displacement;
     LOG(TRACE) << "Orientation " << orientation;
     orientation_ = orientation;
-    rotation_ = rotation_fct_(orientation_);
 
     recalculate();
 }
 
-void Detector::WhereIsThatThing::recalculate() {
+void Detector::Alignment::recalculate() {
 
     auto translations = Translation3D(displacement_.X(), displacement_.Y(), displacement_.Z());
+    auto rotations = rotation_fct_(orientation_);
 
     // Calculate current local-to-global transformation and its inverse:
-    local2global_ = Transform3D(rotation_, translations);
+    local2global_ = Transform3D(rotations, translations);
     global2local_ = local2global_.Inverse();
 
     // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
