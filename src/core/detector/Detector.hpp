@@ -19,11 +19,15 @@
 #include <string>
 
 #include <Math/DisplacementVector2D.h>
+#include <Math/RotationX.h>
+#include <Math/RotationY.h>
+#include <Math/RotationZ.h>
+#include <Math/RotationZYX.h>
+#include <Math/Transform3D.h>
 #include <Math/Vector2D.h>
 #include <Math/Vector3D.h>
 #include <TMatrixD.h>
-#include "Math/Transform3D.h"
-#include "Math/Vector3D.h"
+#include <TFormula.h>
 
 #include "core/config/Configuration.hpp"
 #include "core/utils/ROOT.h"
@@ -71,6 +75,112 @@ namespace corryvreckan {
      */
     class Detector {
     public:
+        class WhereIsThatThing {
+        public:
+            explicit WhereIsThatThing(const Configuration& config) {
+
+                // Set upate granularity for alignment transformations
+                granularity_ = config.get<uint64_t>("alignment_update_granularity", 1000000000);
+
+                // Get the orientation right - we keep this constant:
+                auto orientation = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
+                auto mode = config.get<std::string>("orientation_mode", "xyz");
+
+                if(mode == "xyz") {
+                    LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
+                    // First angle given in the configuration file is around x, second around y, last around z:
+                    rotation_ = RotationZ(orientation.Z()) * RotationY(orientation.Y()) * RotationX(orientation.X());
+                } else if(mode == "zyx") {
+                    LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
+                    // First angle given in the configuration file is around z, second around y, last around x:
+                    rotation_ = RotationZYX(orientation.x(), orientation.y(), orientation.z());
+                } else if(mode == "zxz") {
+                    LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
+                    // First angle given in the configuration file is around z, second around x, last around z:
+                    rotation_ = EulerAngles(orientation.x(), orientation.y(), orientation.z());
+                } else {
+                    throw InvalidValueError(
+                        config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
+                }
+
+                // Let's get the formulae for the positions:
+                auto position_functions = config.getArray<std::string>("position");
+                if(position_functions.size() != 3) {
+                    throw InvalidValueError(config, "position", "Position needs to have three components");
+                }
+
+                px = std::make_shared<TFormula>("px", position_functions.at(0).c_str(), false);
+                py = std::make_shared<TFormula>("py", position_functions.at(1).c_str(), false);
+                pz = std::make_shared<TFormula>("pz", position_functions.at(2).c_str(), false);
+
+                // Parse parameters:
+                auto position_parameters = config.getArray<double>("position_parameters");
+                if(static_cast<size_t>(px->GetNpar() + py->GetNpar() + pz->GetNpar()) != position_parameters.size()) {
+                    throw InvalidValueError(
+                        config,
+                        "position_parameters",
+                        "The number of position parameters does not line up with the sum of parameters in all functions.");
+                }
+
+                // Apply parameters to the functions
+                for(auto n = 0; n < px->GetNpar(); ++n) {
+                    px->SetParameter(n, position_parameters.at(static_cast<size_t>(n)));
+                }
+                for(auto n = 0; n < py->GetNpar(); ++n) {
+                    py->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar())));
+                }
+                for(auto n = 0; n < pz->GetNpar(); ++n) {
+                    pz->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar() + py->GetNpar())));
+                }
+            };
+
+        private:
+            void update(uint64_t time) {
+                // Check if we need to update already
+                if(time < last_time_ + granularity_) {
+                    return;
+                }
+
+                // Calculate current translation from formulae
+                auto displacement = ROOT::Math::XYZVector(px->Eval(time), py->Eval(time), pz->Eval(time));
+                auto translations = Translation3D(displacement.X(), displacement.Y(), displacement.Z());
+
+                // Calculate current local-to-global transformation and its inverse:
+                local2global_ = Transform3D(rotation_, translations);
+                global2local_ = local2global_.Inverse();
+
+                // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
+                // transform these points to the global coordinate frame and then make a vector pointing between them
+                origin_ = local2global_ * PositionVector3D<Cartesian3D<double>>(0., 0., 0.);
+
+                auto local_z = local2global_ * unit_z_;
+                normal_ = PositionVector3D<Cartesian3D<double>>(
+                    local_z.X() - origin_.X(), local_z.Y() - origin_.Y(), local_z.Z() - origin_.Z());
+
+                // Update time
+                last_time_ = time;
+            }
+
+            // Cache for last time the transformations were renewed, in ns:
+            uint64_t last_time_{};
+            uint64_t granularity_{};
+
+            // Cache for calculated transformations
+            ROOT::Math::XYZVector origin_;
+            ROOT::Math::XYZVector normal_;
+            ROOT::Math::Transform3D local2global_;
+            ROOT::Math::Transform3D global2local_;
+
+            // The formulae
+            std::shared_ptr<TFormula> px;
+            std::shared_ptr<TFormula> py;
+            std::shared_ptr<TFormula> pz;
+
+            // Constants
+            const XYZPoint unit_z_{0., 0., 1.};
+            Rotation3D rotation_;
+        };
+
         /**
          * Delete default constructor
          */
