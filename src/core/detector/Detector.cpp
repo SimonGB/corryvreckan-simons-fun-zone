@@ -94,6 +94,120 @@ std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& c
     }
 }
 
+Detector::WhereIsThatThing::WhereIsThatThing(const Configuration& config) {
+
+    // Set update granularity for alignment transformations
+    granularity_ = config.get<double>("alignment_update_granularity", 1000000000);
+
+    // Get the orientation right - we keep this constant:
+    auto orientation = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
+    auto mode = config.get<std::string>("orientation_mode", "xyz");
+
+    if(mode == "xyz") {
+        LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
+        // First angle given in the configuration file is around x, second around y, last around z:
+        rotation_ = RotationZ(orientation.Z()) * RotationY(orientation.Y()) * RotationX(orientation.X());
+    } else if(mode == "zyx") {
+        LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
+        // First angle given in the configuration file is around z, second around y, last around x:
+        rotation_ = RotationZYX(orientation.x(), orientation.y(), orientation.z());
+    } else if(mode == "zxz") {
+        LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
+        // First angle given in the configuration file is around z, second around x, last around z:
+        rotation_ = EulerAngles(orientation.x(), orientation.y(), orientation.z());
+    } else {
+        throw InvalidValueError(config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
+    }
+
+    // Let's get the formulae for the positions:
+    auto position_functions = config.getArray<std::string>("position");
+    if(position_functions.size() != 3) {
+        throw InvalidValueError(config, "position", "Position needs to have three components");
+    }
+
+    px = std::make_shared<TFormula>("px", position_functions.at(0).c_str(), false);
+    py = std::make_shared<TFormula>("py", position_functions.at(1).c_str(), false);
+    pz = std::make_shared<TFormula>("pz", position_functions.at(2).c_str(), false);
+
+    // Check that the formulae could correctly be compiled
+    if(!(px->IsValid() && py->IsValid() && pz->IsValid())) {
+        throw InvalidValueError(config, "position", "Invalid formulae");
+    }
+
+    // Check that we have the correct number of dimensions
+    if(px->GetNdim() > 1 || py->GetNdim() > 1 || pz->GetNdim() > 1) {
+        throw InvalidValueError(config, "position", "Invalid number of dimensions, only 1d is supported");
+    }
+
+    // We have constant values, no update needed
+    if(px->GetNdim() == 0 && py->GetNdim() == 0 && pz->GetNdim() == 0) {
+        LOG(DEBUG) << "Constant functions, no updates needed";
+        needs_update_ = false;
+    } else {
+        needs_update_ = true;
+    }
+
+    // Check if we expect parameters
+    auto allpars = static_cast<size_t>(px->GetNpar() + py->GetNpar() + pz->GetNpar());
+    if(allpars != 0) {
+        LOG(DEBUG) << "Formulae require " << allpars << " parameters.";
+
+        // Parse parameters:
+        auto position_parameters = config.getArray<double>("position_parameters");
+        if(allpars != position_parameters.size()) {
+            throw InvalidValueError(config,
+                                    "position_parameters",
+                                    "The number of position parameters does not line up with the sum of "
+                                    "parameters in all functions.");
+        }
+
+        // Apply parameters to the functions
+        for(auto n = 0; n < px->GetNpar(); ++n) {
+            px->SetParameter(n, position_parameters.at(static_cast<size_t>(n)));
+        }
+        for(auto n = 0; n < py->GetNpar(); ++n) {
+            py->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar())));
+        }
+        for(auto n = 0; n < pz->GetNpar(); ++n) {
+            pz->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar() + py->GetNpar())));
+        }
+    }
+
+    // Force first calculation at t = 0
+    update(0., true);
+}
+
+void Detector::WhereIsThatThing::update(double time, bool force) {
+    // Check if we need to update already
+    if(!force && (time < last_time_ + granularity_ || !needs_update_)) {
+        return;
+    }
+
+    LOG(DEBUG) << "Calculating updated transformations at t = " << Units::display(time, {"ns", "us", "ms", "s"});
+
+    // Calculate current translation from formulae
+    displacement_ = ROOT::Math::XYZVector(px->Eval(time), py->Eval(time), pz->Eval(time));
+    LOG(TRACE) << "Displacement " << displacement_;
+    auto translations = Translation3D(displacement_.X(), displacement_.Y(), displacement_.Z());
+
+    // Calculate current local-to-global transformation and its inverse:
+    local2global_ = Transform3D(rotation_, translations);
+    global2local_ = local2global_.Inverse();
+
+    // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
+    // transform these points to the global coordinate frame and then make a vector pointing between them
+    origin_ = ROOT::Math::XYZVector(0., 0., 0.);
+    origin_ = local2global_ * origin_;
+    LOG(TRACE) << "Origin " << origin_;
+
+    auto local_z = local2global_ * ROOT::Math::XYZPoint(0., 0., 1.);
+    normal_ = ROOT::Math::XYZVector(local_z.X() - origin_.X(), local_z.Y() - origin_.Y(), local_z.Z() - origin_.Z());
+    LOG(TRACE) << "Normal " << normal_;
+
+    // Update time
+    last_time_ = time;
+}
+
 double Detector::getTimeResolution() const {
     if(m_timeResolution > 0) {
         return m_timeResolution;
