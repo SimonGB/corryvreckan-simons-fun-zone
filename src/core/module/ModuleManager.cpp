@@ -567,7 +567,7 @@ void ModuleManager::run() {
             // Check if we should already update the detectors:
             if(m_clipboard->isEventDefined() && !detectors_updated) {
                 for(auto& det : m_detectors) {
-                    det->setTime(m_clipboard->getEvent()->start());
+                    det->update(m_clipboard->getEvent()->start());
                 }
                 detectors_updated = true;
             }

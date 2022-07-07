@@ -197,7 +197,7 @@ bool PixelDetector::hasIntercept(const Track* track, double pixelTolerance) cons
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
 
     // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local(time_) * globalIntercept;
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
 
     // Get the row and column numbers
     double row = this->getRow(localIntercept);
@@ -221,7 +221,7 @@ bool PixelDetector::hitMasked(const Track* track, int tolerance) const {
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
 
     // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local(time_) * globalIntercept;
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
 
     // Get the row and column numbers
     int row = static_cast<int>(floor(this->getRow(localIntercept) + 0.5));

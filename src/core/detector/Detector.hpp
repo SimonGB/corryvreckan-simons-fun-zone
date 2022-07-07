@@ -79,31 +79,16 @@ namespace corryvreckan {
             explicit WhereIsThatThing(const Configuration& config);
 
             // Transforms from local to global and back
-            const Transform3D& local2global(double time) {
-                update(time);
-                return local2global_;
-            };
+            const Transform3D& local2global() const { return local2global_; };
 
-            const Transform3D& global2local(double time) {
-                update(time);
-                return global2local_;
-            };
+            const Transform3D& global2local() const { return global2local_; };
 
             // Normal to the detector surface and point on the surface
-            const ROOT::Math::XYZVector& normal(double time) {
-                update(time);
-                return normal_;
-            };
+            const ROOT::Math::XYZVector& normal() const { return normal_; };
 
-            const ROOT::Math::XYZPoint& origin(double time) {
-                update(time);
-                return origin_;
-            };
+            const ROOT::Math::XYZPoint& origin() const { return origin_; };
 
-            const ROOT::Math::XYZPoint& displacement(double time) {
-                update(time);
-                return displacement_;
-            };
+            const ROOT::Math::XYZPoint& displacement() const { return displacement_; };
 
             void update(double time, bool force = false);
 
@@ -152,12 +137,6 @@ namespace corryvreckan {
          * @return shared_ptr that contains the real detector
          */
         static std::shared_ptr<Detector> factory(const Configuration& config);
-
-        /**
-         * @brief Set current time of the run
-         * @param time  Time of the run in framework units
-         */
-        void setTime(double time) { time_ = time; };
 
         /**
          * @brief Get type of the detector
@@ -275,7 +254,7 @@ namespace corryvreckan {
          * @brief Get position in the world
          * @return Global position in Cartesian coordinates
          */
-        XYZPoint displacement() const { return alignment_->displacement(time_); }
+        XYZPoint displacement() const { return alignment_->displacement(); }
 
         /**
          * @brief Get orientation in the world
@@ -293,13 +272,13 @@ namespace corryvreckan {
          * @brief Get normal vector to sensor surface
          * @return Normal vector to sensor surface
          */
-        ROOT::Math::XYZVector normal() const { return alignment_->normal(time_); }
+        ROOT::Math::XYZVector normal() const { return alignment_->normal(); }
 
         /**
          * @brief Get origin vector to sensor surface
          * @return Origin vector to sensor surface
          */
-        ROOT::Math::XYZPoint origin() const { return alignment_->origin(time_); }
+        ROOT::Math::XYZPoint origin() const { return alignment_->origin(); }
 
         /**
          * @brief Get path of the file with calibration information
@@ -342,6 +321,8 @@ namespace corryvreckan {
         /**
          * @brief Update coordinate transformations based on currently configured position and orientation values
          */
+        void update(double time);
+
         void update();
 
         // Function to get global intercept with a track
@@ -385,14 +366,14 @@ namespace corryvreckan {
          * @param  local Local coordinates in the reference frame of this detector
          * @return       Global coordinates
          */
-        XYZPoint localToGlobal(const XYZPoint& local) const { return alignment_->local2global(time_) * local; };
+        XYZPoint localToGlobal(const XYZPoint& local) const { return alignment_->local2global() * local; };
 
         /**
          * @brief Transform global coordinates into detector-local coordinates
          * @param  global Global coordinates
          * @return        Local coordinates in the reference frame of this detector
          */
-        XYZPoint globalToLocal(const XYZPoint& global) const { return alignment_->global2local(time_) * global; };
+        XYZPoint globalToLocal(const XYZPoint& global) const { return alignment_->global2local() * global; };
 
         /**
          * @brief Check whether given track is within the detector's region-of-interest
@@ -418,13 +399,13 @@ namespace corryvreckan {
          * @brief toGlobal Get the transformation from local to global coordinates
          * @return Transform3D local to global
          */
-        Transform3D toGlobal() const { return alignment_->local2global(time_); }
+        Transform3D toGlobal() const { return alignment_->local2global(); }
 
         /**
          * @brief toLocal Get the transformation from global to local coordinates
          * @return Transform3D global to local
          */
-        Transform3D toLocal() const { return alignment_->global2local(time_); }
+        Transform3D toLocal() const { return alignment_->global2local(); }
 
         /**
          * @brief Test whether one pixel touches the cluster
@@ -493,7 +474,6 @@ namespace corryvreckan {
 
         // Alignment and coordinate transofrmation information:
         std::shared_ptr<WhereIsThatThing> alignment_;
-        double time_;
 
         // Path of calibration file
         std::optional<std::filesystem::path> m_calibrationfile;

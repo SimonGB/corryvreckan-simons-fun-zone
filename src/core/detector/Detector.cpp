@@ -254,9 +254,11 @@ void Detector::maskFile(std::filesystem::path file) {
 }
 
 // Function to update transforms (such as during alignment)
-void Detector::update() {
-    alignment_->update(0., true);
+void Detector::update(double time) {
+    alignment_->update(time);
 }
+
+void Detector::update() {}
 
 Configuration Detector::getConfiguration() const {
 
