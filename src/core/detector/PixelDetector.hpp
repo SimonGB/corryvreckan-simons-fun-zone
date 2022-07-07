@@ -67,18 +67,6 @@ namespace corryvreckan {
         bool isWithinMatrix(const int col, const int row) const override;
 
         /**
-         * @brief Update detector position in the world
-         * @param displacement Vector with three position coordinates
-         */
-        void displacement(XYZPoint displacement) override { m_displacement = displacement; }
-
-        /**
-         * @brief Get position in the world
-         * @return Global position in Cartesian coordinates
-         */
-        XYZPoint displacement() const override { return m_displacement; }
-
-        /**
          * @brief Get orientation in the world
          * @return Vector with three rotation angles
          */

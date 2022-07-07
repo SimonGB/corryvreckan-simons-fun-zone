@@ -78,7 +78,7 @@ namespace corryvreckan {
         public:
             explicit WhereIsThatThing(const Configuration& config) {
 
-                // Set upate granularity for alignment transformations
+                // Set update granularity for alignment transformations
                 granularity_ = config.get<double>("alignment_update_granularity", 1000000000);
 
                 // Get the orientation right - we keep this constant:
@@ -176,12 +176,17 @@ namespace corryvreckan {
                 update(time);
                 return normal_;
             };
+
             const ROOT::Math::XYZPoint& origin(double time) {
                 update(time);
                 return origin_;
             };
 
-        private:
+            const ROOT::Math::XYZPoint& displacement(double time) {
+                update(time);
+                return displacement_;
+            };
+
             void update(double time, bool force = false) {
                 // Check if we need to update already
                 if(!force && (time < last_time_ + granularity_ || !needs_update_)) {
@@ -191,8 +196,8 @@ namespace corryvreckan {
                 LOG(DEBUG) << "Calculating updated transformations at t = " << Units::display(time, {"ns", "us", "ms", "s"});
 
                 // Calculate current translation from formulae
-                auto displacement = ROOT::Math::XYZVector(px->Eval(time), py->Eval(time), pz->Eval(time));
-                auto translations = Translation3D(displacement.X(), displacement.Y(), displacement.Z());
+                displacement_ = ROOT::Math::XYZVector(px->Eval(time), py->Eval(time), pz->Eval(time));
+                auto translations = Translation3D(displacement_.X(), displacement_.Y(), displacement_.Z());
 
                 // Calculate current local-to-global transformation and its inverse:
                 local2global_ = Transform3D(rotation_, translations);
@@ -202,7 +207,7 @@ namespace corryvreckan {
                 // transform these points to the global coordinate frame and then make a vector pointing between them
                 origin_ = local2global_ * ROOT::Math::XYZVector(0., 0., 0.);
 
-                auto local_z = local2global_ * unit_z_;
+                auto local_z = local2global_ * ROOT::Math::XYZPoint(0., 0., 1.);
                 normal_ =
                     ROOT::Math::XYZVector(local_z.X() - origin_.X(), local_z.Y() - origin_.Y(), local_z.Z() - origin_.Z());
 
@@ -210,12 +215,14 @@ namespace corryvreckan {
                 last_time_ = time;
             }
 
+        private:
             // Cache for last time the transformations were renewed, in ns:
             double last_time_{};
             double granularity_{};
             bool needs_update_{false};
 
             // Cache for calculated transformations
+            ROOT::Math::XYZPoint displacement_;
             ROOT::Math::XYZPoint origin_;
             ROOT::Math::XYZVector normal_;
             ROOT::Math::Transform3D local2global_;
@@ -227,7 +234,6 @@ namespace corryvreckan {
             std::shared_ptr<TFormula> pz;
 
             // Constants
-            const XYZPoint unit_z_{0., 0., 1.};
             Rotation3D rotation_;
         };
 
@@ -370,13 +376,14 @@ namespace corryvreckan {
          * @brief Update detector position in the world
          * @param displacement Vector with three position coordinates
          */
-        virtual void displacement(XYZPoint displacement) = 0;
+        void displacement(XYZPoint) { /* FIXME */
+        }
 
         /**
          * @brief Get position in the world
          * @return Global position in Cartesian coordinates
          */
-        virtual XYZPoint displacement() const = 0;
+        XYZPoint displacement() const { return alignment_->displacement(time_); }
 
         /**
          * @brief Get orientation in the world

@@ -141,8 +141,7 @@ void Detector::maskFile(std::filesystem::path file) {
 
 // Function to update transforms (such as during alignment)
 void Detector::update() {
-    // FIXME
-    // this->initialise();
+    alignment_->update(0., true);
 }
 
 Configuration Detector::getConfiguration() const {
