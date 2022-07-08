@@ -128,70 +128,76 @@ Detector::Alignment::Alignment(const Configuration& config) {
     // First try to only read a regular position value from the config:
     try {
         displacement_ = config.get<ROOT::Math::XYZPoint>("position", ROOT::Math::XYZPoint());
-        needs_update_ = false;
 
         // Force calculation with the given position and orientation and stop parsing
         update(displacement_, orientation_);
-        return;
     } catch(InvalidKeyError&) {
+        formulae_pos_ = parse_formulae(config, "position");
+
+        // Force first calculation at t = 0
+        update(0., true);
     }
+}
+
+std::array<std::shared_ptr<TFormula>, 3> Detector::Alignment::parse_formulae(const Configuration& config,
+                                                                             const std::string& key) {
+    std::array<std::shared_ptr<TFormula>, 3> formulae;
 
     // Let's get the formulae for the positions:
-    auto position_functions = config.getArray<std::string>("position");
-    if(position_functions.size() != 3) {
-        throw InvalidValueError(config, "position", "Position needs to have three components");
+    auto functions = config.getArray<std::string>(key);
+    if(functions.size() != 3) {
+        throw InvalidValueError(config, key, "Position needs to have three components");
     }
 
-    px = std::make_shared<TFormula>("px", position_functions.at(0).c_str(), false);
-    py = std::make_shared<TFormula>("py", position_functions.at(1).c_str(), false);
-    pz = std::make_shared<TFormula>("pz", position_functions.at(2).c_str(), false);
+    formulae.at(0) = std::make_shared<TFormula>((key + "_x").c_str(), functions.at(0).c_str(), false);
+    formulae.at(1) = std::make_shared<TFormula>((key + "_y").c_str(), functions.at(1).c_str(), false);
+    formulae.at(2) = std::make_shared<TFormula>((key + "_z").c_str(), functions.at(2).c_str(), false);
 
     // Check that the formulae could correctly be compiled
-    if(!(px->IsValid() && py->IsValid() && pz->IsValid())) {
-        throw InvalidValueError(config, "position", "Invalid formulae");
+    if(!(formulae.at(0)->IsValid() && formulae.at(1)->IsValid() && formulae.at(2)->IsValid())) {
+        throw InvalidValueError(config, key, "Invalid formulae");
     }
 
     // Check that we have the correct number of dimensions
-    if(px->GetNdim() > 1 || py->GetNdim() > 1 || pz->GetNdim() > 1) {
-        throw InvalidValueError(config, "position", "Invalid number of dimensions, only 1d is supported");
+    if(formulae.at(0)->GetNdim() > 1 || formulae.at(1)->GetNdim() > 1 || formulae.at(2)->GetNdim() > 1) {
+        throw InvalidValueError(config, key, "Invalid number of dimensions, only 1d is supported");
     }
 
     // We have constant values, no update needed
-    if(px->GetNdim() == 0 && py->GetNdim() == 0 && pz->GetNdim() == 0) {
+    if(formulae.at(0)->GetNdim() == 0 && formulae.at(1)->GetNdim() == 0 && formulae.at(2)->GetNdim() == 0) {
         LOG(DEBUG) << "Constant functions, no updates needed";
-        needs_update_ = false;
     } else {
         needs_update_ = true;
     }
 
     // Check if we expect parameters
-    auto allpars = static_cast<size_t>(px->GetNpar() + py->GetNpar() + pz->GetNpar());
+    auto allpars = static_cast<size_t>(formulae.at(0)->GetNpar() + formulae.at(1)->GetNpar() + formulae.at(2)->GetNpar());
     if(allpars != 0) {
         LOG(DEBUG) << "Formulae require " << allpars << " parameters.";
 
         // Parse parameters:
-        auto position_parameters = config.getArray<double>("position_parameters");
-        if(allpars != position_parameters.size()) {
+        auto parameters = config.getArray<double>(key + "_parameters");
+        if(allpars != parameters.size()) {
             throw InvalidValueError(config,
-                                    "position_parameters",
-                                    "The number of position parameters does not line up with the sum of "
+                                    key + "_parameters",
+                                    "The number of provided parameters does not line up with the sum of "
                                     "parameters in all functions.");
         }
 
         // Apply parameters to the functions
-        for(auto n = 0; n < px->GetNpar(); ++n) {
-            px->SetParameter(n, position_parameters.at(static_cast<size_t>(n)));
+        for(auto n = 0; n < formulae.at(0)->GetNpar(); ++n) {
+            formulae.at(0)->SetParameter(n, parameters.at(static_cast<size_t>(n)));
         }
-        for(auto n = 0; n < py->GetNpar(); ++n) {
-            py->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar())));
+        for(auto n = 0; n < formulae.at(1)->GetNpar(); ++n) {
+            formulae.at(1)->SetParameter(n, parameters.at(static_cast<size_t>(n + formulae.at(0)->GetNpar())));
         }
-        for(auto n = 0; n < pz->GetNpar(); ++n) {
-            pz->SetParameter(n, position_parameters.at(static_cast<size_t>(n + px->GetNpar() + py->GetNpar())));
+        for(auto n = 0; n < formulae.at(2)->GetNpar(); ++n) {
+            formulae.at(2)->SetParameter(
+                n, parameters.at(static_cast<size_t>(n + formulae.at(0)->GetNpar() + formulae.at(1)->GetNpar())));
         }
     }
 
-    // Force first calculation at t = 0
-    update(0., true);
+    return formulae;
 }
 
 void Detector::Alignment::update(double time, bool force) {
@@ -203,7 +209,8 @@ void Detector::Alignment::update(double time, bool force) {
     LOG(DEBUG) << "Calculating updated transformations at t = " << Units::display(time, {"ns", "us", "ms", "s"});
 
     // Calculate current translation from formulae
-    displacement_ = ROOT::Math::XYZVector(px->Eval(time), py->Eval(time), pz->Eval(time));
+    displacement_ = ROOT::Math::XYZVector(
+        formulae_pos_.at(0)->Eval(time), formulae_pos_.at(1)->Eval(time), formulae_pos_.at(2)->Eval(time));
     LOG(TRACE) << "Displacement " << displacement_;
 
     recalculate();

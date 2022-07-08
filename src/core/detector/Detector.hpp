@@ -99,6 +99,8 @@ namespace corryvreckan {
         private:
             void recalculate();
 
+            std::array<std::shared_ptr<TFormula>, 3> parse_formulae(const Configuration& config, const std::string& key);
+
             // Cache for last time the transformations were renewed, in ns:
             double last_time_{};
             double granularity_{};
@@ -115,9 +117,7 @@ namespace corryvreckan {
             ROOT::Math::Transform3D global2local_;
 
             // The formulae
-            std::shared_ptr<TFormula> px;
-            std::shared_ptr<TFormula> py;
-            std::shared_ptr<TFormula> pz;
+            std::array<std::shared_ptr<TFormula>, 3> formulae_pos_;
 
             // Function to generate rotation matrix, depending on mode
             std::function<ROOT::Math::Rotation3D(const ROOT::Math::XYZVector& rot)> rotation_fct_;
