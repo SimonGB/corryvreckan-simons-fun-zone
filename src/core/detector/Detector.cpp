@@ -125,6 +125,16 @@ Detector::Alignment::Alignment(const Configuration& config) {
         throw InvalidValueError(config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
     }
 
+    // First try to only read a regular position value from the config:
+    try {
+        displacement_ = config.get<ROOT::Math::XYZPoint>("position", ROOT::Math::XYZPoint());
+        needs_update_ = false;
+
+        // Force calculation with the given position and orientation
+        update(displacement_, orientation_);
+    } catch(InvalidKeyError&) {
+    }
+
     // Let's get the formulae for the positions:
     auto position_functions = config.getArray<std::string>("position");
     if(position_functions.size() != 3) {
