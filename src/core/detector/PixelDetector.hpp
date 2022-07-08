@@ -199,9 +199,6 @@ namespace corryvreckan {
         TMatrixD m_spatial_resolution_matrix_global{3, 3};
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> m_nPixels{};
         std::vector<std::vector<int>> m_roi{};
-        // Displacement and rotation in x,y,z
-        ROOT::Math::XYZPoint m_displacement;
-        ROOT::Math::XYZVector m_orientation;
         std::string m_orientation_mode;
     };
 } // namespace corryvreckan

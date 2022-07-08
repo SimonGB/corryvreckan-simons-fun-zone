@@ -28,8 +28,7 @@ using namespace corryvreckan;
 
 PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
 
-    // Set detector position and direction from configuration file
-    SetPostionAndOrientation(config);
+    m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
 
     // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
     TMatrixD errorMatrix(3, 3);
@@ -77,20 +76,6 @@ void PixelDetector::build_axes(const Configuration& config) {
         maskFile(mask_file);
         process_mask_file();
     }
-}
-
-void PixelDetector::SetPostionAndOrientation(const Configuration& config) {
-    // Detector position and orientation
-    m_displacement = config.get<ROOT::Math::XYZPoint>("position", ROOT::Math::XYZPoint());
-    m_orientation = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
-    m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
-
-    if(m_orientation_mode != "xyz" && m_orientation_mode != "zyx" && m_orientation_mode != "zxz") {
-        throw InvalidValueError(config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
-    }
-
-    LOG(TRACE) << "  Position:    " << Units::display(m_displacement, {"mm", "um"});
-    LOG(TRACE) << "  Orientation: " << Units::display(m_orientation, {"deg"}) << " (" << m_orientation_mode << ")";
 }
 
 void PixelDetector::process_mask_file() {
@@ -176,9 +161,9 @@ void PixelDetector::configure_detector(Configuration& config) const {
 }
 
 void PixelDetector::configure_pos_and_orientation(Configuration& config) const {
-    config.set("position", m_displacement, {"um", "mm"});
+    config.set("position", alignment_->displacement(), {"um", "mm"});
     config.set("orientation_mode", m_orientation_mode);
-    config.set("orientation", m_orientation, {{"deg"}});
+    config.set("orientation", alignment_->orientation(), {{"deg"}});
 }
 
 // Function to get global intercept with a track
