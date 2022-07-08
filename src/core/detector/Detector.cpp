@@ -130,8 +130,9 @@ Detector::Alignment::Alignment(const Configuration& config) {
         displacement_ = config.get<ROOT::Math::XYZPoint>("position", ROOT::Math::XYZPoint());
         needs_update_ = false;
 
-        // Force calculation with the given position and orientation
+        // Force calculation with the given position and orientation and stop parsing
         update(displacement_, orientation_);
+        return;
     } catch(InvalidKeyError&) {
     }
 
