@@ -107,7 +107,7 @@ Detector::Alignment::Alignment(const Configuration& config) {
         LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
         // First angle given in the configuration file is around x, second around y, last around z:
         rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
-            return static_cast<ROOT::Math::Rotation3D>(RotationZ(rot.Z()) * RotationY(rot.Y()) * RotationX(rot.X()));
+            return RotationZ(rot.Z()) * RotationY(rot.Y()) * RotationX(rot.X());
         };
     } else if(mode == "zyx") {
         LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
@@ -213,7 +213,7 @@ void Detector::Alignment::update(double time, bool force) {
 
 void Detector::Alignment::update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation) {
 
-    LOG(DEBUG) << "Calculating updated transformations with external displacment and orientation";
+    LOG(DEBUG) << "Calculating updated transformations with external displacement and orientation";
     LOG(TRACE) << "Displacement " << displacement;
     displacement_ = displacement;
     LOG(TRACE) << "Orientation " << orientation;
