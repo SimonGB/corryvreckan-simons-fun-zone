@@ -131,11 +131,13 @@ Detector::Alignment::Alignment(const Configuration& config) {
 
         // Force calculation with the given position and orientation and stop parsing
         update(displacement_, orientation_);
+        LOG(INFO) << "Fixed alignment, position: " << Units::display(displacement_, {"um", "mm"});
     } catch(InvalidKeyError&) {
         formulae_pos_ = parse_formulae(config, "position");
 
         // Force first calculation at t = 0
         update(0., true);
+        LOG(INFO) << "Variable alignment, initial position at t=0: " << Units::display(displacement_, {"um", "mm"});
     }
 }
 
@@ -169,6 +171,9 @@ std::array<std::shared_ptr<TFormula>, 3> Detector::Alignment::parse_formulae(con
     } else {
         needs_update_ = true;
     }
+
+    LOG(DEBUG) << "Found alignment formulae with " << formulae.at(0)->GetNpar() << ", " << formulae.at(1)->GetNpar()
+               << " and " << formulae.at(2)->GetNpar() << " parameters, respectively";
 
     // Check if we expect parameters
     auto allpars = static_cast<size_t>(formulae.at(0)->GetNpar() + formulae.at(1)->GetNpar() + formulae.at(2)->GetNpar());
