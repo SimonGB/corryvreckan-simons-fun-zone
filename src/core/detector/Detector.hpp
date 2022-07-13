@@ -96,6 +96,8 @@ namespace corryvreckan {
 
             void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
 
+            bool isVariable() const { return needs_update_; };
+
         private:
             void recalculate();
 
@@ -315,11 +317,23 @@ namespace corryvreckan {
         virtual bool masked(int chX, int chY) const = 0;
 
         /**
-         * @brief Update coordinate transformations based on currently configured position and orientation values
+         * @brief Update coordinate transformations based on position and orientation values at the given time
+         * @param time Time for which the alignment should be calculated
          */
         void update(double time);
 
+        /**
+         * @brief Update coodinate transformations based on the provided displacement and orientation
+         * @param displacement  New displacement of the detector
+         * @param orientation   New orientation of the detector
+         */
         void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
+
+        /**
+         * @brief Check whether this detector has a variable alignment configured
+         * @return true if alignment changes over time, false otherwise
+         */
+        bool hasVariableAlignment() const { return alignment_->isVariable(); }
 
         // Function to get global intercept with a track
         virtual PositionVector3D<Cartesian3D<double>> getIntercept(const Track* track) const = 0;
