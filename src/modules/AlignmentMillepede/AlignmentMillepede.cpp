@@ -47,6 +47,14 @@ AlignmentMillepede::AlignmentMillepede(Configuration& config, std::vector<std::s
     if(m_dofs.size() != 6) {
         throw InvalidValueError(config_, "dofs", "Invalid number of degrees of freedom.");
     }
+
+    // Check that we're not in a variable-alignment situation:
+    for(auto& detector : get_regular_detectors(false)) {
+        if(detector->hasVariableAlignment()) {
+            throw ModuleError("Cannot perform alignment procedure with variable alignment of detector \"" +
+                              detector->getName() + "\"");
+        }
+    }
 }
 
 //=============================================================================

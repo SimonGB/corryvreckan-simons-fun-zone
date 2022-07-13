@@ -58,6 +58,12 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     m_maxAssocClusters = config_.get<size_t>("max_associated_clusters");
     m_maxTrackChi2 = config_.get<double>("max_track_chi2ndof");
 
+    // Check that we're not in a variable-alignment situation:
+    if(m_detector->hasVariableAlignment()) {
+        throw ModuleError("Cannot perform alignment procedure with variable alignment of detector \"" +
+                          m_detector->getName() + "\"");
+    }
+
     LOG(INFO) << "Aligning detector \"" << m_detector->getName() << "\"";
 }
 

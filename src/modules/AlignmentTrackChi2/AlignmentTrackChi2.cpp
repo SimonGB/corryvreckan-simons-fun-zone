@@ -47,6 +47,14 @@ AlignmentTrackChi2::AlignmentTrackChi2(Configuration& config, std::vector<std::s
         LOG(INFO) << "Aligning orientations";
     }
 
+    // Check that we're not in a variable-alignment situation:
+    for(auto& detector : get_regular_detectors(false)) {
+        if(detector->hasVariableAlignment()) {
+            throw ModuleError("Cannot perform alignment procedure with variable alignment of detector \"" +
+                              detector->getName() + "\"");
+        }
+    }
+
     m_maxAssocClusters = config_.get<size_t>("max_associated_clusters");
     m_maxTrackChi2 = config_.get<double>("max_track_chi2ndof");
     fixed_planes_ = config_.getArray<std::string>("fixed_planes", {});
