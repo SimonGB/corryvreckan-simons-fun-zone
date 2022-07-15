@@ -76,6 +76,7 @@ namespace corryvreckan {
         std::string track_model_;
         std::string timestamp_from_;
         std::vector<std::string> require_detectors_;
+        std::vector<std::string> exclude_from_seed_;
 
         // Member histograms
         std::map<streams, TH1F*> trackletMultiplicity;

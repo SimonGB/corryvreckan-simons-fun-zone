@@ -55,6 +55,7 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
     refit_gbl_ = config_.get<bool>("refit_gbl");
 
     require_detectors_ = config_.getArray<std::string>("require_detectors", {});
+    exclude_from_seed_ = config_.getArray<std::string>("exclude_from_seed", {});
     timestamp_from_ = config_.get<std::string>("timestamp_from", {});
     if(!timestamp_from_.empty() &&
        std::find(require_detectors_.begin(), require_detectors_.end(), timestamp_from_) == require_detectors_.end()) {
@@ -601,10 +602,12 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         upstream_trees.emplace(std::piecewise_construct, std::make_tuple(upstream_detector), std::make_tuple());
         upstream_trees[upstream_detector].buildTrees(clusters);
 
-        if(reference_up_first == nullptr) {
-            reference_up_first = upstream_detector;
-        }
-        reference_up_last = upstream_detector;
+	if(std::find(exclude_from_seed_.begin(), exclude_from_seed_.end(), upstream_detector_ID) == exclude_from_seed_.end()) {
+	    if(reference_up_first == nullptr) {
+	        reference_up_first = upstream_detector;
+	    }
+	    reference_up_last = upstream_detector;
+	}
     }
 
     // Store downstream data in KDTrees and define reference detectors
@@ -623,10 +626,13 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         downstream_trees.emplace(std::piecewise_construct, std::make_tuple(downstream_detector), std::make_tuple());
         downstream_trees[downstream_detector].buildTrees(clusters);
 
-        if(reference_down_first == nullptr) {
-            reference_down_first = downstream_detector;
-        }
-        reference_down_last = downstream_detector;
+	if(std::find(exclude_from_seed_.begin(), exclude_from_seed_.end(), downstream_detector_ID) == exclude_from_seed_.end()) {
+            if(reference_down_first == nullptr) {
+                reference_down_first = downstream_detector;
+            }
+            reference_down_last = downstream_detector;
+	}
+
     }
 
     // Up- & downstream tracklet finding
