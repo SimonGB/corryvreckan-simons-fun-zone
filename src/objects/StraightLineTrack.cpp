@@ -20,7 +20,7 @@ ROOT::Math::XYPoint StraightLineTrack::distance(const Cluster* cluster) const {
     if(get_plane(cluster->detectorID()) == nullptr) {
         throw MissingReferenceException(typeid(*this), typeid(Plane));
     }
-    auto trackIntercept = get_plane(cluster->detectorID())->getToLocal() * getIntercept(cluster->global().z());
+    auto trackIntercept = get_plane(cluster->detectorID())->getToLocal() * getState(cluster->detectorID());
 
     auto dist = cluster->local() - trackIntercept;
 
@@ -32,8 +32,20 @@ ROOT::Math::XYPoint StraightLineTrack::getKinkAt(const std::string&) const {
     return ROOT::Math::XYPoint(0, 0);
 }
 
-ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string&) const {
-    return m_state;
+ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string& detectorID) const {
+    if(get_plane(detectorID) == nullptr) {
+        throw MissingReferenceException(typeid(*this), typeid(Plane));
+    }
+    auto toGlobal = get_plane(detectorID)->getToGlobal();
+    ROOT::Math::XYZVector planeU, planeV, planeN;
+    toGlobal.Rotation().GetComponents(planeU, planeV, planeN);
+    ROOT::Math::XYZPoint origin = toGlobal.Translation() * ROOT::Math::XYZPoint(0, 0, 0);
+
+    ROOT::Math::XYZVector distance = m_state - origin;
+    double pathLength = -distance.Dot(planeN) / m_direction.Dot(planeN);
+    ROOT::Math::XYZPoint position = m_state + pathLength * m_direction;
+
+    return position;
 }
 
 ROOT::Math::XYZVector StraightLineTrack::getDirection(const std::string&) const {
@@ -64,7 +76,8 @@ void StraightLineTrack::calculateChi2() {
         }
 
         // Get the distance and the error
-        ROOT::Math::XYPoint dist = this->distance(cluster);
+        auto intercept = get_plane(cluster->detectorID())->getToLocal() * getState(cluster->detectorID());
+        auto dist = cluster->local() - intercept;
         double ex2 = cluster->errorX() * cluster->errorX();
         double ey2 = cluster->errorY() * cluster->errorY();
         chi2_ += ((dist.x() * dist.x() / ex2) + (dist.y() * dist.y() / ey2));
@@ -80,10 +93,9 @@ void StraightLineTrack::calculateResiduals() {
         if(get_plane(cluster->detectorID()) == nullptr) {
             throw MissingReferenceException(typeid(*this), typeid(Plane));
         }
-        // fixme: cluster->global.z() is only an approximation for the plane intersect. Can be fixed after !115
-        residual_global_[cluster->detectorID()] = cluster->global() - getIntercept(cluster->global().z());
+        residual_global_[cluster->detectorID()] = cluster->global() - getState(cluster->detectorID());
         residual_local_[cluster->detectorID()] =
-            cluster->local() - get_plane(cluster->detectorID())->getToLocal() * getIntercept(cluster->global().z());
+            cluster->local() - get_plane(cluster->detectorID())->getToLocal() * getState(cluster->detectorID());
     }
 }
 
