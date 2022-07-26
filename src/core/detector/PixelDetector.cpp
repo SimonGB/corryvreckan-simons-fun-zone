@@ -14,8 +14,6 @@
 #include "Math/RotationY.h"
 #include "Math/RotationZ.h"
 #include "Math/RotationZYX.h"
-#include "TMatrixD.h"
-#include "TArrayD.h"
 
 #include "PixelDetector.hpp"
 #include "core/utils/log.h"
@@ -29,13 +27,13 @@ PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
     // Set detector position and direction from configuration file
     SetPostionAndOrientation(config);
 
-    // initialize transform
-    this->initialise();
-
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         build_axes(config);
     }
+
+    // initialize transform
+    this->initialise();
 }
 
 void PixelDetector::build_axes(const Configuration& config) {
@@ -59,22 +57,6 @@ void PixelDetector::build_axes(const Configuration& config) {
         LOG(WARNING) << "Spatial resolution for detector '" << m_detectorName << "' not set." << std::endl
                      << "Using pitch/sqrt(12) as default";
     }
-
-    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
-    TMatrixD locToGlob(3,3);
-    TMatrixD globToLoc(3,3);
-    TMatrixD errorMatrix(3,3);
-    TArrayD varsLocal(9);
-    varsLocal.Reset(0.);
-    m_localToGlobal.Rotation().GetRotationMatrix(locToGlob);
-    m_globalToLocal.Rotation().GetRotationMatrix(globToLoc);
-    varsLocal[0] = m_spatial_resolution.x() * m_spatial_resolution.x();
-    varsLocal[4] = m_spatial_resolution.y() * m_spatial_resolution.y();
-    errorMatrix.SetMatrixArray(varsLocal.GetArray());
-
-    auto errorMatrixGlobal = locToGlob * errorMatrix * globToLoc;
-    m_spatial_resolution_global.SetX(std::sqrt(errorMatrixGlobal(0,0)));
-    m_spatial_resolution_global.SetY(std::sqrt(errorMatrixGlobal(1,1)));
 
     // region of interest:
     m_roi = config.getMatrix<int>("roi", std::vector<std::vector<int>>());
@@ -193,6 +175,16 @@ void PixelDetector::initialise() {
     localZ = m_localToGlobal * localZ;
     m_normal = PositionVector3D<Cartesian3D<double>>(
         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
+
+    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
+    Eigen::Matrix3d locToGlob;
+    Eigen::Matrix3d globToLoc;
+    Eigen::Matrix3d errorMatrix;
+    m_localToGlobal.Rotation().GetRotationMatrix(locToGlob);
+    m_globalToLocal.Rotation().GetRotationMatrix(globToLoc);
+    errorMatrix << m_spatial_resolution.x() * m_spatial_resolution.x(), 0, 0, 0,
+        m_spatial_resolution.y() * m_spatial_resolution.y(), 0, 0, 0, 0;
+    m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 }
 
 // Only if detector is not auxiliary

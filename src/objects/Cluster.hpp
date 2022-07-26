@@ -14,6 +14,7 @@
 #include <Math/Point3D.h>
 #include <Math/Vector2D.h>
 #include <TRef.h>
+#include "Eigen/Dense"
 
 #include <iostream>
 
@@ -52,9 +53,7 @@ namespace corryvreckan {
         double error() const;
         double errorX() const { return m_error.X(); }
         double errorY() const { return m_error.Y(); }
-        double errorGlobal() const;
-        double errorGlobalX() const { return m_error_global.X(); }
-        double errorGlobalY() const { return m_error_global.Y(); }
+        Eigen::Matrix3d errorMatrixGlobal() const { return m_error_matrix_global; }
 
         bool isSplit() const { return m_split; }
         void setSplit(bool split);
@@ -93,10 +92,7 @@ namespace corryvreckan {
         void setErrorX(double error) { m_error.SetX(error); }
         void setErrorY(double error) { m_error.SetY(error); }
         void setError(ROOT::Math::XYVector error) { m_error = std::move(error); }
-        void setErrorGlobalX(double error) { m_error_global.SetX(error); }
-        void setErrorGlobalY(double error) { m_error_global.SetY(error); }
-        void setErrorGlobal(ROOT::Math::XYVector error) { m_error_global = std::move(error); }
-
+        void setErrorMatrixGlobal(Eigen::Matrix3d errorMatrix) { m_error_matrix_global = std::move(errorMatrix); }
 
         /**
          * @brief Print an ASCII representation of Cluster to the given stream
@@ -114,7 +110,7 @@ namespace corryvreckan {
         double m_row;
         double m_charge;
         ROOT::Math::XYVector m_error;
-        ROOT::Math::XYVector m_error_global;
+        Eigen::Matrix3d m_error_matrix_global;
         size_t m_columnWidth{0};
         size_t m_rowWidth{0};
         bool m_split{false};

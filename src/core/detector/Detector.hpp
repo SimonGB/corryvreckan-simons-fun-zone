@@ -17,6 +17,7 @@
 #include <Math/DisplacementVector2D.h>
 #include <Math/Vector2D.h>
 #include <Math/Vector3D.h>
+#include "Eigen/Dense"
 #include "Math/Transform3D.h"
 #include "Math/Vector3D.h"
 
@@ -167,7 +168,7 @@ namespace corryvreckan {
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
          * @return Intrinsic spatial resolution in global X and Y
          */
-        virtual XYVector getSpatialResolutionGlobal() const = 0;
+        virtual Eigen::Matrix3d getSpatialResolutionMatrixGlobal() const = 0;
 
         /**
          * @brief Get number of pixels in x and y

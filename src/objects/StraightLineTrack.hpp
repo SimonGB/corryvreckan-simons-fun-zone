@@ -63,7 +63,7 @@ namespace corryvreckan {
          */
         ROOT::Math::XYZVector getDirection(const double& z) const override;
 
-        ROOT::Math::XYPoint distance(const Cluster* cluster);
+        ROOT::Math::XYPoint distance(const Cluster* cluster) const;
 
         /**
          * @brief This track model does not support kinks, it therefore is always zero
