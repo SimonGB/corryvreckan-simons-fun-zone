@@ -14,11 +14,11 @@ This module also provides a cluster shape analysis. To characterize the cluster 
 ### Parameters
 * `reject_by_roi`: ROI rejection with the local position of the cluster. (Default: false)
 * `method`: Clustering method to reconstruct cluster position and charge.
-  * `cluster` (defualt): includes all adjecent pixels with signal above thresholds (see later) and calculates charge-weighted center-of-gravity as the cluster position.
+  * `cluster` (default): includes all adjecent pixels with signal above thresholds (see later) and calculates charge-weighted center-of-gravity as the cluster position.
   * `seed`: equivalent to `cluster` but the cluster position and charge is given only by the seed pixel.
   * `binary`: equivalent to `cluster` but calculates center-of-gravity of all pixels above threshold without charge weighting (as is done in binary sensors).
   * `sumNxN`: includes all pixels in the `NxN` matrix around the seed, where `N=window_size` and calculates charge-weighted center-of-gravity as the cluster position.
-* `seeding_method`: Method to select seed pixels. Option `multi`  (defualt) selects all pixels above the seed threshold for clustering and allows multiple clusters/hits in the same event. Option `max` keeps only the single seed with the maximum charge (if above seed threshold) as seed candidate.
+* `seeding_method`: Method to select seed pixels. Option `multi`  (default) selects all pixels above the seed threshold for clustering and allows multiple clusters/hits in the same event. Option `max` keeps only the single seed with the maximum charge (if above seed threshold) as seed candidate.
 * `window_size`: Matrix width around the seed to find neighbors in `sumNxN` method. It also used to define central pixels in histograms (see later). The module is only capable to deal with an odd number larger than 3. (Default: 3)
 * `threshold_type`: `fix`, `snr`, or `mix`, use fixed threshold, signal-to-noise-ratio, or both of them to clusterize. (Default: `fix`)
 * `threshold_seed`: Cut on pixel charge to find seeds. Used if `threshold_type=fix or mix`.
