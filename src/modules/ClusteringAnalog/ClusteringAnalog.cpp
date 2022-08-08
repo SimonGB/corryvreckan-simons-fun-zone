@@ -46,7 +46,7 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     auto detConf = m_detector->getConfiguration();
     if(detConf.has("calibration_file")) {
         string tmp = detConf.getText("calibration_file"); // Return absolute path
-        tmp = tmp.substr(1UL, tmp.size() - 2);     // DEBUG: Remove double quotes around string
+        tmp = tmp.substr(1UL, tmp.size() - 2);            // DEBUG: Remove double quotes around string
         if(readCalibrationFileROOT(tmp)) {
             LOG(INFO) << "Calibration file found - " << tmp;
             isCalibrated = true;
