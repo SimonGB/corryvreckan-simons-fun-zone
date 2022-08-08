@@ -37,50 +37,15 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
 
     thresholdClusterCharge = config_.get<float>("threshold_cluster", thresholdSeed);
 
-    string tmp = config_.get<string>("method", "cluster");
-    if(tmp == "seed")
-        estimationMethod = EstimationMethod::seed;
-    else if(tmp == "cluster")
-        estimationMethod = EstimationMethod::cluster;
-    else if(tmp == "sumNxN")
-        estimationMethod = EstimationMethod::sumNxN;
-    else if(tmp == "binary")
-        estimationMethod = EstimationMethod::binary;
-    else {
-        LOG(ERROR) << "Estimation method \"" << tmp << "\" not understood -- using \"cluster\" instead.";
-        estimationMethod = EstimationMethod::cluster;
-    }
-
-    tmp = config_.get<string>("seeding_method", "multi");
-    if(tmp == "max")
-        seedingMethod = SeedingMethod::max;
-    else if(tmp == "multi")
-        seedingMethod = SeedingMethod::multi;
-    else {
-        LOG(ERROR) << "Seeding method <" << tmp << "> not defined -- using <multi> instead";
-        seedingMethod = SeedingMethod::multi;
-    }
-
-    tmp = config_.get<string>("threshold_type", "fix");
-    flagAnalysisSNR = false;
-    if(tmp == "fix")
-        thresholdType = ThresholdType::fix;
-    else if(tmp == "snr") {
-        thresholdType = ThresholdType::snr;
-        flagAnalysisSNR = true;
-    } else if(tmp == "mix") {
-        thresholdType = ThresholdType::mix;
-        flagAnalysisSNR = true;
-    } else {
-        LOG(ERROR) << "Threshold type <" << tmp << "> not defined -- using <fix> instead";
-        thresholdType = ThresholdType::fix;
-    }
+    estimationMethod = config_.get<EstimationMethod>("method", EstimationMethod::CLUSTER);
+    seedingMethod = config_.get<SeedingMethod>("seeding_method", SeedingMethod::MULTI);
+    thresholdType = config_.get<ThresholdType>("threshold_type", ThresholdType::FIX);
 
     // Read calibration file
     isCalibrated = false;
     auto detConf = m_detector->getConfiguration();
     if(detConf.has("calibration_file")) {
-        tmp = detConf.getText("calibration_file"); // Return absolute path
+        string tmp = detConf.getText("calibration_file"); // Return absolute path
         tmp = tmp.substr(1UL, tmp.size() - 2);     // DEBUG: Remove double quotes around string
         if(readCalibrationFileROOT(tmp)) {
             LOG(INFO) << "Calibration file found - " << tmp;
@@ -351,13 +316,13 @@ float ClusteringAnalog::SNR(const Pixel* px) {
 
 bool ClusteringAnalog::isAboveSeedThreshold(const Pixel* px) {
     switch(thresholdType) {
-    case ThresholdType::snr:
+    case ThresholdType::SNR:
         return (SNR(px) > thresholdSeedSNR);
         break;
-    case ThresholdType::mix:
+    case ThresholdType::MIX:
         return (SNR(px) > thresholdSeedSNR && px->charge() > thresholdSeed);
         break;
-    case ThresholdType::fix:
+    case ThresholdType::FIX:
     default:
         return (px->charge() > thresholdSeed);
         break;
@@ -366,13 +331,13 @@ bool ClusteringAnalog::isAboveSeedThreshold(const Pixel* px) {
 
 bool ClusteringAnalog::isAboveNeighborThreshold(const Pixel* px) {
     switch(thresholdType) {
-    case ThresholdType::snr:
+    case ThresholdType::SNR:
         return (SNR(px) > thresholdNeighborSNR);
         break;
-    case ThresholdType::mix:
+    case ThresholdType::MIX:
         return (SNR(px) > thresholdNeighborSNR && px->charge() > thresholdNeighbor);
         break;
-    case ThresholdType::fix:
+    case ThresholdType::FIX:
     default:
         return (px->charge() > thresholdNeighbor);
         break;
@@ -381,13 +346,13 @@ bool ClusteringAnalog::isAboveNeighborThreshold(const Pixel* px) {
 
 bool ClusteringAnalog::isAboveIterationThreshold(const Pixel* px) {
     switch(thresholdType) {
-    case ThresholdType::snr:
+    case ThresholdType::SNR:
         return (SNR(px) > thresholdIterationSNR);
         break;
-    case ThresholdType::mix:
+    case ThresholdType::MIX:
         return (SNR(px) > thresholdIterationSNR && px->charge() > thresholdIteration);
         break;
-    case ThresholdType::fix:
+    case ThresholdType::FIX:
     default:
         return (px->charge() > thresholdIteration);
         break;
@@ -466,7 +431,7 @@ bool ClusteringAnalog::acceptCluster(const std::shared_ptr<Cluster>& cluster) {
     }
     // Edge detection of ROI and masked pixels
     int cluster_size = static_cast<int>(cluster->size());
-    if(estimationMethod == EstimationMethod::sumNxN && cluster_size < windowSize * windowSize) {
+    if(estimationMethod == EstimationMethod::SUMNXN && cluster_size < windowSize * windowSize) {
         LOG(DEBUG) << "Rejecting incomplete cluster with edge detection at (" << cluster->column() << "," << cluster->row()
                    << ") with size = " << cluster->size() << " and window requirement " << windowSize << " x " << windowSize;
         hCutHisto->Fill(RejectionType::kIncompleteEdgeNxN);
@@ -508,13 +473,13 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         // Select seeds by threshold
         if(isAboveSeedThreshold(pixel.get())) {
             switch(seedingMethod) {
-            case SeedingMethod::max:
+            case SeedingMethod::MAX:
                 if(seedCandidates.empty() || pixel->charge() > seedCandidates[0]->charge()) {
                     seedCandidates.clear();
                     seedCandidates.push_back(pixel);
                 }
                 break;
-            case SeedingMethod::multi:
+            case SeedingMethod::MULTI:
             default:
                 seedCandidates.push_back(pixel);
                 break;
@@ -606,12 +571,12 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         LOG(DEBUG) << "- cluster has " << cluster->pixels().size() << " pixels";
 
         switch(estimationMethod) {
-        case EstimationMethod::seed:
+        case EstimationMethod::SEED:
             cluster->setRow(seed->row());
             cluster->setColumn(seed->column());
             cluster->setCharge(seed->charge());
             break;
-        case EstimationMethod::sumNxN:
+        case EstimationMethod::SUMNXN:
             cluster = clusterWindow;
             cluster->setCharge(chargeTotalWindow);
             if(chargeTotalWindow > 0) {
@@ -626,7 +591,7 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
                 cluster->setColumn(seed->column());
             }
             break;
-        case EstimationMethod::binary:
+        case EstimationMethod::BINARY:
             rowChargeWeighted = 0.;
             colChargeWeighted = 0.;
             for(auto px : cluster->pixels()) {
@@ -637,7 +602,7 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
             cluster->setColumn(colChargeWeighted / static_cast<double>(cluster->size()));
             cluster->setCharge(chargeSum);
             break;
-        case EstimationMethod::cluster:
+        case EstimationMethod::CLUSTER:
         default:
             assert(chargeSum > 0.);
             cluster->setRow(rowChargeWeighted / chargeSum);

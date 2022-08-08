@@ -98,21 +98,21 @@ namespace corryvreckan {
         };
 
         enum class EstimationMethod {
-            seed,
-            cluster,
-            sumNxN,
-            binary,
+            SEED,
+            CLUSTER,
+            SUMNXN,
+            BINARY,
         } estimationMethod;
 
         enum class SeedingMethod {
-            max,
-            multi,
+            MAX,
+            MULTI,
         } seedingMethod;
 
         enum class ThresholdType {
-            fix,
-            snr,
-            mix,
+            FIX,
+            SNR,
+            MIX,
         } thresholdType;
 
         int windowSize; // Cluster matrix to search neighbors
