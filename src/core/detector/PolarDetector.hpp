@@ -205,6 +205,9 @@ namespace corryvreckan {
          */
         double getCenterRadius() const { return (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2; }
 
+        // Function to get row and column of pixel
+        virtual std::pair<int, int> getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const;
+
     private:
         // Initialize coordinate transformations
         void initialise() override;

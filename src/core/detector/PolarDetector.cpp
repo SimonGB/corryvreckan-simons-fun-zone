@@ -73,7 +73,7 @@ void PolarDetector::build_axes(const Configuration& config) {
     focus_translation = {getCenterRadius() * sin(stereo_angle), getCenterRadius() * (1 - cos(stereo_angle)), 0};
 
     // Set reasonable pixel pitch placeholders - length of the strip edge and strip length
-    m_pitch = {row_radius.at(3) * angular_pitch.at(3), row_radius.at(3) - row_radius.at(2)};
+    m_pitch = {row_radius.at(1) * angular_pitch.at(0), row_radius.at(1) - row_radius.at(0)};
 
     LOG(TRACE) << "Initialized \"" << m_detectorType;
 
@@ -556,4 +556,9 @@ XYVector PolarDetector::getSpatialResolution(double, double row) const {
     double resolution_y = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);
     LOG(TRACE) << "--> Resolution: (" << resolution_x << ", " << resolution_y << ")";
     return {resolution_x, resolution_y};
+}
+
+// Function to get row and column of pixel
+std::pair<int, int> PolarDetector::getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const {
+    return {floor(getColumn(localPosition)), floor(getRow(localPosition))};
 }
