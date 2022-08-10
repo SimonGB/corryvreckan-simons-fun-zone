@@ -100,7 +100,7 @@ namespace corryvreckan {
         enum class EstimationMethod {
             SEED,
             CLUSTER,
-            SUMNXN,
+            WINDOW,
             BINARY,
         } estimationMethod;
 

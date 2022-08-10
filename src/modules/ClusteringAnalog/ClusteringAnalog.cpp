@@ -22,10 +22,10 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     rejectByROI = config_.get<bool>("reject_by_roi", false);
     flagAnalysisShape = config_.get<bool>("analysis_shape", false);
 
-    windowSize = config_.get<int>("window_size", 3);
+    windowSize = config_.get<int>("window_size", 1);
     // size check, possible value 3, 5, 7, ...
-    if(windowSize < 3 || windowSize % 2 == 0) {
-        throw InvalidValueError(config_, "method", "Invalid window size - value should be an odd number >= 3.");
+    if(windowSize < 1) {
+        throw InvalidValueError(config_, "window_size", "Invalid window size - value should be >= 1.");
     }
 
     thresholdSeed = config_.get<float>("threshold_seed");
@@ -276,8 +276,8 @@ void ClusteringAnalog::fillHistogramsShapeAnalysis(const std::shared_ptr<Cluster
         // "Seed" count - mimic binary output
         if(isAboveSeedThreshold(px))
             counterSeed++;
-        // Define index in seeding window
-        int index = windowSize * (px->row() - seed->row()) + px->column() - seed->column();
+        // Define index in seeding window, could be optimized for hexagonal pixels
+        int index = (windowSize * 2 + 1) * (px->row() - seed->row()) + px->column() - seed->column();
         // Charge
         clusterShape_Charge_LocalIndex->Fill(index, chargePixel);
         clusterShape_Charge_SortedIndex->Fill(counter, chargePixel);
@@ -381,10 +381,9 @@ void ClusteringAnalog::fillHistograms(const std::shared_ptr<Cluster>& cluster, d
     }
 
     // Central seeds
-    int seedToWindowEdge = (windowSize - 1) / 2; // window size half
-    if(seed->column() >= seedToWindowEdge && seed->row() >= seedToWindowEdge &&
-       seed->column() < m_detector->nPixels().X() - seedToWindowEdge &&
-       seed->row() < m_detector->nPixels().Y() - seedToWindowEdge) {
+    if(seed->column() >= windowSize && seed->row() >= windowSize &&
+       seed->column() < m_detector->nPixels().X() - windowSize &&
+       seed->row() < m_detector->nPixels().Y() - windowSize) {
         clusterSizeCentral->Fill(static_cast<double>(cluster->size()));
         clusterChargeCentral->Fill(cluster->charge());
         clusterSeedChargeCentral->Fill(seed->charge());
@@ -425,22 +424,23 @@ void ClusteringAnalog::fillHistograms(const std::shared_ptr<Cluster>& cluster, d
 bool ClusteringAnalog::acceptCluster(const std::shared_ptr<Cluster>& cluster) {
     // check if the cluster is within ROI
     if(rejectByROI && !m_detector->isWithinROI(cluster.get())) {
-        LOG(DEBUG) << "Rejecting cluster outside of " << m_detector->getName() << " ROI";
+        LOG(DEBUG) << "Rejecting cluster at (" << cluster->column() << "," << cluster->row() << ") outside of "
+                   << m_detector->getName() << " ROI";
         hCutHisto->Fill(RejectionType::kOutsideROI);
         return false;
     }
     // Edge detection of ROI and masked pixels
     int cluster_size = static_cast<int>(cluster->size());
-    if(estimationMethod == EstimationMethod::SUMNXN && cluster_size < windowSize * windowSize) {
-        LOG(DEBUG) << "Rejecting incomplete cluster with edge detection at (" << cluster->column() << "," << cluster->row()
-                   << ") with size = " << cluster->size() << " and window requirement " << windowSize << " x " << windowSize;
+    if(estimationMethod == EstimationMethod::WINDOW && cluster_size < (windowSize * 2 + 1) * (windowSize * 2 + 1)) {
+        LOG(DEBUG) << "Rejecting incomplete cluster at (" << cluster->column() << "," << cluster->row() << ") with size = "
+                   << cluster->size() << " and window requirement " << (windowSize * 2 + 1) * (windowSize * 2 + 1);
         hCutHisto->Fill(RejectionType::kIncompleteEdgeNxN);
         return false;
     }
     // Reject noise by cluster charge
     if(cluster->charge() < thresholdClusterCharge) {
-        LOG(DEBUG) << "Rejecting small cluster with charge " << cluster->charge() << " lower than threshold "
-                   << thresholdClusterCharge;
+        LOG(DEBUG) << "Rejecting small cluster at (" << cluster->column() << "," << cluster->row() << ") with charge "
+                   << cluster->charge() << " lower than threshold " << thresholdClusterCharge;
         hCutHisto->Fill(RejectionType::kLowCharge);
         return false;
     }
@@ -545,24 +545,23 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         searchNeighbors(seed);
 
         // Window estimation
-        int seedToWindowEdge = (windowSize - 1) / 2;
         double chargeTotalWindow = 0.;
         double colWeightTotalWindow = 0.;
         double rowWeightTotalWindow = 0.;
         // cluster as the whole window
         auto clusterWindow = std::make_shared<Cluster>();
         // Traverse all pixels in the NxN window around seed
-        for(int col = max(seed->column() - seedToWindowEdge, 0); col <= min(seed->column() + seedToWindowEdge, nCols - 1);
+        for(int col = max(seed->column() - windowSize, 0); col <= min(seed->column() + windowSize, nCols - 1);
             col++) {
-            for(int row = max(seed->row() - seedToWindowEdge, 0); row <= min(seed->row() + seedToWindowEdge, nRows - 1);
+            for(int row = max(seed->row() - windowSize, 0); row <= min(seed->row() + windowSize, nRows - 1);
                 row++) {
                 auto pixel = hitmap[col][row];
                 if(!pixel)
                     continue;
                 clusterWindow->addPixel(&*pixel);
                 chargeTotalWindow += pixel->charge();
-                colWeightTotalWindow += double(pixel->column()) * pixel->charge();
-                rowWeightTotalWindow += double(pixel->row()) * pixel->charge();
+                colWeightTotalWindow += static_cast<double>(pixel->column()) * pixel->charge();
+                rowWeightTotalWindow += static_cast<double>(pixel->row()) * pixel->charge();
             }
         }
         // End - window estimation
@@ -576,7 +575,7 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
             cluster->setColumn(seed->column());
             cluster->setCharge(seed->charge());
             break;
-        case EstimationMethod::SUMNXN:
+        case EstimationMethod::WINDOW:
             cluster = clusterWindow;
             cluster->setCharge(chargeTotalWindow);
             if(chargeTotalWindow > 0) {
