@@ -88,10 +88,12 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Younes Otarid, DESY, @yotarid
 * Klaas Padeken, Bonn, HISKP, @padeken
 * Florian Pitters, HEPHY, @fpipper
+* Miljenko Suljic, CERN, @msuljic
 * Tomas Vanat, CERN, @tvanat
 * Annika Vauth, University of Hamburg/DESY, @anvauth
 * Mateus Vicente Barreto Pinto, University Geneva, @mvicente
 * Morag Williams, University of Glasgow/CERN, @williamm
+* Yitao Wu, University of Science and Technology of China, @yitao
 * Jin Zhang, DESY, @jinz
 * Bong-Hwi Lim, University of Turin, @blim
 
