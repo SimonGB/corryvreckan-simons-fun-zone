@@ -20,26 +20,22 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     : Module(config, detector), m_detector(detector) {
 
     rejectByROI = config_.get<bool>("reject_by_roi", false);
-    flagAnalysisShape = config_.get<bool>("analysis_shape", false);
-
-    windowSize = config_.get<int>("window_size", 1);
-    // size check, possible value 3, 5, 7, ...
-    if(windowSize < 1) {
-        throw InvalidValueError(config_, "window_size", "Invalid window size - value should be >= 1.");
-    }
-
     thresholdSeed = config_.get<float>("threshold_seed");
     thresholdNeighbor = config_.get<float>("threshold_neighbor", thresholdSeed);
     thresholdIteration = config_.get<float>("threshold_iteration", thresholdNeighbor);
     thresholdSeedSNR = config_.get<float>("thresholdSNR_seed", thresholdSeed);
     thresholdNeighborSNR = config_.get<float>("thresholdSNR_neighbor", thresholdNeighbor);
     thresholdIterationSNR = config_.get<float>("thresholdSNR_iteration", thresholdNeighborSNR);
-
     thresholdClusterCharge = config_.get<float>("threshold_cluster", thresholdSeed);
-
     estimationMethod = config_.get<EstimationMethod>("method", EstimationMethod::CLUSTER);
     seedingMethod = config_.get<SeedingMethod>("seeding_method", SeedingMethod::MULTI);
     thresholdType = config_.get<ThresholdType>("threshold_type", ThresholdType::FIX);
+    windowSize = config_.get<int>("window_size", 1);
+    if(windowSize < 1) {
+        throw InvalidValueError(config_, "window_size", "Invalid window size - value should be >= 1.");
+    }
+    flagAnalysisShape = config_.get<bool>("analysis_shape", false);
+    flagAnalysisSNR = thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX;
 
     // Read calibration file
     isCalibrated = false;
@@ -53,11 +49,9 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
         } else {
             throw InvalidValueError(detConf, "calibration_file", "Invalid calibration file");
         }
-    } else if(flagAnalysisSNR) {
+    } else if(thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX) {
         throw InvalidCombinationError(
-            detConf, {"calibration_file", "threshold_type"}, "Missing input file, required by S/N ratio analysis");
-    } else {
-        flagAnalysisSNR = false;
+            detConf, {"calibration_file", "threshold_type"}, "Missing calibration file, required by S/N ratio analysis");
     }
 }
 
