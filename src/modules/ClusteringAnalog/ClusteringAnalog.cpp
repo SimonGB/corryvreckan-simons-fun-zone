@@ -37,9 +37,19 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     flagAnalysisShape = config_.get<bool>("analysis_shape", false);
     flagAnalysisSNR = thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX;
 
+    auto detConf = m_detector->getConfiguration();
+
+    if(flagAnalysisShape) {
+        auto coordinates = detConf.get<std::string>("coordinates", "cartesian");
+        std::transform(coordinates.begin(), coordinates.end(), coordinates.begin(), ::tolower);
+        if(coordinates != "cartesian") {
+            throw InvalidCombinationError(
+                detConf, {"coordinates", "analysis_shape"}, "Shape analysis implemented only for cartesian coordinates");
+        }
+    }
+
     // Read calibration file
     isCalibrated = false;
-    auto detConf = m_detector->getConfiguration();
     if(detConf.has("calibration_file")) {
         string tmp = detConf.getText("calibration_file"); // Return absolute path
         tmp = tmp.substr(1UL, tmp.size() - 2);            // DEBUG: Remove double quotes around string
@@ -270,7 +280,7 @@ void ClusteringAnalog::fillHistogramsShapeAnalysis(const std::shared_ptr<Cluster
         // "Seed" count - mimic binary output
         if(isAboveSeedThreshold(px))
             counterSeed++;
-        // Define index in seeding window, could be optimized for hexagonal pixels
+        // Define index in seeding window
         int index = (windowSize * 2 + 1) * (px->row() - seed->row()) + px->column() - seed->column();
         // Charge
         clusterShape_Charge_LocalIndex->Fill(index, chargePixel);
