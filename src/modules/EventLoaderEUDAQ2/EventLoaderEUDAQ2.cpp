@@ -35,6 +35,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     config_.setDefault<int>("shift_triggers", 0);
     config_.setDefault<bool>("inclusive", true);
     config_.setDefault<std::string>("eudaq_loglevel", "ERROR");
+    config_.setDefault<bool>("use_as_monitor", false);
 
     filename_ = config_.getPath("file_name", true);
     get_time_residuals_ = config_.get<bool>("get_time_residuals");
@@ -50,6 +51,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     shift_triggers_ = config_.get<int>("shift_triggers");
     inclusive_ = config_.get<bool>("inclusive");
     sync_by_trigger_ = config_.get<bool>("sync_by_trigger");
+    use_as_monitor_ = config_.get<bool>("use_as_monitor");
 
     // Set EUDAQ log level to desired value:
     EUDAQ_LOG_LEVEL(config_.get<std::string>("eudaq_loglevel"));
@@ -209,7 +211,13 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_sorted_std_eve
         LOG(DEBUG) << "Filling buffer with new event.";
         // fill buffer with new std event:
         auto new_event = get_next_std_event();
-        sorted_events_.push(new_event);
+        // in case EventLoader is used as monitor, new_event isn't necessarily returned
+        if(new_event) {
+            sorted_events_.push(new_event);
+        }
+        // in this case we need to return to uphold communication with ModuleManager
+        else
+            return nullptr;
     }
 
     // get first element of queue and erase it
@@ -227,9 +235,14 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
         if(events_raw_.empty()) {
             LOG(TRACE) << "Reading new EUDAQ event from file";
             auto new_event = reader_->GetNextEvent();
-            if(!new_event) {
+            if(!new_event && !use_as_monitor_) {
                 LOG(DEBUG) << "Reached EOF";
                 throw EndOfFile();
+            } else if(!new_event && use_as_monitor_) {
+                LOG(INFO) << "Waiting for new events";
+                sleep(1);
+                // need to return to uphold communication with module manager
+                return nullptr;
             }
             // Build buffer from all sub-events:
             auto subevents = new_event->GetSubEvents();
@@ -596,6 +609,10 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
                     // get next decoded EUDAQ StandardEvent from timesorted buffer
                     event_ = get_next_sorted_std_event();
                 }
+                // In case the monitor needs to wait for more events, return DeadTime to allow for stop signal from
+                // ModuleManager to come through
+                if(!event_)
+                    return StatusCode::DeadTime;
             } catch(EndOfFile&) {
                 return StatusCode::EndRun;
 #ifdef STDEVENTCONVERTER_EXCEPTIONS_
