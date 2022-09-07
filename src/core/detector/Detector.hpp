@@ -323,7 +323,7 @@ namespace corryvreckan {
         void update(double time);
 
         /**
-         * @brief Update coodinate transformations based on the provided displacement and orientation
+         * @brief Update coordinate transformations based on the provided displacement and orientation
          * @param displacement  New displacement of the detector
          * @param orientation   New orientation of the detector
          */
