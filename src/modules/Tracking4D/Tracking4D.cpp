@@ -317,10 +317,14 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             refTrack.addCluster(clusterLast.get());
             auto averageTimestamp = calculate_average_timestamp(&refTrack);
             refTrack.setTimestamp(averageTimestamp);
-            refTrack.registerPlane(
-                reference_first->getName(), reference_first->displacement().z(), reference_first->materialBudget(), reference_first->toLocal());
-            refTrack.registerPlane(
-                reference_last->getName(), reference_last->displacement().z(), reference_last->materialBudget(), reference_last->toLocal());
+            refTrack.registerPlane(reference_first->getName(),
+                                   reference_first->displacement().z(),
+                                   reference_first->materialBudget(),
+                                   reference_first->toLocal());
+            refTrack.registerPlane(reference_last->getName(),
+                                   reference_last->displacement().z(),
+                                   reference_last->materialBudget(),
+                                   reference_last->toLocal());
 
             // Make a new track
             auto track = Track::Factory(track_model_);
