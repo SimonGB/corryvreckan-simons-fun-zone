@@ -609,10 +609,10 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
                     // get next decoded EUDAQ StandardEvent from timesorted buffer
                     event_ = get_next_sorted_std_event();
                 }
-                // In case the monitor needs to wait for more events, return DeadTime to allow for stop signal from
+                // In case the monitor needs to wait for more events, return NoData to allow for stop signal from
                 // ModuleManager to come through
                 if(!event_)
-                    return StatusCode::DeadTime;
+                    return StatusCode::NoData;
             } catch(EndOfFile&) {
                 return StatusCode::EndRun;
 #ifdef STDEVENTCONVERTER_EXCEPTIONS_
