@@ -13,6 +13,7 @@
  * Refer to the User's Manual for more details.
  */
 
+#include <chrono>
 #include <iostream>
 #include <queue>
 #include <vector>
@@ -121,6 +122,7 @@ namespace corryvreckan {
         std::vector<std::string> discard_raw_events_;
         int buffer_depth_;
         int shift_triggers_;
+        std::chrono::steady_clock::time_point time_of_last_log_for_monitoring_;
 
         size_t hits_ = 0;
 

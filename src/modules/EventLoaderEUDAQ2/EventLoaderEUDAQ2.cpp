@@ -52,6 +52,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     inclusive_ = config_.get<bool>("inclusive");
     sync_by_trigger_ = config_.get<bool>("sync_by_trigger");
     use_as_monitor_ = config_.get<bool>("use_as_monitor");
+    time_of_last_log_for_monitoring_ = std::chrono::steady_clock::now();
 
     // Set EUDAQ log level to desired value:
     EUDAQ_LOG_LEVEL(config_.get<std::string>("eudaq_loglevel"));
@@ -239,8 +240,16 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
                 LOG(DEBUG) << "Reached EOF";
                 throw EndOfFile();
             } else if(!new_event && use_as_monitor_) {
-                LOG(INFO) << "Waiting for new events";
-                sleep(1);
+                // only want to log every 10 seconds but cannot use sleep(10) because then GUI becomes unresponsive for 10
+                // seconds
+                std::chrono::steady_clock::time_point time_reference_for_logging = std::chrono::steady_clock::now();
+                auto time_since_last_logging = std::chrono::duration_cast<std::chrono::seconds>(
+                                                   time_reference_for_logging - time_of_last_log_for_monitoring_)
+                                                   .count();
+                if(time_since_last_logging >= 10) {
+                    LOG(INFO) << "Waiting for new events";
+                    time_of_last_log_for_monitoring_ = time_reference_for_logging;
+                }
                 // need to return to uphold communication with module manager
                 return nullptr;
             }
