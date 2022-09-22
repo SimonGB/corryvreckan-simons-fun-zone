@@ -23,8 +23,8 @@ void ClusteringSeed::initialize() {
         LOG(DEBUG) << "Initialise for detector " + detector->getName();
     }
 
-    config_.setDefault<double>("SeedThreshold", 5.);
-    config_.setDefault<double>("NeighbourThreshold", 2.5);
+    config_.setDefault<double>("SeedThreshold", 5);
+    config_.setDefault<double>("NeighbourThreshold", 5);
     config_.setDefault<int>("LowerChannel", 0);
     config_.setDefault<int>("UpperChannel", 127);
     config_.setDefault<bool>("CalculateCrosstalk", true);
@@ -36,7 +36,7 @@ void ClusteringSeed::initialize() {
     m_calculate_crosstalk = config_.get<bool>("CalculateCrosstalk");
 
     std::string title = m_detector->getName() + " Cluster size;cluster size [#];events";
-    clusterSize = new TH1F("clusterSize", title.c_str(), 15, 0, 15);
+    clusterSize = new TH1F("clusterSize", title.c_str(), 128, 0, 128);
 
     title = m_detector->getName() + " Cluster seed charge;cluster seed charge [e];events";
     clusterSeedCharge = new TH1F("clusterSeedCharge", title.c_str(), 40, 2500, 8000);
@@ -65,8 +65,7 @@ void ClusteringSeed::initialize() {
     DEBUG_event_charge = new TH1F("DEBUG_event_charge", title.c_str(), 128, 0, 128);
 }
 
-StatusCode ClusteringSeed::runOLD(const std::shared_ptr<Clipboard>& clipboard) {
-
+StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard) {
   // Get the pixels in the strip
   auto pixels = clipboard->getData<Pixel>(m_detector->getName());
   if(pixels.empty()) {
@@ -95,13 +94,17 @@ StatusCode ClusteringSeed::runOLD(const std::shared_ptr<Clipboard>& clipboard) {
   for(auto pixel : pixels){
     neighbourCandidates.push_back(pixel);
     nChannels++;
+    //std::cout << "Channel number " << nChannels << std::endl;
     if(nChannels-1 == 0 || nChannels-1 == m_upper_channel-m_lower_channel) continue;
     double pixelSNRatio = pixel->raw()/100000.0;
+    //std::cout << "SN ration" << pixelSNRatio << std::endl;
     if(pixelSNRatio > m_seedThreshold && pixelSNRatio > greatestSeedSNRatio){
       greatestSeedSNRatio = pixelSNRatio;
       seedCoordinate = nChannels-1;
+      //std::cout << seedCoordinate << std::endl;
       seed = pixel;
       seedCharge = pixel->charge();
+      //std::cout << seedCharge << std::endl;
       clusterChargeVal = seedCharge;
       clusterSizeVal = 1;
     }
@@ -115,7 +118,7 @@ StatusCode ClusteringSeed::runOLD(const std::shared_ptr<Clipboard>& clipboard) {
     bool rightBO_neighbourFound = false;
     bool leftBO_neighbourFound = false;
 
-    bool clusterContact = true;
+    bool clusterContact = true; 
     for(int rightChan = seedCoordinate+1; rightChan < nChannels; rightChan++){
       if(!clusterContact) break;
       clusterContact = false;
@@ -245,9 +248,10 @@ StatusCode ClusteringSeed::runOLD(const std::shared_ptr<Clipboard>& clipboard) {
 }
 
 
-StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard){
+StatusCode ClusteringSeed::runNEW(const std::shared_ptr<Clipboard>& clipboard){
   // Get the pixels in the strip
   auto pixels = clipboard->getData<Pixel>(m_detector->getName());
+  //std::cout << pixels.empty() << std::endl;
   if(pixels.empty()) {
       LOG(DEBUG) << "Detector " << m_detector->getName() << " does not have any pixels on the clipboard";
       return StatusCode::Success;
@@ -263,7 +267,8 @@ StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard){
 
   // Take all pixels and put them in an ordered (by channel) array
   for(auto pixel : pixels){
-    orderedStrip[pixel->column()] = pixel;
+  // std::cout << pixel->column() << std::endl;
+    orderedStrip[pixel->column()] = pixel; // was originally column
   }
   // Create a collection of pixelchains
   // A bool to remember if the previous pixel in the loop passed the neighbourcut
@@ -327,7 +332,7 @@ StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard){
       clusterChargeVal += pixelCharge;
       if(pixelSNRatio > m_seedThreshold && pixelSNRatio > clusterSeedChargeVal){
           clusterSeedChargeVal = pixelCharge;
-          seedPositionVal = pixel->column();
+          seedPositionVal = pixel->column(); // was originally column
       }
     }
     clusterSize->Fill(clusterSizeVal);
@@ -414,6 +419,7 @@ StatusCode ClusteringSeed::run(const std::shared_ptr<Clipboard>& clipboard){
     }
   }
 */
+  return StatusCode::Success;
 }
 
 

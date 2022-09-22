@@ -3,8 +3,8 @@
 
 #include <vector>
 #include "Data.h"
-#include "Hit.h"
-#include "ChanList.h"
+//#include "Hit.h"
+//#include "ChanList.h"
 #include <ctime>
 #include <TH1.h>
 #include <TH2.h>
@@ -63,17 +63,19 @@ class DataFileRoot
         int     _version;
         int     _polarity;
         double _t1, _t2;
-        HitList _hits;
-        std::vector<ChanList> chan_list;
+        
+        // not happy with this, would be nicer as a static 
+        std::vector<unsigned int> _roi;
+        double _cmmd_roi;
+        double _cnoise_roi;
+        
         EventDataBlock _data;
 
     protected:
         void reset_data();
-
+        
     public:
-        void set_data(int i, unsigned short x) { _data.data[i] = x; }
-
-    public:
+        
         /**
          * The constructor needs three parameters
          *
@@ -109,13 +111,14 @@ class DataFileRoot
          * implemented
          *
          */
-
+         
          /**
-          * Gives the number of events.
-          *
-          * @return an int
-          */
-         virtual int nevents() const =0;
+         * Sets the number of channels and the data in the case
+         * of non "standard" values. If data==0, then only the number
+         * of channels is changed
+         */
+        void set_data(int nchan, const unsigned short *data=0);
+
 
         /**
          * Tells if the data stream is valid.
@@ -123,6 +126,17 @@ class DataFileRoot
          * @return a boolean
          */
         virtual bool valid() const =0;
+
+        
+        // all of the below functions are implemented in AsciiRoot.h. I dont know why they work here
+        
+        
+        /*
+         * Scan information
+         */
+        // return the scan type
+        int scan_type() const { return _scantype; }
+
 
         /**
          * Opens a new file.
@@ -167,15 +181,10 @@ class DataFileRoot
         int version() const { return _version; }
 
 
-        int polarity() const { return _polarity; }
-        void polarity(int x) { _polarity = ( x<0 ? -1 : 1); }
+        int get_polarity() const { return _polarity; }
+        void set_polarity(int x) { _polarity = ( x<0 ? -1 : 1); }
 
-        /*
-         * Sets the number of channels and the data in the case
-         * of non "standard" values. If data==0, then only the number
-         * of channels is changed
-         */
-        void set_data(int nchan, const unsigned short *data=0);
+        
 
 
         /*
@@ -274,98 +283,8 @@ class DataFileRoot
         // return the temperature
         virtual double temp() const;
 
-
-        /*
-         * Scan information
-         */
-        // return the scan type
-        int scan_type() const { return _scantype; }
-
-        // number of points
-        int npts() const
-        {
-            return _npoints;
-        }
-
-        // first value of the scan
-        int from() const
-        {
-            return _from;
-        }
-
-        // last value of the scan
-        int to() const
-        {
-            return _to;
-        }
-
-        // the step from one point to the next
-        int step() const
-        {
-            return _step;
-        }
-
-        // Number of events acquired per scan point
-        int nevts() const
-        {
-            return _step;
-        }
-
-
-        // returns the value of the scan variables
-        virtual void get_scan_values(short &delay, short &charge) = 0;
-
         unsigned short get_header(int ichip, int ibit) { return _header[ichip][ibit]; }
 
-
-        /*
-         * Event hit information
-         */
-
-        // Adds a new hit
-        void add_hit(const Hit &h)
-        {
-            _hits.push_back(h);
-        }
-
-        /*
-         * Iterators
-         */
-        HitList::iterator begin()
-        {
-            return _hits.begin();
-        }
-        HitList::iterator end()
-        {
-            return _hits.end();
-        }
-
-        // number of hits
-        int nhits() const
-        {
-            return _hits.size();
-        }
-
-        // check if the hit list is empty
-        bool empty() const
-        {
-            return _hits.empty();
-        }
-
-        // retrieve i-th hit
-        const Hit &hit(int i) const
-        {
-            return _hits[i];
-        }
-
-        // Empty the hit list
-        void clear()
-        {
-            _hits.clear();
-        }
-
-        // replace the hit list by the given
-        void set_hit_list(const HitList &L) { _hits = L; }
 
         // returns the gain of channel i
         double get_gain(int i) const
@@ -419,47 +338,17 @@ class DataFileRoot
         void set_timecut(double t1, double t2);
         bool valid_time(double time) const;
 
-        // Returns a histogram with the pedestals
-        TH1F *show_pedestals(const int lowerChannel, const int upperChannel, bool corrected);
-
-        // Returns a histogram with the noise
-        TH1F *show_noise(const int lowerChannel, const int upperChannel, bool corrected);
-
-        // Computes pedestals from the data of the file
-        virtual TH2 *compute_pedestals(int mxevts=-1, bool do_cmmd=true);
-        virtual void compute_pedestals_fast(int mxevts = -1, double ped_weight=0.01, double noise_weight=0.001);
-
         // Alternative functions
-        virtual void compute_pedestals_alternative(const int lowerChannel, const int upperChannel);
-        virtual void compute_cmmd_alternative(const int lowerChannel, const int upperChannel);
-
-        // Computes common mode,
-        void common_mode();
-        void common_mode(ChanList &C, bool correct=false);
-
+        virtual void compute_pedestals_alternative();
+        virtual void compute_cmmd_alternative();
 
         // Subtract pedestals and compute common mode and s/n
         void process_event(bool do_cmmd=true);
-
-        // find clusters
-        void find_clusters(int ichip=-1);
-        void find_clusters(ChanList &C);
 
         // Save/load pedestals in/from a file
         void save_pedestals(const char *fnam);
         void load_pedestals(const char *fnam, bool show=false);
 
-        // Loads a gain file
-        void load_gain(const char *fnam);
-
-        // Loads a channel mask
-        void load_masking(const char *fnam);
-        void spy_data(bool with_signal=false, double t0=0.0, double t1=0.0, int nevt=1);
-
-        int  n_channel_list() const { return chan_list.size(); }
-        void add_channel_list(const ChanList &C);
-        void clear_channel_lists() { chan_list.clear(); }
-        ChanList get_channel_list(int i) const { return chan_list[i]; }
 
         int chip_mask() const
         {
@@ -475,9 +364,16 @@ class DataFileRoot
         {
             return _nchips;
         }
+        
+        void set_ROI(std::vector<unsigned int> bounds);
+        
+        std::vector<unsigned int> get_ROI() const
+        {
+            return _roi;
+        }
+        
+        void calc_common_mode_signal();
 };
 
-// Return true if file is an ASCII text file
-bool is_text(const char *);
 
 #endif /* DATAFILEROOT_H_ */

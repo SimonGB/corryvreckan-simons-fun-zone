@@ -5,13 +5,9 @@ CORRYVRECKAN_DETECTOR_MODULE(MODULE_NAME)
 CORRYVRECKAN_MODULE_SOURCES(${MODULE_NAME}
     EventLoaderALiBaVa.cpp
     ALiBaVa/AsciiRoot.cpp
-    ALiBaVa/auxfunctions.cpp
-    ALiBaVa/ChanList.cpp
     ALiBaVa/DataFileRoot.cpp
     ALiBaVa/HDFRoot.cpp
-    ALiBaVa/Tracer.cpp
     ALiBaVa/utils.cpp
-    ALiBaVa/Hit.cpp
 )
 
 FIND_PACKAGE(HDF5 REQUIRED)

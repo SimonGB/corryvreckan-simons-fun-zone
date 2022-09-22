@@ -11,12 +11,13 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TProfile.h>
 #include <dirent.h>
 
-#include "objects/Pixel.hpp"
-#include "ALiBaVa/auxfunctions.h"
+//#include "objects/Pixel.hpp"
+//#include "ALiBaVa/auxfunctions.h"
 #include "EventLoaderALiBaVa.h"
-#include "ALiBaVa/HDFRoot.h"
+//#include "ALiBaVa/HDFRoot.h"
 
 using namespace corryvreckan;
 
@@ -37,29 +38,29 @@ void EventLoaderALiBaVa::initialize() {
   config_.setDefault<double>("LowerTimecut", 0);
   config_.setDefault<double>("UpperTimecut", std::numeric_limits<double>::max());
   config_.setDefault<int>("IgnoreEvents", 1);
-  config_.setDefault<int>("LowerChannel", 0);
-  config_.setDefault<int>("UpperChannel", 127);
   config_.setDefault<double>("Chargecut", std::numeric_limits<double>::max());
   config_.setDefault<double>("CalibrationConstant", 1.0);
   config_.setDefault<bool>("CrosstalkCorrection", false);
+  config_.setDefaultArray<unsigned int>("ROI", {0, 255});
+  config_.setDefault<int>("Polarity", -1);
 
   m_inputDirectory = config_.getPath("input_directory");
   m_run = config_.get<int>("run");
   m_timecut_lower = config_.get<double>("LowerTimecut");
   m_timecut_upper = config_.get<double>("UpperTimecut");
   m_ignore_events = config_.get<int>("IgnoreEvents");
-  m_lower_channel = config_.get<int>("LowerChannel");
-  m_upper_channel = config_.get<int>("UpperChannel");
   m_chargecut = config_.get<double>("Chargecut");
   m_calibration_constant = config_.get<double>("CalibrationConstant");
   m_correct_crosstalk = config_.get<bool>("CrosstalkCorrection");
+  m_roi = config_.getArray<unsigned int>("ROI");
+  m_polarity = config_.get<int>("Polarity");
   if(!m_correct_crosstalk){
     config_.setDefault<double>("b_one", 0.);
     config_.setDefault<double>("b_two", 0.);
   }
   m_b_one = config_.get<double>("b_one");
   m_b_two = config_.get<double>("b_two");
-
+  
   // Open the input directory
   DIR* directory = opendir(m_inputDirectory.c_str());
   if(directory == nullptr) {
@@ -97,27 +98,137 @@ void EventLoaderALiBaVa::initialize() {
   if(m_calibrationfilename.length() == 0) {
       LOG(WARNING) << "No calibration file was found." << "\n" << "Results will be uncalibrated: ADC = charge.";
   }
+  
+  
+  
+  // Create histograms
+  std::string title = "Charge of signal; Charge [e]; # entries";
+  hChargeSignal = new TH1F("chargeSignal",title.c_str(), 100, -96000, 32000);
+  
+  title = "ADC of signal; Signal [ADC]; # entries";
+  hADCSignal = new TH1F("ADCSignal",title.c_str(), 100, -200, 600);
+  
+  title = "Signal to noise ratio; SNRatio; # entries";
+  hSNR = new TH1F("SNRatio",title.c_str(), 100, -50, 200);
+  
+  title = "Uncorrected pedestal; # channel; Pedestal[ADC]";
+  hPedestal = new TH1F("pedestal", title.c_str(), 256, 0, 256);
+  
+  title = "Corrected pedestal; # channel; Pedestal[ADC]";
+  hPedestalCorrect = new TH1F("pedestalCorrect", title.c_str() ,256, 0, 256);
+  
+  title = "Uncorrected Noise; # channel; Noise[ADC]";
+  hNoise = new TH1F("noise", title.c_str() ,256, 0, 256);
+  
+  title = "Corrected Noise; # channel; Noise[ADC]";
+  hNoiseCorrect = new TH1F("noiseCorrect", title.c_str() ,256, 0, 256);
+  
+  title = "Time profile; Time [ns], Ave. signal highest channel [ADC]";
+  hTimeProfile = new TProfile("timeProfile", title.c_str(), 35, 0, 35, 0, 200);
 
   // Create a pointer with the data file.
   ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str());
-  // Call the loader function, which sets everything up.
-  // For some reason in ALiBaVa's code, it needs the pointer AND the data file again
-  ALiBaVa_loader(ALiBaVaPointer, m_datafilename.c_str(), m_pedestalfilename.c_str(), m_calibrationfilename.c_str(),
-      pedestalValues, noiseValues, correctedPedestalValues, correctedNoiseValues, m_lower_channel, m_upper_channel);
+  // DEBUG stuff
+  // print the vector
+  //for (auto i: m_roi)
+    //std::cout << i << std::endl;
+  // print the size of the vector
+  //std::cout << m_roi.size() << std::endl;
+  // Sort vector to avoid errors later on
+  std::sort(m_roi.begin(), m_roi.end());
+  // Set the region of interest 
+  ALiBaVaPointer->set_ROI(m_roi);
+  // Get the vector with all ROI channels listed to use here
+  m_roi_ch = ALiBaVaPointer->get_ROI();
+  
+  ALiBaVaPointer->set_polarity(m_polarity);
+      
+      
+  const char *ped_f = "alibava_ped.ped";
+  const char *cal_f = "alibava_cal.cal";
+  // Create a pointer with the pedestal file
+  DataFileRoot * PedestalPointer = DataFileRoot::OpenFile(m_pedestalfilename.c_str());
+  PedestalPointer->set_ROI(m_roi);
+
+  // Calculate the pedestals, and compute and apply the common mode noise correction
+  PedestalPointer->compute_pedestals_alternative();
+  
+  for (int chan: m_roi_ch)
+  {
+      double ped_val, noise_val;
+      ped_val = PedestalPointer->ped(chan);
+      noise_val = PedestalPointer->noise(chan);
+      hPedestal->SetBinContent(chan, ped_val);
+      hNoise->SetBinContent(chan, noise_val);
+  }
+  
+  PedestalPointer->compute_cmmd_alternative();
+  for (int chan: m_roi_ch)
+  {
+      double ped_val, noise_val;
+      ped_val = PedestalPointer->ped(chan);
+      noise_val = PedestalPointer->noise(chan);
+      hPedestalCorrect->SetBinContent(chan, ped_val);
+      hNoiseCorrect->SetBinContent(chan, noise_val);
+  }
+  
+   
+  // Save the calculated pedestal information in a temporary file
+  PedestalPointer->save_pedestals(ped_f);
+  PedestalPointer->close();
+  delete PedestalPointer;
+  // Load the calculated pedestal info into the original datafile
+  ALiBaVaPointer->load_pedestals(ped_f, kTRUE);
+      
+  int columns, rows; 
+     
+  columns = m_detector->nPixels().X();
+  rows = m_detector->nPixels().Y();
+  
+  if (columns>rows)
+  {
+      m_horizontal = false;
+  }
+  else
+  {
+      m_horizontal = true;
+  }
+  
+  std::vector<unsigned int> all_ch(256);
+  std::iota(all_ch.begin(), all_ch.end(), 0);
+  
+  
+  std::vector<unsigned int> mask_ch;
+  std::set_difference(all_ch.begin(), all_ch.end(), m_roi_ch.begin(), m_roi_ch.end(),
+                        std::inserter(mask_ch, mask_ch.begin()));
+                        
+  
+  for (int i: mask_ch)
+  {
+      if (m_horizontal)
+      {
+          m_detector->maskChannel(0, i);
+      }
+      else
+      {
+          m_detector->maskChannel(i, 0);
+      }
+  }
+      
   // Set the timecuts
   ALiBaVaPointer->set_timecut(m_timecut_lower, m_timecut_upper);
   // Check how many events the data file contains.
   //nEvents = ALiBaVaPointer->nevents();
 
-// Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
-for(int ievt = 0; ievt < m_ignore_events; ievt++){
+  // Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
+  for(int ievt = 0; ievt < m_ignore_events; ievt++){
     ALiBaVaPointer->read_event();
   }
 
-  // Create histograms
-  chargeHist = new TH1F("chargeSignal","Charge;Charge [e];events", 100, -96000, 32000);
-  ADCHist = new TH1F("ADCSignal","Signal;(-1) Signal [ADC];events", 100, -200, 600);
-  SNRHist = new TH1F("SNRatio","SNRatio;(-1) SNRatio;events", 100, -50, 200);
+
+
+  
+  
 }
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -168,7 +279,8 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     LOG(ERROR) << "Terminating run";
     return StatusCode::EndRun;
   }
-
+  // Calculate the common mode for the signal in this event
+  ALiBaVaPointer->calc_common_mode_signal();
   // Process the opened data event, i.e. pedestal correction, common mode noise correction
   ALiBaVaPointer->process_event();
   // This gets the TDC time from the event, allowing timecuts around the event peak
@@ -178,8 +290,10 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     clipboard->putData(pixels, m_detector->getName());
     return StatusCode::NoData;
   }
+  
 
-  double channels_Sig_corrected[m_upper_channel-m_lower_channel+1];
+  double channels_Sig_corrected[m_roi_ch.size()];
+  /*
   if(m_correct_crosstalk){
     double channels_Sig[m_upper_channel-m_lower_channel+1];
     double b_one = m_b_one;
@@ -197,9 +311,10 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     channels_Sig_corrected[m_upper_channel-1] = (1+b_one)*channels_Sig[m_upper_channel-1]-b_one*channels_Sig[m_upper_channel-2]-b_two*channels_Sig[m_upper_channel-3];
     channels_Sig_corrected[m_upper_channel] = (1)*channels_Sig[m_upper_channel]-b_one*channels_Sig[m_upper_channel-1]-b_two*channels_Sig[m_upper_channel-2];
   }
-
+  */
+  double max_signal = 0;
   // This loops over the channels in the current ALiBaVa event
-  for(int chan = m_lower_channel; chan <= m_upper_channel; chan++){
+  for(int chan: m_roi_ch){
     // In order, these are the calibration factor, the calibrated signal, and the ADC signal
     // If a pedestal file is supplied, pedestal and common mode error correction is applied to all
     // double calibration = ALiBaVaPointer->get_gain(chan);
@@ -208,7 +323,9 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // double SNRatio = ALiBaVaPointer->sn(chan);
     double ADCSignal = 0;
     double SNRatio = 0;
-
+    
+  
+  
     if(m_correct_crosstalk){
       ADCSignal = channels_Sig_corrected[chan];
       SNRatio = channels_Sig_corrected[chan]/ALiBaVaPointer->noise(chan);
@@ -218,23 +335,45 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
       SNRatio = ALiBaVaPointer->sn(chan);
     }
     double CalSignal = ADCSignal*m_calibration_constant;
-
+    
+    if (ADCSignal > max_signal)
+    {
+        max_signal = ADCSignal;
+        //std::cout << chan << std::endl;
+    }
+    
+    
     // The chargecut is applied here
-    // std::cout << CalSignal << " smaller than " << m_chargecut << "?\n";
-    if(CalSignal < m_chargecut){
+    // std::cout << CalSignal << " greater than " << m_chargecut << "?\n";
+    // Not needed anymore but left in for now, other wise stuff explodes in Correlation
+    if(CalSignal > m_chargecut){  
+       //std::cout << "Here should be an entry" << CalSignal << std::endl;
     // if(true){
       // Create a pixel for every channel in this event with all the information and put it in the vector.
       // The value in the pixel reserved for the ADC value is used for the S/N ratio multiplied by 100000.
-      auto pixel = std::make_shared<Pixel>(m_detector->getName(), chan, 0, SNRatio*100000, CalSignal, 0);
+      
+      std::shared_ptr<Pixel> pixel;
+      
+      if (m_horizontal)
+      {
+          pixel = std::make_shared<Pixel>(m_detector->getName(), 0, chan, SNRatio*100000, CalSignal, 0);
+      }
+      else
+      {
+          pixel = std::make_shared<Pixel>(m_detector->getName(), chan, 0, SNRatio*100000, CalSignal, 0); 
+      }
+      
+      
       pixels.push_back(pixel);
 
       // Fill the histograms
-      chargeHist->Fill(CalSignal);
-      ADCHist->Fill(-ADCSignal);
-      SNRHist->Fill(-SNRatio);
+      hChargeSignal->Fill(CalSignal);
+      hADCSignal->Fill(ADCSignal);
+      hSNR->Fill(SNRatio);
     }
   }
-
+  // std::cout << "Maximum signal is: " << max_signal << std::endl;
+  hTimeProfile->Fill(TDCTime, max_signal,1);
   // Put the created vector of pixels on the clipboard.
   clipboard->putData(pixels, m_detector->getName());
 
@@ -242,7 +381,15 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
   if(pixels.empty()){
     return StatusCode::NoData;
   }
+  
+  
+  //std::vector<double> event_time;
+  //std::vector<double> highest_signal;
+  
+  //event_time.push_back(TDCTime);
+  //highest_signal.push_back(max_signal);
 
+  
   // Report the end of this event to Corryvreckan
   return StatusCode::Success;
 }

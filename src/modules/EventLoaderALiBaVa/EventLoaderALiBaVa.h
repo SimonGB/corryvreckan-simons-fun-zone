@@ -50,13 +50,14 @@ namespace corryvreckan {
         DataFileRoot * ALiBaVaPointer;
         int iEvent = 0;
         int nEvents = 0;
-        TH1F * chargeHist{};
-        TH1F * ADCHist{};
-        TH1F * SNRHist{};
-        TH1F * pedestalValues{};
-        TH1F * noiseValues{};
-        TH1F * correctedPedestalValues{};
-        TH1F * correctedNoiseValues{};
+        TH1F * hChargeSignal{};
+        TH1F * hADCSignal{};
+        TH1F * hSNR{};
+        TH1F * hPedestal{};
+        TH1F * hNoise{};
+        TH1F * hPedestalCorrect{};
+        TH1F * hNoiseCorrect{};
+        TProfile * hTimeProfile{};
 
         int m_run{}; 
         double m_timecut_lower{};
@@ -70,6 +71,10 @@ namespace corryvreckan {
         double m_calibration_constant{};
         double m_b_one{};
         double m_b_two{};
+        std::vector<unsigned int> m_roi{};
+        std::vector<unsigned int> m_roi_ch;
+        bool m_horizontal;
+        int m_polarity;
 
         std::string m_datafilename;
         std::string m_pedestalfilename;
