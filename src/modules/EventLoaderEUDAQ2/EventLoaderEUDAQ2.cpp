@@ -211,11 +211,11 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_sorted_std_eve
         LOG(DEBUG) << "Filling buffer with new event.";
         // fill buffer with new std event:
         auto new_event = get_next_std_event();
-        // in case EventLoader is used as monitor, new_event isn't necessarily returned
+        // in case EventLoader is used as monitor, new_event might be nullptr
         if(new_event) {
             sorted_events_.push(new_event);
         }
-        // in this case we need to return to uphold communication with ModuleManager
+        // if new_event is nullptr we need to return to uphold communication with ModuleManager
         else
             return nullptr;
     }
