@@ -11,16 +11,13 @@
 #ifndef EtaCalculation_H
 #define EtaCalculation_H 1
 
-#include <TCanvas.h>
-#include <TF1.h>
-#include <TH1F.h>
+#include <iostream>
+
 #include <TH2F.h>
 #include <TProfile.h>
-#include <iostream>
 
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
-#include "objects/Pixel.hpp"
 #include "objects/Track.hpp"
 
 namespace corryvreckan {
@@ -31,7 +28,6 @@ namespace corryvreckan {
     public:
         // Constructors and destructors
         EtaCalculation(Configuration& config, std::shared_ptr<Detector> detector);
-        ~EtaCalculation() {}
 
         // Functions
         void initialize() override;
@@ -39,22 +35,17 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
-        ROOT::Math::XYVector pixelIntercept(Track* tr);
-        void calculateEta(Track* track, Cluster* cluster);
-        std::string fit(TF1* function, std::string fname, TProfile* profile);
+        void calculate_eta(Track* track, Cluster* cluster);
+        std::string fit(std::string fname, double pitch, TProfile* profile) const;
 
-        std::shared_ptr<Detector> m_detector;
-        double m_chi2ndofCut;
-        std::string m_etaFormulaX;
-        TF1* m_etaFitX;
-        std::string m_etaFormulaY;
-        TF1* m_etaFitY;
+        std::shared_ptr<Detector> detector_;
+        double chi2ndof_cut_;
 
         // Histograms
-        TH2F* m_etaDistributionX;
-        TH2F* m_etaDistributionY;
-        TProfile* m_etaDistributionXprofile;
-        TProfile* m_etaDistributionYprofile;
+        TH2F* etaDistributionX_;
+        TH2F* etaDistributionY_;
+        TProfile* etaDistributionXprofile_;
+        TProfile* etaDistributionYprofile_;
     };
 } // namespace corryvreckan
 #endif // EtaCalculation_H
