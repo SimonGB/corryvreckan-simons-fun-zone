@@ -71,7 +71,7 @@ void EtaCalculation::initialize() {
                                             pitch_y / 2);
 }
 
-void EtaCalculation::calculate_eta(Track* track, Cluster* cluster) {
+void EtaCalculation::calculate_eta(const Track* track, const Cluster* cluster) {
     // Ignore single pixel clusters
     if(cluster->size() == 1) {
         return;
@@ -113,7 +113,7 @@ StatusCode EtaCalculation::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     // Loop over all tracks and look at the associated clusters to plot the eta distribution
     auto tracks = clipboard->getData<Track>();
-    for(auto& track : tracks) {
+    for(const auto& track : tracks) {
 
         // Cut on the chi2/ndof
         if(track->getChi2ndof() > chi2ndof_cut_) {
@@ -138,7 +138,7 @@ StatusCode EtaCalculation::run(const std::shared_ptr<Clipboard>& clipboard) {
     return StatusCode::Success;
 }
 
-std::string EtaCalculation::fit(std::string fname, double pitch, TProfile* profile) const {
+std::string EtaCalculation::fit(const std::string& fname, double pitch, TProfile* profile) const {
 
     auto formula = config_.get<std::string>(fname);
     auto function = new TF1(fname.c_str(), formula.c_str(), -pitch, pitch);

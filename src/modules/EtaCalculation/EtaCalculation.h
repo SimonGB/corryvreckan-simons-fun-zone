@@ -35,8 +35,8 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
-        void calculate_eta(Track* track, Cluster* cluster);
-        std::string fit(std::string fname, double pitch, TProfile* profile) const;
+        void calculate_eta(const Track* track, const Cluster* cluster);
+        std::string fit(const std::string& fname, double pitch, TProfile* profile) const;
 
         std::shared_ptr<Detector> detector_;
         double chi2ndof_cut_;
