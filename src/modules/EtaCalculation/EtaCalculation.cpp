@@ -145,12 +145,15 @@ std::string EtaCalculation::fit(std::string fname, double pitch, TProfile* profi
 void EtaCalculation::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     std::stringstream config;
-    config << std::endl
-           << "eta_constants_x_" << detector_->getName() << " ="
-           << fit("eta_formula_x", detector_->getPitch().X(), etaDistributionXprofile_);
-    config << std::endl
-           << "eta_constants_y_" << detector_->getName() << " ="
+    config << "eta_formula_x = \"" << config_.get<std::string>("eta_formula_x") << "\"" << std::endl
+           << "eta_constants_x_" << detector_->getName() << " = "
+           << fit("eta_formula_x", detector_->getPitch().X(), etaDistributionXprofile_) << std::endl
+           << "eta_formula_y = \"" << config_.get<std::string>("eta_formula_y") << "\"" << std::endl
+           << "eta_constants_y_" << detector_->getName() << " = "
            << fit("eta_formula_y", detector_->getPitch().Y(), etaDistributionYprofile_);
 
-    LOG(INFO) << "\"EtaCorrection\":" << config.str();
+    LOG(INFO) << "To apply this correction, place the following in the configuration:" << std::endl
+              << "[EtaCorrection]" << std::endl
+              << "name = " << detector_->getName() << std::endl
+              << config.str();
 }
