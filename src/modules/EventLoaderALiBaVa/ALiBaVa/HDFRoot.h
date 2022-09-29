@@ -12,30 +12,30 @@
 
 struct HDFRootPrivate;
 
-class HDFRoot: public DataFileRoot
-{
-    private:
-        HDFRootPrivate *priv;
+class HDFRoot : public DataFileRoot {
+private:
+    HDFRootPrivate* priv;
 
-        void next_scan_point();
-    public:
-        HDFRoot(const char *nam=0, const char *pedfile=0, const char *gainfile=0);
-        virtual ~HDFRoot();
+    void next_scan_point();
 
-        bool valid() const;
-        int nevents() const;
-        void open(const char *name);
-        void close();
-        void rewind();
-        void save();
-        void restore();
-        int read_event();
-        int read_data();
+public:
+    HDFRoot(const char* nam = 0, const char* pedfile = 0, const char* gainfile = 0);
+    virtual ~HDFRoot();
 
-        unsigned int clock_counter() const;
-        double time() const;
-        double temp() const;
-        void get_scan_values(short &delay, short &charge);
+    bool valid() const;
+    int nevents() const;
+    void open(const char* name);
+    void close();
+    void rewind();
+    void save();
+    void restore();
+    int read_event();
+    int read_data();
+
+    unsigned int clock_counter() const;
+    double time() const;
+    double temp() const;
+    void get_scan_values(short& delay, short& charge);
 };
 
 #endif /* HDFROOT_H_ */

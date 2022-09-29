@@ -8,11 +8,11 @@
  * Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
- #ifndef EventLoaderALiBaVa_H
- #define EventLoaderALiBaVa_H 1
+#ifndef EventLoaderALiBaVa_H
+#define EventLoaderALiBaVa_H 1
 
-#include "core/module/Module.hpp"
 #include "ALiBaVa/DataFileRoot.h"
+#include "core/module/Module.hpp"
 
 namespace corryvreckan {
     /** @ingroup Modules
@@ -47,19 +47,19 @@ namespace corryvreckan {
 
     private:
         std::shared_ptr<Detector> m_detector;
-        DataFileRoot * ALiBaVaPointer;
+        DataFileRoot* ALiBaVaPointer;
         int iEvent = 0;
         int nEvents = 0;
-        TH1F * hChargeSignal{};
-        TH1F * hADCSignal{};
-        TH1F * hSNR{};
-        TH1F * hPedestal{};
-        TH1F * hNoise{};
-        TH1F * hPedestalCorrect{};
-        TH1F * hNoiseCorrect{};
-        TProfile * hTimeProfile{};
+        TH1F* hChargeSignal{};
+        TH1F* hADCSignal{};
+        TH1F* hSNR{};
+        TH1F* hPedestal{};
+        TH1F* hNoise{};
+        TH1F* hPedestalCorrect{};
+        TH1F* hNoiseCorrect{};
+        TProfile* hTimeProfile{};
 
-        int m_run{}; 
+        int m_run{};
         double m_timecut_lower{};
         double m_timecut_upper{};
         int m_ignore_events{};
