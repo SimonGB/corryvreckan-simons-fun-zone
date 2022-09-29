@@ -38,27 +38,37 @@ void EtaCalculation::initialize() {
     etaDistributionX_ = new TH2F("etaDistributionX",
                                  title.c_str(),
                                  static_cast<int>(Units::convert(pitch_x, "um") * 2),
-                                 -pitch_x,
-                                 pitch_x,
+                                 -pitch_x / 2,
+                                 pitch_x / 2,
                                  static_cast<int>(Units::convert(pitch_x, "um") * 2),
-                                 -pitch_x,
-                                 pitch_x);
+                                 -pitch_x / 2,
+                                 pitch_x / 2);
     title = "2D #eta distribution Y;" + mod_axes_y + "No. entries";
     etaDistributionY_ = new TH2F("etaDistributionY",
                                  title.c_str(),
                                  static_cast<int>(Units::convert(pitch_y, "um") * 2),
-                                 -pitch_y,
-                                 pitch_y,
+                                 -pitch_y / 2,
+                                 pitch_y / 2,
                                  static_cast<int>(Units::convert(pitch_y, "um") * 2),
-                                 -pitch_y,
-                                 pitch_y);
+                                 -pitch_y / 2,
+                                 pitch_y / 2);
 
     title = "#eta distribution X;" + mod_axes_x;
-    etaDistributionXprofile_ = new TProfile(
-        "etaDistributionXprofile", title.c_str(), static_cast<int>(Units::convert(pitch_x, "um") * 2), -pitch_x, pitch_x);
+    etaDistributionXprofile_ = new TProfile("etaDistributionXprofile",
+                                            title.c_str(),
+                                            static_cast<int>(Units::convert(pitch_x, "um") * 2),
+                                            -pitch_x / 2,
+                                            pitch_x / 2,
+                                            -pitch_x / 2,
+                                            pitch_x / 2);
     title = "#eta distribution Y;" + mod_axes_x;
-    etaDistributionYprofile_ = new TProfile(
-        "etaDistributionYprofile", title.c_str(), static_cast<int>(Units::convert(pitch_y, "um") * 2), -pitch_y, pitch_y);
+    etaDistributionYprofile_ = new TProfile("etaDistributionYprofile",
+                                            title.c_str(),
+                                            static_cast<int>(Units::convert(pitch_y, "um") * 2),
+                                            -pitch_y / 2,
+                                            pitch_y / 2,
+                                            -pitch_y / 2,
+                                            pitch_y / 2);
 }
 
 void EtaCalculation::calculate_eta(Track* track, Cluster* cluster) {
@@ -75,6 +85,7 @@ void EtaCalculation::calculate_eta(Track* track, Cluster* cluster) {
                 reference_col = pixel->column();
             }
         }
+        // Map residual onto range -pitch/2 to pitch/2
         auto reference_X = detector_->getPitch().X() * (reference_col - 0.5 * detector_->nPixels().X());
         auto xmod_cluster = cluster->local().X() - reference_X;
         auto xmod_track = localIntercept.X() - reference_X;
@@ -88,6 +99,7 @@ void EtaCalculation::calculate_eta(Track* track, Cluster* cluster) {
                 reference_row = pixel->row();
             }
         }
+        // Map residual onto range -pitch/2 to pitch/2
         auto reference_Y = detector_->getPitch().Y() * (reference_row - 0.5 * detector_->nPixels().Y());
         auto ymod_cluster = cluster->local().Y() - reference_Y;
         auto ymod_track = localIntercept.Y() - reference_Y;
