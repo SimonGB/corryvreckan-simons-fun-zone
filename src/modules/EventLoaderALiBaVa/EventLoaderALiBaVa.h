@@ -2,7 +2,7 @@
  * @file
  * @brief Definition of module EventLoaderALiBaVa
  *
- * @copyright Copyright (c) 2020 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2021-2022 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -46,10 +46,9 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
-        std::shared_ptr<Detector> m_detector;
+        std::shared_ptr<Detector> detector_;
         DataFileRoot* ALiBaVaPointer;
-        int iEvent = 0;
-        int nEvents = 0;
+
         TH1F* hChargeSignal{};
         TH1F* hADCSignal{};
         TH1F* hSNR{};

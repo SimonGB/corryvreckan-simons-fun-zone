@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of module EventLoaderALiBaVa
  *
- * @copyright Copyright (c) 2020 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2021-2022 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -22,9 +22,7 @@
 using namespace corryvreckan;
 
 EventLoaderALiBaVa::EventLoaderALiBaVa(Configuration& config, std::shared_ptr<Detector> detector)
-    : Module(config, detector) {
-    m_detector = detector;
-}
+    : Module(config, detector), detector_(detector) {}
 
 void EventLoaderALiBaVa::initialize() {
 
@@ -183,8 +181,8 @@ void EventLoaderALiBaVa::initialize() {
 
     int columns, rows;
 
-    columns = m_detector->nPixels().X();
-    rows = m_detector->nPixels().Y();
+    columns = detector_->nPixels().X();
+    rows = detector_->nPixels().Y();
 
     if(columns > rows) {
         m_horizontal = false;
@@ -201,16 +199,14 @@ void EventLoaderALiBaVa::initialize() {
 
     for(int i : mask_ch) {
         if(m_horizontal) {
-            m_detector->maskChannel(0, i);
+            detector_->maskChannel(0, i);
         } else {
-            m_detector->maskChannel(i, 0);
+            detector_->maskChannel(i, 0);
         }
     }
 
     // Set the timecuts
     ALiBaVaPointer->set_timecut(m_timecut_lower, m_timecut_upper);
-    // Check how many events the data file contains.
-    // nEvents = ALiBaVaPointer->nevents();
 
     // Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
     for(int ievt = 0; ievt < m_ignore_events; ievt++) {
@@ -220,8 +216,7 @@ void EventLoaderALiBaVa::initialize() {
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
     // During running, every Corryvreckan event will get one ALiBaVa event
-    // Increment the event counter
-    iEvent++;
+
     // Create the pixelvector
     PixelVector pixels;
     // Get the event that already exists on the Corryvreckan clipboard
@@ -235,13 +230,13 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
         return StatusCode::EndRun;
         // Not sure if this is end of run or something else. Need to see difference between HDF5 and binary
     } else if(return_code == 0) {
-        LOG(ERROR) << "There\'s something wrong (0) with the datafile at event number " << iEvent - 1;
+        LOG(ERROR) << "There\'s something wrong (0) with the datafile";
         LOG(ERROR) << "Terminating run";
         return StatusCode::EndRun;
     } else if(return_code == 1) {
         // This means the event was read properly.
     } else if(return_code == 2) {
-        LOG(ERROR) << "There\'s something wrong (2) with the datafile at event number " << iEvent - 1;
+        LOG(ERROR) << "There\'s something wrong (2) with the datafile";
         LOG(ERROR) << "Terminating run";
         return StatusCode::EndRun;
     } else if(return_code == 3) {
@@ -252,11 +247,11 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
         // LOG(WARNING) << "End of data file reached.";
         return StatusCode::EndRun;
     } else if(return_code == 4) {
-        LOG(ERROR) << "There\'s something wrong (4) with the HDF5 datafile at event number " << iEvent - 1;
+        LOG(ERROR) << "There\'s something wrong (4) with the HDF5 datafile";
         LOG(ERROR) << "Terminating run";
         return StatusCode::EndRun;
     } else {
-        LOG(ERROR) << "This shouldn\'t happen. Current event number: " << iEvent - 1;
+        LOG(ERROR) << "This shouldn\'t happen.";
         LOG(ERROR) << "Terminating run";
         return StatusCode::EndRun;
     }
@@ -268,7 +263,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // The timecut is set in the ALiBaVa_loader() function.
     double TDCTime = ALiBaVaPointer->time();
     if(!ALiBaVaPointer->valid_time(TDCTime)) {
-        clipboard->putData(pixels, m_detector->getName());
+        clipboard->putData(pixels, detector_->getName());
         return StatusCode::NoData;
     }
 
@@ -333,9 +328,9 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
             std::shared_ptr<Pixel> pixel;
 
             if(m_horizontal) {
-                pixel = std::make_shared<Pixel>(m_detector->getName(), 0, chan, SNRatio * 100000, CalSignal, 0);
+                pixel = std::make_shared<Pixel>(detector_->getName(), 0, chan, SNRatio * 100000, CalSignal, 0);
             } else {
-                pixel = std::make_shared<Pixel>(m_detector->getName(), chan, 0, SNRatio * 100000, CalSignal, 0);
+                pixel = std::make_shared<Pixel>(detector_->getName(), chan, 0, SNRatio * 100000, CalSignal, 0);
             }
 
             pixels.push_back(pixel);
@@ -349,7 +344,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // std::cout << "Maximum signal is: " << max_signal << std::endl;
     hTimeProfile->Fill(TDCTime, max_signal, 1);
     // Put the created vector of pixels on the clipboard.
-    clipboard->putData(pixels, m_detector->getName());
+    clipboard->putData(pixels, detector_->getName());
 
     // If the pixels vector is empty, report this to Corryvreckan
     if(pixels.empty()) {
@@ -366,8 +361,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     return StatusCode::Success;
 }
 
-void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) {
+void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
     ALiBaVaPointer->close();
     delete ALiBaVaPointer;
-    LOG(DEBUG) << "Analysed " << iEvent; //<< " of total " << nEvents << " ALiBaVa events";
 }
