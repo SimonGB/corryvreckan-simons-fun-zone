@@ -65,7 +65,7 @@ void MaskCreator::initialize() {
                            m_detector->nPixels().Y() - 0.5);
 
     if(m_method == MaskingMethod::LOCALDENSITY) {
-        title = m_detector->getName() + " Occupancy distribution;Occupancy [hits/event];Counts";
+        title = m_detector->getName() + " Occupancy distribution;Occupancy;Entries";
         m_occupancyDist = new TH1D("occupancy_dist", title.c_str(), binsOccupancy, 0, 1);
 
         title = m_detector->getName() + " Density;x [px]; y [px]";
@@ -88,7 +88,7 @@ void MaskCreator::initialize() {
                                   -0.5,
                                   m_detector->nPixels().Y() - 0.5);
 
-        title = m_detector->getName() + " Local significance distribution;Local significance [squareroot(hits/event)];Counts";
+        title = m_detector->getName() + " Local significance distribution;Local significance ;Entries";
         m_significanceDist = new TH1D("local_significance_dist", title.c_str(), binsOccupancy, 0, 1);
     }
 
