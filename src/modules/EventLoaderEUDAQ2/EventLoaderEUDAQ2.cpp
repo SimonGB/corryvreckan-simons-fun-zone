@@ -11,6 +11,8 @@
 #include "EventLoaderEUDAQ2.h"
 #include "eudaq/FileReader.hh"
 
+#include "objects/Waveform.hpp"
+
 #include <TDirectory.h>
 
 using namespace corryvreckan;
@@ -56,7 +58,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
 
     // Forward all settings to EUDAQ
     // WARNING: the EUDAQ Configuration class is not very flexible and e.g. booleans have to be passed as 1 and 0.
-    auto configs = config_.getAll();
+    auto configs = config_.getAll(true);
     for(const auto& key : configs) {
         LOG(DEBUG) << "Forwarding key \"" << key.first << " = " << key.second << "\" to EUDAQ converter";
         cfg.Set(key.first, key.second);
@@ -489,7 +491,16 @@ PixelVector EventLoaderEUDAQ2::get_pixel_data(std::shared_ptr<eudaq::StandardEve
         }
 
         // when calibration is not available, set charge = raw
-        auto pixel = std::make_shared<Pixel>(detector_->getName(), col, row, raw, raw, ts);
+        auto pixel = (plane.HasWaveform(i)
+                          ? std::make_shared<Waveform>(
+                                detector_->getName(),
+                                col,
+                                row,
+                                raw,
+                                raw,
+                                ts,
+                                Waveform::waveform_t{plane.GetWaveform(i), plane.GetWaveformX0(i), plane.GetWaveformDX(i)})
+                          : std::make_shared<Pixel>(detector_->getName(), col, row, raw, raw, ts));
 
         hitmap->Fill(col, row);
         hPixelTimes->Fill(static_cast<double>(Units::convert(ts, "ms")));
