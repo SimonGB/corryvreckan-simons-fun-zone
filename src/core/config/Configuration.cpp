@@ -86,7 +86,7 @@ std::string Configuration::getText(const std::string& key, const std::string& de
 /**
  * @throws InvalidValueError If the path did not exists while the check_exists parameter is given
  *
- * For a relative path the absolute path of the configuration file is preprended. Absolute paths are not changed.
+ * For a relative path the absolute path of the configuration file is prepended. Absolute paths are not changed.
  */
 // TODO [doc] Document canonicalizing behaviour
 std::filesystem::path Configuration::getPath(const std::string& key, bool check_exists) const {
@@ -112,7 +112,7 @@ Configuration::getPathWithExtension(const std::string& key, const std::string& e
 /**
  * @throws InvalidValueError If the path did not exists while the check_exists parameter is given
  *
- * For all relative paths the absolute path of the configuration file is preprended. Absolute paths are not changed.
+ * For all relative paths the absolute path of the configuration file is prepended. Absolute paths are not changed.
  */
 // TODO [doc] Document canonicalizing behaviour
 std::vector<std::filesystem::path> Configuration::getPathArray(const std::string& key, bool check_exists) const {
@@ -191,7 +191,7 @@ void Configuration::merge(const Configuration& other) {
     }
 }
 
-std::vector<std::pair<std::string, std::string>> Configuration::getAll() const {
+std::vector<std::pair<std::string, std::string>> Configuration::getAll(bool mark_used) const {
     std::vector<std::pair<std::string, std::string>> result;
 
     // Loop over all configuration keys
@@ -199,6 +199,10 @@ std::vector<std::pair<std::string, std::string>> Configuration::getAll() const {
         // Skip internal keys starting with an underscore
         if(!key_value.first.empty() && key_value.first.front() == '_') {
             continue;
+        }
+
+        if(mark_used) {
+            used_keys_.markUsed(key_value.first);
         }
 
         result.emplace_back(key_value);
