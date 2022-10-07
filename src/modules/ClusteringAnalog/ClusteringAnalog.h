@@ -116,6 +116,8 @@ namespace corryvreckan {
         } thresholdType;
 
         int windowSize; // Cluster matrix to search neighbors
+        size_t neighborsSizeCentral;
+        bool includeCorners;
         bool rejectByROI;
         // Threshold - raw value (ADC unit, TOT, ...)
         float thresholdSeed;

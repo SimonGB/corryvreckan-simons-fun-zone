@@ -34,6 +34,7 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     if(windowSize < 1) {
         throw InvalidValueError(config_, "window_size", "Invalid window size - value should be >= 1.");
     }
+    includeCorners = config_.get<bool>("include_corners", false);
     flagAnalysisShape = config_.get<bool>("analysis_shape", false);
     flagAnalysisSNR = thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX;
 
@@ -63,6 +64,8 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
         throw InvalidCombinationError(
             detConf, {"calibration_file", "threshold_type"}, "Missing calibration file, required by S/N ratio analysis");
     }
+
+    neighborsSizeCentral = 0; // TODO
 }
 
 bool ClusteringAnalog::readCalibrationFileROOT(const std::string fileName) {
@@ -385,6 +388,7 @@ void ClusteringAnalog::fillHistograms(const std::shared_ptr<Cluster>& cluster, d
     }
 
     // Central seeds
+    // if(m_detector->getNeighbors(seed, static_cast<size_t>(windowSize), true).size() == neighborsSizeCentral) {}
     if(seed->column() >= windowSize && seed->row() >= windowSize &&
        seed->column() < m_detector->nPixels().X() - windowSize &&
        seed->row() < m_detector->nPixels().Y() - windowSize) {
@@ -465,10 +469,6 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
     map<std::shared_ptr<Pixel>, bool> used;
     map<int, map<int, std::shared_ptr<Pixel>>> hitmap;
 
-    // Get the device dimensions
-    int nRows = m_detector->nPixels().Y();
-    int nCols = m_detector->nPixels().X();
-
     // Seeding
     PixelVector seedCandidates;
     for(auto pixel : pixels) {
@@ -520,28 +520,26 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         // Nested lambda function for recursion
         std::function<void(std::shared_ptr<Pixel>&)> searchNeighbors;
         searchNeighbors = [&](std::shared_ptr<Pixel>& pxCenter) -> void {
+            for(auto coo : m_detector->getNeighbors(pxCenter, 1, includeCorners)) {
             // Traverse adjacent pixels around seed (central pixel)
-            for(int col = max(pxCenter->column() - 1, 0); col <= min(pxCenter->column() + 1, nCols - 1); col++) {
-                for(int row = max(pxCenter->row() - 1, 0); row <= min(pxCenter->row() + 1, nRows - 1); row++) {
-                    auto pixel = hitmap[col][row];
-                    // No pixel or already be accepted in cluster
-                    if(!pixel || used[pixel])
-                        continue;
-                    // Criteria for neighboring pixels
-                    if(isAboveNeighborThreshold(pixel.get())) {
-                        cluster->addPixel(&*pixel);
-                        used[pixel] = true;
-                        neighbors.push_back(pixel);
-                        LOG(DEBUG) << "- pixel col, row, charge : " << pixel->column() << "," << pixel->row() << ","
-                                   << pixel->charge();
-                        // Position by centre-of-gravity
-                        chargeSum += pixel->charge();
-                        colChargeWeighted += double(pixel->column()) * pixel->charge();
-                        rowChargeWeighted += double(pixel->row()) * pixel->charge();
-                        // Recursive searching
-                        if(isAboveIterationThreshold(pixel.get())) {
-                            searchNeighbors(pixel);
-                        }
+                auto pixel = hitmap[coo.first][coo.second];
+                // No pixel or already be accepted in cluster
+                if(!pixel || used[pixel])
+                    continue;
+                // Criteria for neighboring pixels
+                if(isAboveNeighborThreshold(pixel.get())) {
+                    cluster->addPixel(&*pixel);
+                    used[pixel] = true;
+                    neighbors.push_back(pixel);
+                    LOG(DEBUG) << "- pixel col, row, charge : " << pixel->column() << "," << pixel->row() << ","
+                                << pixel->charge();
+                    // Position by centre-of-gravity
+                    chargeSum += pixel->charge();
+                    colChargeWeighted += double(pixel->column()) * pixel->charge();
+                    rowChargeWeighted += double(pixel->row()) * pixel->charge();
+                    // Recursive searching
+                    if(isAboveIterationThreshold(pixel.get())) {
+                        searchNeighbors(pixel);
                     } // Neighbors found over threshold
                 }
             } // Loop neighbors
@@ -555,18 +553,14 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         // cluster as the whole window
         auto clusterWindow = std::make_shared<Cluster>();
         // Traverse all pixels in the NxN window around seed
-        for(int col = max(seed->column() - windowSize, 0); col <= min(seed->column() + windowSize, nCols - 1);
-            col++) {
-            for(int row = max(seed->row() - windowSize, 0); row <= min(seed->row() + windowSize, nRows - 1);
-                row++) {
-                auto pixel = hitmap[col][row];
-                if(!pixel)
-                    continue;
-                clusterWindow->addPixel(&*pixel);
-                chargeTotalWindow += pixel->charge();
-                colWeightTotalWindow += static_cast<double>(pixel->column()) * pixel->charge();
-                rowWeightTotalWindow += static_cast<double>(pixel->row()) * pixel->charge();
-            }
+        for(auto coo : m_detector->getNeighbors(seed, static_cast<size_t>(windowSize), true)) {
+            auto pixel = hitmap[coo.first][coo.second];
+            if(!pixel)
+                continue;
+            clusterWindow->addPixel(&*pixel);
+            chargeTotalWindow += pixel->charge();
+            colWeightTotalWindow += static_cast<double>(pixel->column()) * pixel->charge();
+            rowWeightTotalWindow += static_cast<double>(pixel->row()) * pixel->charge();
         }
         // End - window estimation
 
