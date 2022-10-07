@@ -78,7 +78,7 @@ void MaskCreator::initialize() {
                              -0.5,
                              m_detector->nPixels().Y() - 0.5);
 
-        title = m_detector->getName() + " Local significance;x [px];y [px]";
+        title = m_detector->getName() + " Local significance;x [px];y [px];Local significance";
         m_significance = new TH2D("local_significance",
                                   title.c_str(),
                                   m_detector->nPixels().X(),
