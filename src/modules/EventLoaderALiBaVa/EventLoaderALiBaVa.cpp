@@ -267,6 +267,17 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
         return StatusCode::NoData;
     }
 
+    double trigger_ts;
+
+    if(!clipboard->getEvent()->triggerList().empty()) {
+        trigger_ts = clipboard->getEvent()->triggerList().begin()->second;
+        LOG(DEBUG) << "Using trigger timestamp " << Units::display(trigger_ts, "us") << " as cluster timestamp.";
+
+    } else {
+        trigger_ts = 0;
+        LOG(DEBUG) << "No trigger timestamp setting 0 ns as cluster timestamp.";
+    }
+
     double channels_Sig_corrected[m_roi_ch.size()];
     /*
     if(m_correct_crosstalk){
@@ -328,9 +339,9 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
             std::shared_ptr<Pixel> pixel;
 
             if(m_horizontal) {
-                pixel = std::make_shared<Pixel>(detector_->getName(), 0, chan, SNRatio * 100000, CalSignal, 0);
+                pixel = std::make_shared<Pixel>(detector_->getName(), 0, chan, SNRatio * 100000, CalSignal, trigger_ts);
             } else {
-                pixel = std::make_shared<Pixel>(detector_->getName(), chan, 0, SNRatio * 100000, CalSignal, 0);
+                pixel = std::make_shared<Pixel>(detector_->getName(), chan, 0, SNRatio * 100000, CalSignal, trigger_ts);
             }
 
             pixels.push_back(pixel);
