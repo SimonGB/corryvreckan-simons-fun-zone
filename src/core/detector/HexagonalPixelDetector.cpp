@@ -228,12 +228,12 @@ size_t HexagonalPixelDetector::hex_distance(double x1, double y1, double x2, dou
 }
 
 std::set<std::pair<int, int>>
-HexagonalPixelDetector::getNeighbors(const std::shared_ptr<Pixel>& px, const size_t distance, const bool) const {
+HexagonalPixelDetector::getNeighbors(const int col, const int row, const size_t distance, const bool) const {
     std::set<std::pair<int, int>> neighbors;
 
-    for(int x = px->column() - static_cast<int>(distance); x <= px->column() + static_cast<int>(distance); x++) {
-        for(int y = px->row() - static_cast<int>(distance); y <= px->row() + static_cast<int>(distance); y++) {
-            if(hex_distance(px->column(), px->row(), x, y) <= distance) {
+    for(int x = col - static_cast<int>(distance); x <= col + static_cast<int>(distance); x++) {
+        for(int y = row - static_cast<int>(distance); y <= row + static_cast<int>(distance); y++) {
+            if(hex_distance(col, row, x, y) <= distance) {
 
                 if(!isWithinMatrix(x, y)) {
                     continue;
