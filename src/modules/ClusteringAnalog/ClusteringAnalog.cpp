@@ -523,9 +523,9 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         // Nested lambda function for recursion
         std::function<void(std::shared_ptr<Pixel>&)> searchNeighbors;
         searchNeighbors = [&](std::shared_ptr<Pixel>& pxCenter) -> void {
-            for(auto coo : m_detector->getNeighbors(pxCenter, 1, includeCorners)) {
+            for(auto neighborCandidate : m_detector->getNeighbors(pxCenter, 1, includeCorners)) {
                 // Traverse adjacent pixels around seed (central pixel)
-                auto pixel = hitmap[coo.first][coo.second];
+                auto pixel = hitmap[neighborCandidate.first][neighborCandidate.second];
                 // No pixel or already be accepted in cluster
                 if(!pixel || used[pixel])
                     continue;
@@ -556,8 +556,8 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         // cluster as the whole window
         auto clusterWindow = std::make_shared<Cluster>();
         // Traverse all pixels in the NxN window around seed
-        for(auto coo : m_detector->getNeighbors(seed, static_cast<size_t>(windowSize), true)) {
-            auto pixel = hitmap[coo.first][coo.second];
+        for(auto neighbor : m_detector->getNeighbors(seed, static_cast<size_t>(windowSize), true)) {
+            auto pixel = hitmap[neighbor.first][neighbor.second];
             if(!pixel)
                 continue;
             clusterWindow->addPixel(&*pixel);
