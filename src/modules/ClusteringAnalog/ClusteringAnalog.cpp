@@ -65,7 +65,9 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
             detConf, {"calibration_file", "threshold_type"}, "Missing calibration file, required by S/N ratio analysis");
     }
 
-    neighborsSizeCentral = 0; // TODO
+    neighborsSizeCentral = m_detector->getNeighbors(
+        m_detector->nPixels().X() / 2, m_detector->nPixels().Y() / 2,
+        static_cast<size_t>(windowSize), true).size();
 }
 
 bool ClusteringAnalog::readCalibrationFileROOT(const std::string fileName) {
@@ -388,10 +390,7 @@ void ClusteringAnalog::fillHistograms(const std::shared_ptr<Cluster>& cluster, d
     }
 
     // Central seeds
-    // if(m_detector->getNeighbors(seed, static_cast<size_t>(windowSize), true).size() == neighborsSizeCentral) {}
-    if(seed->column() >= windowSize && seed->row() >= windowSize &&
-       seed->column() < m_detector->nPixels().X() - windowSize &&
-       seed->row() < m_detector->nPixels().Y() - windowSize) {
+    if(m_detector->getNeighbors(seed->column(), seed->row(), static_cast<size_t>(windowSize), true).size() == neighborsSizeCentral) {
         clusterSizeCentral->Fill(static_cast<double>(cluster->size()));
         clusterChargeCentral->Fill(cluster->charge());
         clusterSeedChargeCentral->Fill(seed->charge());
