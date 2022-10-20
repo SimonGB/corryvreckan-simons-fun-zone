@@ -65,9 +65,11 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
             detConf, {"calibration_file", "threshold_type"}, "Missing calibration file, required by S/N ratio analysis");
     }
 
-    neighborsSizeCentral = m_detector->getNeighbors(
-        m_detector->nPixels().X() / 2, m_detector->nPixels().Y() / 2,
-        static_cast<size_t>(windowSize), true).size();
+    neighborsSizeCentral =
+        m_detector
+            ->getNeighbors(
+                m_detector->nPixels().X() / 2, m_detector->nPixels().Y() / 2, static_cast<size_t>(windowSize), true)
+            .size();
 }
 
 bool ClusteringAnalog::readCalibrationFileROOT(const std::string fileName) {
@@ -390,7 +392,8 @@ void ClusteringAnalog::fillHistograms(const std::shared_ptr<Cluster>& cluster, d
     }
 
     // Central seeds
-    if(m_detector->getNeighbors(seed->column(), seed->row(), static_cast<size_t>(windowSize), true).size() == neighborsSizeCentral) {
+    if(m_detector->getNeighbors(seed->column(), seed->row(), static_cast<size_t>(windowSize), true).size() ==
+       neighborsSizeCentral) {
         clusterSizeCentral->Fill(static_cast<double>(cluster->size()));
         clusterChargeCentral->Fill(cluster->charge());
         clusterSeedChargeCentral->Fill(seed->charge());
@@ -439,8 +442,9 @@ bool ClusteringAnalog::acceptCluster(const std::shared_ptr<Cluster>& cluster) {
     // Edge detection of ROI and masked pixels
     int cluster_size = static_cast<int>(cluster->size());
     if(estimationMethod == EstimationMethod::WINDOW && cluster_size < (windowSize * 2 + 1) * (windowSize * 2 + 1)) {
-        LOG(DEBUG) << "Rejecting incomplete cluster at (" << cluster->column() << "," << cluster->row() << ") with size = "
-                   << cluster->size() << " and window requirement " << (windowSize * 2 + 1) * (windowSize * 2 + 1);
+        LOG(DEBUG) << "Rejecting incomplete cluster at (" << cluster->column() << "," << cluster->row()
+                   << ") with size = " << cluster->size() << " and window requirement "
+                   << (windowSize * 2 + 1) * (windowSize * 2 + 1);
         hCutHisto->Fill(RejectionType::kIncompleteEdgeNxN);
         return false;
     }
@@ -520,7 +524,7 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         std::function<void(std::shared_ptr<Pixel>&)> searchNeighbors;
         searchNeighbors = [&](std::shared_ptr<Pixel>& pxCenter) -> void {
             for(auto coo : m_detector->getNeighbors(pxCenter, 1, includeCorners)) {
-            // Traverse adjacent pixels around seed (central pixel)
+                // Traverse adjacent pixels around seed (central pixel)
                 auto pixel = hitmap[coo.first][coo.second];
                 // No pixel or already be accepted in cluster
                 if(!pixel || used[pixel])
@@ -531,7 +535,7 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
                     used[pixel] = true;
                     neighbors.push_back(pixel);
                     LOG(DEBUG) << "- pixel col, row, charge : " << pixel->column() << "," << pixel->row() << ","
-                                << pixel->charge();
+                               << pixel->charge();
                     // Position by centre-of-gravity
                     chargeSum += pixel->charge();
                     colChargeWeighted += double(pixel->column()) * pixel->charge();
