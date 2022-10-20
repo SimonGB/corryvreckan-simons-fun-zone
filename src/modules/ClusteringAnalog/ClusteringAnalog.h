@@ -42,7 +42,7 @@ namespace corryvreckan {
         bool acceptCluster(const std::shared_ptr<Cluster>& cluster);
         void fillHistogramsShapeAnalysis(const std::shared_ptr<Cluster>& cluster);
         void fillHistograms(const std::shared_ptr<Cluster>& cluster, double chargeTotal);
-        bool readCalibrationFileROOT(const std::string fileName);
+        bool readCalibrationFileROOT(const std::filesystem::path fileName);
 
         std::shared_ptr<Detector> m_detector;
 

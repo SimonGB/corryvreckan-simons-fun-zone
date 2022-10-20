@@ -51,18 +51,19 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
 
     // Read calibration file
     isCalibrated = false;
-    if(detConf.has("calibration_file")) {
-        string tmp = detConf.getText("calibration_file"); // Return absolute path
-        tmp = tmp.substr(1UL, tmp.size() - 2);            // DEBUG: Remove double quotes around string
-        if(readCalibrationFileROOT(tmp)) {
-            LOG(INFO) << "Calibration file found - " << tmp;
-            isCalibrated = true;
+    if(thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX) {
+        if(detConf.has("calibration_file")) {
+            auto calibFilePath = detConf.getPath("calibration_file", true); // Return absolute path
+            if(readCalibrationFileROOT(calibFilePath)) {
+                LOG(INFO) << "Calibration file " << calibFilePath << " loaded successfully";
+                isCalibrated = true;
+            } else {
+                throw InvalidValueError(detConf, "calibration_file", "Invalid calibration file");
+            }
         } else {
-            throw InvalidValueError(detConf, "calibration_file", "Invalid calibration file");
+            throw InvalidCombinationError(
+                detConf, {"calibration_file", "threshold_type"}, "Missing calibration file, required by S/N ratio analysis");
         }
-    } else if(thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX) {
-        throw InvalidCombinationError(
-            detConf, {"calibration_file", "threshold_type"}, "Missing calibration file, required by S/N ratio analysis");
     }
 
     neighborsSizeCentral =
@@ -72,7 +73,7 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
             .size();
 }
 
-bool ClusteringAnalog::readCalibrationFileROOT(const std::string fileName) {
+bool ClusteringAnalog::readCalibrationFileROOT(const std::filesystem::path fileName) {
     auto f = new TFile(fileName.c_str(), "READ");
     if(!f->IsOpen()) {
         return false;
