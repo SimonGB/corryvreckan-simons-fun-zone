@@ -320,8 +320,8 @@ float ClusteringAnalog::SNR(const Pixel* px) {
     if(pNoise > 0.)
         return float(px->charge() / pNoise);
     else {
-        LOG_ONCE(WARNING) << "Invalid noise value <" << pNoise << "> - return raw charge of (" << px->column() << "," << px->row()
-                          << ")";
+        LOG_ONCE(WARNING) << "Invalid noise value <" << pNoise << "> - return raw charge of (" << px->column() << ","
+                          << px->row() << ")";
         return float(px->charge());
     }
 }
