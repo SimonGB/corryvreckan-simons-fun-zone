@@ -311,16 +311,16 @@ void ClusteringAnalog::fillHistogramsShapeAnalysis(const std::shared_ptr<Cluster
 // return charge, if calibration file is not available.
 float ClusteringAnalog::SNR(const Pixel* px) {
     if(!isCalibrated) {
-        LOG(WARNING) << "Calibration file NOT initialized - return raw charge of (" << px->column() << "," << px->row()
-                     << ")";
+        LOG_ONCE(WARNING) << "Calibration file NOT initialized - return raw charge of (" << px->column() << "," << px->row()
+                          << ")";
         return float(px->charge());
     }
     double pNoise = noisemap[static_cast<size_t>(px->column())][static_cast<size_t>(px->row())];
     if(pNoise > 0.)
         return float(px->charge() / pNoise);
     else {
-        LOG(WARNING) << "Invalid noise value <" << pNoise << "> - return raw charge of (" << px->column() << "," << px->row()
-                     << ")";
+        LOG_ONCE(WARNING) << "Invalid noise value <" << pNoise << "> - return raw charge of (" << px->column() << "," << px->row()
+                          << ")";
         return float(px->charge());
     }
 }
