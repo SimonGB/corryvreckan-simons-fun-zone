@@ -62,10 +62,7 @@ namespace corryvreckan {
         int m_lower_channel{};
         int m_upper_channel{};
         double m_chargecut{};
-        bool m_correct_crosstalk{};
         double m_calibration_constant{};
-        double m_b_one{};
-        double m_b_two{};
         std::vector<unsigned int> m_roi_ch{};
         bool m_horizontal;
 
