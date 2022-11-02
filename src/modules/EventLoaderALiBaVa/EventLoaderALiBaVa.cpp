@@ -38,16 +38,16 @@ void EventLoaderALiBaVa::initialize() {
     config_.setDefaultArray<unsigned int>("ROI", {0, 255});
     config_.setDefault<int>("polarity", -1);
 
-    m_inputDirectory = config_.getPath("input_directory");
-    m_run = config_.get<int>("run");
-    m_timecut_low = config_.get<double>("timecut_low");
-    m_timecut_up = config_.get<double>("timecut_up");
-    m_ignore_events = config_.get<int>("ignore_events");
+    std::string input_directory = config_.getPath("input_directory");
+    int run = config_.get<int>("run");
+    double timecut_low = config_.get<double>("timecut_low");
+    double timecut_up = config_.get<double>("timecut_up");
+    int ignore_events = config_.get<int>("ignore_events");
     m_chargecut = config_.get<double>("chargecut");
     m_calibration_constant = config_.get<double>("calibration_constant");
     m_correct_crosstalk = config_.get<bool>("crosstalk_correction");
-    m_roi = config_.getArray<unsigned int>("ROI");
-    m_polarity = config_.get<int>("polarity");
+    std::vector<unsigned int> roi = config_.getArray<unsigned int>("ROI");
+    int polarity = config_.get<int>("polarity");
     if(!m_correct_crosstalk) {
         config_.setDefault<double>("b_one", 0.);
         config_.setDefault<double>("b_two", 0.);
@@ -56,9 +56,9 @@ void EventLoaderALiBaVa::initialize() {
     m_b_two = config_.get<double>("b_two");
 
     // Open the input directory
-    DIR* directory = opendir(m_inputDirectory.c_str());
+    DIR* directory = opendir(input_directory.c_str());
     if(directory == nullptr) {
-        LOG(ERROR) << "Directory \'" << m_inputDirectory << "\' does not exist or was not supplied.";
+        LOG(ERROR) << "Directory \'" << input_directory << "\' does not exist or was not supplied.";
         return;
     }
 
@@ -67,17 +67,17 @@ void EventLoaderALiBaVa::initialize() {
     while(entry = readdir(directory)) {
         if(entry->d_type == DT_REG) {
             std::string entryName = entry->d_name;
-            if(entryName.find(std::to_string(m_run) + ".dat") != std::string::npos ||
-               entryName.find("dat_run" + std::to_string(m_run) + ".hdf") != std::string::npos) {
-                m_datafilename = m_inputDirectory + "/" + entryName;
+            if(entryName.find(std::to_string(run) + ".dat") != std::string::npos ||
+               entryName.find("dat_run" + std::to_string(run) + ".hdf") != std::string::npos) {
+                m_datafilename = input_directory + "/" + entryName;
             }
-            if(entryName.find(std::to_string(m_run) + ".ped") != std::string::npos ||
-               entryName.find("ped_run" + std::to_string(m_run) + ".hdf") != std::string::npos) {
-                m_pedestalfilename = m_inputDirectory + "/" + entryName;
+            if(entryName.find(std::to_string(run) + ".ped") != std::string::npos ||
+               entryName.find("ped_run" + std::to_string(run) + ".hdf") != std::string::npos) {
+                m_pedestalfilename = input_directory + "/" + entryName;
             }
-            if(entryName.find(std::to_string(m_run) + ".cal") != std::string::npos ||
-               entryName.find("cal_run" + std::to_string(m_run) + ".hdf") != std::string::npos) {
-                m_calibrationfilename = m_inputDirectory + "/" + entryName;
+            if(entryName.find(std::to_string(run) + ".cal") != std::string::npos ||
+               entryName.find("cal_run" + std::to_string(run) + ".hdf") != std::string::npos) {
+                m_calibrationfilename = input_directory + "/" + entryName;
             }
         }
     }
@@ -85,7 +85,7 @@ void EventLoaderALiBaVa::initialize() {
     // Log errors in case the files aren't found in the folder.
     // The datafile can also be supplied directly in the config.
     if(m_datafilename.length() == 0) {
-        LOG(ERROR) << "No data file was found for ALiBaVa in " << m_inputDirectory;
+        LOG(ERROR) << "No data file was found for ALiBaVa in " << input_directory;
         return;
     }
     if(m_pedestalfilename.length() == 0) {
@@ -128,19 +128,19 @@ void EventLoaderALiBaVa::initialize() {
     // Create a pointer with the data file.
     ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str());
     // Sort vector to avoid errors later on
-    std::sort(m_roi.begin(), m_roi.end());
+    std::sort(roi.begin(), roi.end());
     // Set the region of interest
-    ALiBaVaPointer->set_ROI(m_roi);
+    ALiBaVaPointer->set_ROI(roi);
     // Get the vector with all ROI channels listed to use here
     m_roi_ch = ALiBaVaPointer->get_ROI();
 
-    ALiBaVaPointer->set_polarity(m_polarity);
+    ALiBaVaPointer->set_polarity(polarity);
 
     const char* ped_f = "alibava_ped.ped";
     const char* cal_f = "alibava_cal.cal";
     // Create a pointer with the pedestal file
     DataFileRoot* PedestalPointer = DataFileRoot::OpenFile(m_pedestalfilename.c_str());
-    PedestalPointer->set_ROI(m_roi);
+    PedestalPointer->set_ROI(roi);
 
     // Calculate the pedestals, and compute and apply the common mode noise correction
     PedestalPointer->compute_pedestals_alternative();
@@ -196,13 +196,18 @@ void EventLoaderALiBaVa::initialize() {
     }
 
     // Set the timecuts
-    ALiBaVaPointer->set_timecut(m_timecut_low, m_timecut_up);
+    ALiBaVaPointer->set_timecut(timecut_low, timecut_up);
 
     // Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
-    for(int ievt = 0; ievt < m_ignore_events; ievt++) {
+    for(int ievt = 0; ievt < ignore_events; ievt++) {
         ALiBaVaPointer->read_event();
     }
 }
+
+
+
+
+
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
     // During running, every Corryvreckan event will get one ALiBaVa event

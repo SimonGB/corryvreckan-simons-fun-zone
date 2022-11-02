@@ -59,21 +59,15 @@ namespace corryvreckan {
         TProfile* hTimeProfile{};
 
         int m_run{};
-        double m_timecut_low{};
-        double m_timecut_up{};
-        int m_ignore_events{};
         int m_lower_channel{};
         int m_upper_channel{};
         double m_chargecut{};
-        std::string m_inputDirectory{};
         bool m_correct_crosstalk{};
         double m_calibration_constant{};
         double m_b_one{};
         double m_b_two{};
-        std::vector<unsigned int> m_roi{};
-        std::vector<unsigned int> m_roi_ch;
+        std::vector<unsigned int> m_roi_ch{};
         bool m_horizontal;
-        int m_polarity;
 
         std::string m_datafilename;
         std::string m_pedestalfilename;
