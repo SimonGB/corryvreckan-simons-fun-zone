@@ -10,9 +10,6 @@
 #include <vector>
 
 #include "AsciiRoot.h"
-//#include "Tracer.h"
-//#include "Hit.h"
-//#include "ChanList.h"
 #include "core/utils/log.h"
 #include "utils.h"
 
@@ -54,8 +51,6 @@ std::vector<int> decode_header(const std::string& h, AsciiRoot::XtraValues& xtra
             vout.push_back(atoi(buf));
         }
     }
-    // LOG(DEBUG) << "####################";
-    // for (auto i: vout) std::cout << i << ' ';
     return vout;
 }
 
@@ -79,9 +74,7 @@ int AsciiRoot::nevents() const {
 }
 
 bool AsciiRoot::valid() const {
-    // LOG(DEBUG) << "Testing if file is Valid";
     return (priv->ifile != 0);
-    // LOG(DEBUG) << "Tested if file is Valid finished";
 }
 
 void AsciiRoot::open(const char* name) {
@@ -96,14 +89,11 @@ void AsciiRoot::open(const char* name) {
     unsigned int ic, lheader;
     char c;
     priv->ifile->read((char*)&_t0, sizeof(time_t));
-    // std::cout << "64b: " << ctime(&_t0) << std::endl;
     priv->ifile->read((char*)&_type, sizeof(int));
-    // std::cout << "type_ " << _type << std::endl;
     if(_type > LastRType) {
         priv->ifile->seekg(0, std::ios::beg);
         priv->ifile->read((char*)&_t0, sizeof(int));
         priv->ifile->read((char*)&_type, sizeof(int));
-        // std::cout << "32b: " << ctime(&_t0) << std::endl;
     }
 
     priv->ifile->read((char*)&lheader, sizeof(unsigned int));
@@ -120,7 +110,6 @@ void AsciiRoot::open(const char* name) {
         header = header.substr(5);
     }
 
-    // std::cout << "type: " << _type << " header: " << header << std::endl;
     std::vector<int> param = decode_header(header, _xtra);
     priv->ifile->read((char*)_ped, max_nchan * sizeof(double));
     priv->ifile->read((char*)_noise, max_nchan * sizeof(double));
@@ -272,13 +261,10 @@ int AsciiRoot::read_event() {
         }
 
         if(priv->ifile->eof()) {
-            // std::cout << "End of file" << std::endl;
             return -1;
         } else if(priv->ifile->bad()) {
-            // std::cout << "Problems with data file" << std::endl;
             return 0;
         } else {
-            // process_event();
             return 1;
         }
     } else
@@ -290,7 +276,6 @@ double AsciiRoot::time() const {
     short ipart = (_data.time & 0xffff0000) >> 16;
     if(ipart < 0)
         fpart *= -1;
-    // double tt = 100.*(1. -(ipart + (fpart/65535.)));
     double tt = 100.0 * (ipart + (fpart / 65535.));
     return tt;
 }

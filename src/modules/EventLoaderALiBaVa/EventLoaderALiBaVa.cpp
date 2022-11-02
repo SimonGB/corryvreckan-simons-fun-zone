@@ -13,11 +13,7 @@
 #include <TH2F.h>
 #include <TProfile.h>
 #include <dirent.h>
-
-//#include "objects/Pixel.hpp"
-//#include "ALiBaVa/auxfunctions.h"
 #include "EventLoaderALiBaVa.h"
-//#include "ALiBaVa/HDFRoot.h"
 
 using namespace corryvreckan;
 
@@ -131,12 +127,6 @@ void EventLoaderALiBaVa::initialize() {
 
     // Create a pointer with the data file.
     ALiBaVaPointer = DataFileRoot::OpenFile(m_datafilename.c_str());
-    // DEBUG stuff
-    // print the vector
-    // for (auto i: m_roi)
-    // std::cout << i << std::endl;
-    // print the size of the vector
-    // std::cout << m_roi.size() << std::endl;
     // Sort vector to avoid errors later on
     std::sort(m_roi.begin(), m_roi.end());
     // Set the region of interest
@@ -226,7 +216,6 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // Give feedback according to return code
     int return_code = ALiBaVaPointer->read_event();
     if(return_code == -1) {
-        // LOG(WARNING) << "End of data file reached.";
         return StatusCode::EndRun;
         // Not sure if this is end of run or something else. Need to see difference between HDF5 and binary
     } else if(return_code == 0) {
@@ -240,11 +229,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
         LOG(ERROR) << "Terminating run";
         return StatusCode::EndRun;
     } else if(return_code == 3) {
-        // LOG(ERROR) << "There\'s something wrong (3) with the datafile at event number " << iEvent-1;
-        // LOG(ERROR) << "Terminating run";
-        // return StatusCode::EndRun;
         // Still need to figure this out... I think it's just end of run. Need to see difference between HDF5 and binary
-        // LOG(WARNING) << "End of data file reached.";
         return StatusCode::EndRun;
     } else if(return_code == 4) {
         LOG(ERROR) << "There\'s something wrong (4) with the HDF5 datafile";
@@ -279,37 +264,9 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     }
 
     double channels_Sig_corrected[m_roi_ch.size()];
-    /*
-    if(m_correct_crosstalk){
-      double channels_Sig[m_upper_channel-m_lower_channel+1];
-      double b_one = m_b_one;
-      double b_two = m_b_two;
-
-      for(int chan = m_lower_channel; chan <= m_upper_channel; chan++){
-        channels_Sig[chan-m_lower_channel] = ALiBaVaPointer->ADC_signal(chan);
-      }
-
-      channels_Sig_corrected[0] = (1+b_one+b_two)*channels_Sig[0];
-      channels_Sig_corrected[1] = (1+b_one+b_two)*channels_Sig[1]-b_one*channels_Sig[0];
-      for(int chan = m_lower_channel+2; chan <= m_upper_channel-2; chan++){
-        channels_Sig_corrected[chan-m_lower_channel] =
-    (1+b_one+b_two)*channels_Sig[chan-m_lower_channel]-b_one*channels_Sig[chan-m_lower_channel-1]-b_two*channels_Sig[chan-m_lower_channel-2];
-      }
-      channels_Sig_corrected[m_upper_channel-1] =
-    (1+b_one)*channels_Sig[m_upper_channel-1]-b_one*channels_Sig[m_upper_channel-2]-b_two*channels_Sig[m_upper_channel-3];
-      channels_Sig_corrected[m_upper_channel] =
-    (1)*channels_Sig[m_upper_channel]-b_one*channels_Sig[m_upper_channel-1]-b_two*channels_Sig[m_upper_channel-2];
-    }
-    */
     double max_signal = 0;
     // This loops over the channels in the current ALiBaVa event
     for(int chan : m_roi_ch) {
-        // In order, these are the calibration factor, the calibrated signal, and the ADC signal
-        // If a pedestal file is supplied, pedestal and common mode error correction is applied to all
-        // double calibration = ALiBaVaPointer->get_gain(chan);
-        // double CalSignal = ALiBaVaPointer->signal(chan);
-        // double ADCSignal = ALiBaVaPointer->signal(chan)*calibration;
-        // double SNRatio = ALiBaVaPointer->sn(chan);
         double ADCSignal = 0;
         double SNRatio = 0;
 
@@ -324,15 +281,11 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
         if(ADCSignal > max_signal) {
             max_signal = ADCSignal;
-            // std::cout << chan << std::endl;
         }
 
         // The chargecut is applied here
-        // std::cout << CalSignal << " greater than " << m_chargecut << "?\n";
         // Not needed anymore but left in for now, other wise stuff explodes in Correlation
         if(CalSignal > m_chargecut) {
-            // std::cout << "Here should be an entry" << CalSignal << std::endl;
-            // if(true){
             // Create a pixel for every channel in this event with all the information and put it in the vector.
             // The value in the pixel reserved for the ADC value is used for the S/N ratio multiplied by 100000.
 
@@ -352,7 +305,6 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
             hSNR->Fill(SNRatio);
         }
     }
-    // std::cout << "Maximum signal is: " << max_signal << std::endl;
     hTimeProfile->Fill(TDCTime, max_signal, 1);
     // Put the created vector of pixels on the clipboard.
     clipboard->putData(pixels, detector_->getName());
@@ -361,12 +313,6 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     if(pixels.empty()) {
         return StatusCode::NoData;
     }
-
-    // std::vector<double> event_time;
-    // std::vector<double> highest_signal;
-
-    // event_time.push_back(TDCTime);
-    // highest_signal.push_back(max_signal);
 
     // Report the end of this event to Corryvreckan
     return StatusCode::Success;

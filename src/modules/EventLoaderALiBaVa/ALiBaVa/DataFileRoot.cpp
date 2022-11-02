@@ -25,7 +25,6 @@
 #include "AsciiRoot.h"
 #include "DataFileRoot.h"
 #include "HDFRoot.h"
-//#include "utils.h"
 
 #ifdef __APPLE__
 #define sighandler_t sig_t
@@ -58,19 +57,13 @@ DataFileRoot::DataFileRoot(const char* nam, const char* pedfile, const char* gai
         _mask[i] = false;
     }
 
-    ////  Cannot call open in the constructor since overrides are not
-    ////  available in the constructor
-    //    if (nam)
-    //        open(nam);
+    //  Cannot call open in the constructor since overrides are not
+    //  available in the constructor
 
     if(pedfile)
         load_pedestals(pedfile);
 
-    // if (gainfile)
-    // load_gain(gainfile);
-
     // TODO: this loads a "fixed" name file. Be more general...
-    // load_masking();
 }
 
 DataFileRoot::~DataFileRoot() {
@@ -102,14 +95,6 @@ void DataFileRoot::set_ROI(std::vector<unsigned int> bounds) {
         }
         _roi.insert(_roi.end(), temp_array.begin(), temp_array.end());
     }
-    /*
-    std::cout << "In set_ROI" << std::endl;
-    std::cout << _roi.size() << std::endl;
-    for (auto k: _roi)
-        std::cout << k << std::endl;
-    std::cout << _roi.size() << std::endl;
-    std::cout << "end set_ROI" << std::endl;
-     */
 }
 
 void DataFileRoot::set_timecut(double t1, double t2) {
@@ -132,7 +117,6 @@ bool DataFileRoot::valid_time(double tim) const {
 
 void DataFileRoot::compute_pedestals_alternative() {
     int mxevts = 10000000;
-    // int max_nchan = 128;
 
     int i, ievt;
     std::vector<double> pedestal_data[max_nchan];
@@ -146,21 +130,15 @@ void DataFileRoot::compute_pedestals_alternative() {
         _ped[i] = _noise[i] = 0.;
 
     for(ievt = 0; read_data() == 1 && ievt < mxevts; ievt++) {
-        // std::cout << "IT DOESN'T GET TO THIS LOOP?";
-        // now it does, read_data() return value needs to be checked, different for HDF5 and binary
         for(unsigned int i : _roi) {
             pedestal_data[i].push_back(_data.data[i]);
-            // std::cout << "Pedestal data: " << _data.data[i] << "\n";
         }
     }
 
     for(unsigned int i : _roi) {
-        // for(int test=0;test<101;test++){ std::cout << pedestal_data[i][test] << "\n";}
         pedestal_average[i] = std::accumulate(pedestal_data[i].begin(), pedestal_data[i].end(), 0.0);
-        // std::cout << pedestal_average[i] << "\n";
 
         pedestal_average[i] = pedestal_average[i] / pedestal_data[i].size();
-        // std::cout << pedestal_average[i] << "\n";
 
         pedestal_stdev[i] =
             std::inner_product(pedestal_data[i].begin(), pedestal_data[i].end(), pedestal_data[i].begin(), 0.0);
@@ -169,7 +147,6 @@ void DataFileRoot::compute_pedestals_alternative() {
 
         _ped[i] = pedestal_average[i];
         _noise[i] = pedestal_stdev[i];
-        // std::cout << "Before cmmd" << _ped[i] << "\n";
     }
 
     rewind();
@@ -196,12 +173,10 @@ void DataFileRoot::compute_cmmd_alternative() {
         nEvents++;
         double event_sum = 0;
         for(unsigned int i : _roi) {
-            // std::cout << _data.data[i] << "\n";
             event_sum += (_data.data[i] - _ped[i]);
         }
         event_bias = event_sum / (_roi.size());
         cmn += event_bias;
-        // std::cout << cmn << "\n";
         for(unsigned int i : _roi) {
             corrected_pedestal_data[i].push_back(_data.data[i] - event_bias);
         }
@@ -221,9 +196,6 @@ void DataFileRoot::compute_cmmd_alternative() {
 
         _ped[i] = pedestal_average[i];
         _noise[i] = pedestal_stdev[i];
-
-        // std::cout << "After cmmd" << _ped[i] << "\n";
-        // std::cout << _noise[i] << "\n";
     }
 
     rewind();
@@ -235,10 +207,7 @@ void DataFileRoot::save_pedestals(const char* fnam) {
         std::cout << "Could not open " << fnam << " to save pedestals." << std::endl;
         return;
     }
-
-    // TODO: _nchan can be updated in an event by event basis
-    //       while here we are assuming that it is the same
-    //       for all the events
+    
     ofile << _cmmd[0] << "\n";
 
     int i;
@@ -263,8 +232,6 @@ void DataFileRoot::load_pedestals(const char* fnam, bool show) {
             break;
 
         ifile >> _ped[i] >> std::ws >> _noise[i] >> std::ws;
-        // std::cout << _ped[i] << std::endl;
-        // _mask[i] = (_noise[i]>20. || _noise[i]<=0.);
     }
     ifile.close();
 }
@@ -312,7 +279,6 @@ void DataFileRoot::calc_common_mode_signal() {
             mean = signal_sum / n;
             st_dev = sqrt(signal_square / n - mean * mean);
         }
-        // std::cout << "Iteration " << ip << ": Mean: " << mean << " Deviation: " << st_dev << std::endl;
     }
     _cmmd_roi = mean;
     _cnoise_roi = st_dev;
@@ -333,7 +299,6 @@ DataFileRoot* DataFileRoot::OpenFile(const char* nam, const char* pedfile, const
     struct stat sb;
     if(stat(nam, &sb) == -1)
         return 0;
-        
         
         
 
