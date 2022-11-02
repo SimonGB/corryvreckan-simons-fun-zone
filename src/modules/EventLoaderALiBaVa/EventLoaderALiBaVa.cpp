@@ -29,25 +29,25 @@ void EventLoaderALiBaVa::initialize() {
     // Default values are set first
 
     config_.setDefault<int>("run", 0);
-    config_.setDefault<double>("LowerTimecut", 0);
-    config_.setDefault<double>("UpperTimecut", std::numeric_limits<double>::max());
-    config_.setDefault<int>("IgnoreEvents", 1);
-    config_.setDefault<double>("Chargecut", std::numeric_limits<double>::max());
-    config_.setDefault<double>("CalibrationConstant", 1.0);
-    config_.setDefault<bool>("CrosstalkCorrection", false);
+    config_.setDefault<double>("timecut_low", 0);
+    config_.setDefault<double>("timecut_up", std::numeric_limits<double>::max());
+    config_.setDefault<int>("ignore_events", 1);
+    config_.setDefault<double>("chargecut", std::numeric_limits<double>::max());
+    config_.setDefault<double>("calibration_constant", 1.0);
+    config_.setDefault<bool>("crosstalk_correction", false);
     config_.setDefaultArray<unsigned int>("ROI", {0, 255});
-    config_.setDefault<int>("Polarity", -1);
+    config_.setDefault<int>("polarity", -1);
 
     m_inputDirectory = config_.getPath("input_directory");
     m_run = config_.get<int>("run");
-    m_timecut_lower = config_.get<double>("LowerTimecut");
-    m_timecut_upper = config_.get<double>("UpperTimecut");
-    m_ignore_events = config_.get<int>("IgnoreEvents");
-    m_chargecut = config_.get<double>("Chargecut");
-    m_calibration_constant = config_.get<double>("CalibrationConstant");
-    m_correct_crosstalk = config_.get<bool>("CrosstalkCorrection");
+    m_timecut_low = config_.get<double>("timecut_low");
+    m_timecut_up = config_.get<double>("timecut_up");
+    m_ignore_events = config_.get<int>("ignore_events");
+    m_chargecut = config_.get<double>("chargecut");
+    m_calibration_constant = config_.get<double>("calibration_constant");
+    m_correct_crosstalk = config_.get<bool>("crosstalk_correction");
     m_roi = config_.getArray<unsigned int>("ROI");
-    m_polarity = config_.get<int>("Polarity");
+    m_polarity = config_.get<int>("polarity");
     if(!m_correct_crosstalk) {
         config_.setDefault<double>("b_one", 0.);
         config_.setDefault<double>("b_two", 0.);
@@ -196,7 +196,7 @@ void EventLoaderALiBaVa::initialize() {
     }
 
     // Set the timecuts
-    ALiBaVaPointer->set_timecut(m_timecut_lower, m_timecut_upper);
+    ALiBaVaPointer->set_timecut(m_timecut_low, m_timecut_up);
 
     // Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
     for(int ievt = 0; ievt < m_ignore_events; ievt++) {

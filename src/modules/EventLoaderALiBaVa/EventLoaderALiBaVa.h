@@ -59,8 +59,8 @@ namespace corryvreckan {
         TProfile* hTimeProfile{};
 
         int m_run{};
-        double m_timecut_lower{};
-        double m_timecut_upper{};
+        double m_timecut_low{};
+        double m_timecut_up{};
         int m_ignore_events{};
         int m_lower_channel{};
         int m_upper_channel{};
