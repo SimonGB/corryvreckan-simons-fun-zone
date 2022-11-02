@@ -16,12 +16,6 @@
 #include <iostream>
 #include "HDFRoot.h"
 #include "core/utils/log.h"
-
-// #ifndef HAVE_HDF5
-// #define HAVE_HDF5
-// #endif
-
-#ifdef HAVE_HDF5
 #include <ctime>
 #include <hdf5.h>
 
@@ -353,39 +347,5 @@ double HDFRoot::temp() const {
 unsigned int HDFRoot::clock_counter() const {
     return priv->data.clock;
 }
-#else
-HDFRoot::HDFRoot(const char* nam, const char* pedfile, const char* gainfile)
-    : DataFileRoot(nam, pedfile, gainfile), priv(0) {}
-HDFRoot::~HDFRoot() {}
-bool HDFRoot::valid() const {
-    return false;
-}
-void HDFRoot::open(const char* name) {}
-void HDFRoot::close() {}
-void HDFRoot::rewind() {}
-int HDFRoot::read_event() {
-    return -1;
-}
-int HDFRoot::read_data() {
-    return -1;
-}
 
-void HDFRoot::save() {}
-void HDFRoot::restore() {}
 
-double HDFRoot::time() const {
-    return 0.0;
-}
-double HDFRoot::temp() const {
-    return 0.0;
-}
-unsigned int HDFRoot::clock_counter() const {
-    return 0;
-}
-
-void HDFRoot::get_scan_values(short& delay, short& charge) {
-    delay = 0;
-    charge = 0;
-}
-
-#endif
