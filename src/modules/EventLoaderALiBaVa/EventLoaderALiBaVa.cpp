@@ -114,7 +114,6 @@ void EventLoaderALiBaVa::initialize() {
     m_alibava->set_polarity(polarity);
 
     const char* ped_f = "alibava_ped.ped";
-    const char* cal_f = "alibava_cal.cal";
     // Create a pointer with the pedestal file
     DataFileRoot* PedestalPointer = DataFileRoot::OpenFile(pedestalfilename.c_str());
     PedestalPointer->set_ROI(roi);
@@ -197,31 +196,16 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // Read a data event from the ALiBaVa data file
     // Give feedback according to return code
     int return_code = m_alibava->read_event();
-    if(return_code == -1) {
-        return StatusCode::EndRun;
-        // Not sure if this is end of run or something else. Need to see difference between HDF5 and binary
-    } else if(return_code == 0) {
-        LOG(ERROR) << "There\'s something wrong (0) with the datafile";
-        LOG(ERROR) << "Terminating run";
-        return StatusCode::EndRun;
-    } else if(return_code == 1) {
-        // This means the event was read properly.
-    } else if(return_code == 2) {
-        LOG(ERROR) << "There\'s something wrong (2) with the datafile";
-        LOG(ERROR) << "Terminating run";
-        return StatusCode::EndRun;
-    } else if(return_code == 3) {
-        // Still need to figure this out... I think it's just end of run. Need to see difference between HDF5 and binary
-        return StatusCode::EndRun;
-    } else if(return_code == 4) {
-        LOG(ERROR) << "There\'s something wrong (4) with the HDF5 datafile";
-        LOG(ERROR) << "Terminating run";
+    
+    if(return_code == 1) {
+    LOG(DEBUG) << "Successfully read event from ALiBaVa file";
+    } else if(return_code == -1) {
+        LOG(DEBUG) << "Reached end of the ALiBaVa file, requesting end of run";
         return StatusCode::EndRun;
     } else {
-        LOG(ERROR) << "This shouldn\'t happen.";
-        LOG(ERROR) << "Terminating run";
-        return StatusCode::EndRun;
+        throw ModuleError("Issue with ALiBaVa file, return code " + std::to_string(return_code));
     }
+
     // Calculate the common mode for the signal in this event
     m_alibava->calc_common_mode_signal();
     // Process the opened data event, i.e. pedestal correction, common mode noise correction
