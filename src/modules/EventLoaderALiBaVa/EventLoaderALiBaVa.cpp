@@ -214,7 +214,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // The timecut is set in the ALiBaVa_loader() function.
     double TDCTime = m_alibava->time();
     if(!m_alibava->valid_time(TDCTime)) {
-        LOG(DEBUG) << "Event time outside of timecut limits; ignoring event";
+        LOG(DEBUG) << "Event time of " << TDCTime << " ns outside of timecut limits; ignoring event";
         return StatusCode::NoData;
     }
 
