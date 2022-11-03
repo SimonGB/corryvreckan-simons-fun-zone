@@ -150,11 +150,7 @@ void EventLoaderALiBaVa::initialize() {
     columns = detector_->nPixels().X();
     rows = detector_->nPixels().Y();
 
-    if(columns > rows) {
-        m_horizontal = false;
-    } else {
-        m_horizontal = true;
-    }
+  
 
     std::vector<unsigned int> all_ch(256);
     std::iota(all_ch.begin(), all_ch.end(), 0);
@@ -164,11 +160,7 @@ void EventLoaderALiBaVa::initialize() {
         all_ch.begin(), all_ch.end(), m_roi_ch.begin(), m_roi_ch.end(), std::inserter(mask_ch, mask_ch.begin()));
 
     for(int i : mask_ch) {
-        if(m_horizontal) {
-            detector_->maskChannel(0, i);
-        } else {
             detector_->maskChannel(i, 0);
-        }
     }
 
     // Set the timecuts
@@ -246,13 +238,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
             // Create a pixel for every channel in this event with all the information and put it in the vector.
             // The value in the pixel reserved for the ADC value is used for the S/N ratio multiplied by 100000.
 
-            std::shared_ptr<Pixel> pixel;
-
-            if(m_horizontal) {
-                pixel = std::make_shared<Pixel>(detector_->getName(), 0, chan, SNRatio * 100000, CalSignal, trigger_ts);
-            } else {
-                pixel = std::make_shared<Pixel>(detector_->getName(), chan, 0, SNRatio * 100000, CalSignal, trigger_ts);
-            }
+            std::shared_ptr<Pixel> pixel = std::make_shared<Pixel>(detector_->getName(), chan, 0, SNRatio * 100000, CalSignal, trigger_ts);
 
             pixels.push_back(pixel);
 

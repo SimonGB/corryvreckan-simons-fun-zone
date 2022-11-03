@@ -61,7 +61,6 @@ namespace corryvreckan {
         double m_chargecut{};
         double m_calibration_constant{};
         std::vector<unsigned int> m_roi_ch{};
-        bool m_horizontal;
     };
 
 } // namespace corryvreckan
