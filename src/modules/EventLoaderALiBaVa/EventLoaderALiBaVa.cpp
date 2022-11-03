@@ -87,29 +87,21 @@ void EventLoaderALiBaVa::initialize() {
 
 
     // Create histograms
-    std::string title = "Charge of signal; Charge [e]; # entries";
-    hChargeSignal = new TH1F("chargeSignal", title.c_str(), 100, -96000, 32000);
+    hChargeSignal = new TH1F("chargeSignal", "Charge of signal; Charge [e]; # entries", 100, -96000, 32000);
 
-    title = "ADC of signal; Signal [ADC]; # entries";
-    hADCSignal = new TH1F("ADCSignal", title.c_str(), 100, -200, 600);
+    hADCSignal = new TH1F("ADCSignal", "ADC of signal; Signal [ADC]; # entries", 100, -200, 600);
 
-    title = "Signal to noise ratio; SNRatio; # entries";
-    hSNR = new TH1F("SNRatio", title.c_str(), 100, -50, 200);
+    hSNR = new TH1F("SNRatio", "Signal to noise ratio; SNRatio; # entries", 100, -50, 200);
 
-    title = "Uncorrected pedestal; # channel; Pedestal[ADC]";
-    hPedestal = new TH1F("pedestal", title.c_str(), 256, 0, 256);
+    hPedestal = new TH1F("pedestal", "Uncorrected pedestal; # channel; Pedestal[ADC]", 256, 0, 256);
 
-    title = "Corrected pedestal; # channel; Pedestal[ADC]";
-    hPedestalCorrect = new TH1F("pedestalCorrect", title.c_str(), 256, 0, 256);
+    hPedestalCorrect = new TH1F("pedestalCorrect", "Corrected pedestal; # channel; Pedestal[ADC]", 256, 0, 256);
 
-    title = "Uncorrected Noise; # channel; Noise[ADC]";
-    hNoise = new TH1F("noise", title.c_str(), 256, 0, 256);
+    hNoise = new TH1F("noise", "Uncorrected Noise; # channel; Noise[ADC]", 256, 0, 256);
 
-    title = "Corrected Noise; # channel; Noise[ADC]";
-    hNoiseCorrect = new TH1F("noiseCorrect", title.c_str(), 256, 0, 256);
+    hNoiseCorrect = new TH1F("noiseCorrect", "Corrected Noise; # channel; Noise[ADC]", 256, 0, 256);
 
-    title = "Time profile; Time [ns], Ave. signal highest channel [ADC]";
-    hTimeProfile = new TProfile("timeProfile", title.c_str(), 35, 0, 35, 0, 200);
+    hTimeProfile = new TProfile("timeProfile", "Time profile; Time [ns], Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
 
     // Create a pointer with the data file.
     ALiBaVaPointer = DataFileRoot::OpenFile(datafilename.c_str());
