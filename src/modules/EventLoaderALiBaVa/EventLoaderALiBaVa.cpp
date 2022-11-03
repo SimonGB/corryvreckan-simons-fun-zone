@@ -104,15 +104,15 @@ void EventLoaderALiBaVa::initialize() {
     hTimeProfile = new TProfile("timeProfile", "Time profile; Time [ns], Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
 
     // Create a pointer with the data file.
-    ALiBaVaPointer = DataFileRoot::OpenFile(datafilename.c_str());
+    m_alibava.reset(DataFileRoot::OpenFile(datafilename.c_str()));
     // Sort vector to avoid errors later on
     std::sort(roi.begin(), roi.end());
     // Set the region of interest
-    ALiBaVaPointer->set_ROI(roi);
+    m_alibava->set_ROI(roi);
     // Get the vector with all ROI channels listed to use here
-    m_roi_ch = ALiBaVaPointer->get_ROI();
+    m_roi_ch = m_alibava->get_ROI();
 
-    ALiBaVaPointer->set_polarity(polarity);
+    m_alibava->set_polarity(polarity);
 
     const char* ped_f = "alibava_ped.ped";
     const char* cal_f = "alibava_cal.cal";
@@ -145,7 +145,7 @@ void EventLoaderALiBaVa::initialize() {
     PedestalPointer->close();
     delete PedestalPointer;
     // Load the calculated pedestal info into the original datafile
-    ALiBaVaPointer->load_pedestals(ped_f, kTRUE);
+    m_alibava->load_pedestals(ped_f, kTRUE);
 
     int columns, rows;
 
@@ -174,11 +174,11 @@ void EventLoaderALiBaVa::initialize() {
     }
 
     // Set the timecuts
-    ALiBaVaPointer->set_timecut(timecut_low, timecut_up);
+    m_alibava->set_timecut(timecut_low, timecut_up);
 
     // Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
     for(int ievt = 0; ievt < ignore_events; ievt++) {
-        ALiBaVaPointer->read_event();
+        m_alibava->read_event();
     }
 }
 
@@ -197,7 +197,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     // Read a data event from the ALiBaVa data file
     // Give feedback according to return code
-    int return_code = ALiBaVaPointer->read_event();
+    int return_code = m_alibava->read_event();
     if(return_code == -1) {
         return StatusCode::EndRun;
         // Not sure if this is end of run or something else. Need to see difference between HDF5 and binary
@@ -224,13 +224,13 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
         return StatusCode::EndRun;
     }
     // Calculate the common mode for the signal in this event
-    ALiBaVaPointer->calc_common_mode_signal();
+    m_alibava->calc_common_mode_signal();
     // Process the opened data event, i.e. pedestal correction, common mode noise correction
-    ALiBaVaPointer->process_event();
+    m_alibava->process_event();
     // This gets the TDC time from the event, allowing timecuts around the event peak
     // The timecut is set in the ALiBaVa_loader() function.
-    double TDCTime = ALiBaVaPointer->time();
-    if(!ALiBaVaPointer->valid_time(TDCTime)) {
+    double TDCTime = m_alibava->time();
+    if(!m_alibava->valid_time(TDCTime)) {
         clipboard->putData(pixels, detector_->getName());
         return StatusCode::NoData;
     }
@@ -249,8 +249,8 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     double max_signal = 0;
     // This loops over the channels in the current ALiBaVa event
     for(int chan : m_roi_ch) {
-        double ADCSignal = ALiBaVaPointer->ADC_signal(chan);
-        double SNRatio = ALiBaVaPointer->sn(chan);
+        double ADCSignal = m_alibava->ADC_signal(chan);
+        double SNRatio = m_alibava->sn(chan);
         double CalSignal = ADCSignal * m_calibration_constant;
 
         if(ADCSignal > max_signal) {
@@ -293,6 +293,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 }
 
 void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-    ALiBaVaPointer->close();
-    delete ALiBaVaPointer;
+    m_alibava->close();
+    //delete m_alibava;
+    m_alibava.reset();
 }

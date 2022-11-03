@@ -300,20 +300,18 @@ DataFileRoot* DataFileRoot::OpenFile(const char* nam, const char* pedfile, const
     if(stat(nam, &sb) == -1)
         return 0;
         
-        
+    std::ifstream ifile(nam);
+    if(!ifile)
+        return 0;
 
-std::ifstream ifile(nam);
-if(!ifile)
-    return 0;
+    char buf[5] = {'\0'};
+    ifile.read(buf, 4);
+    ifile.close();
+    std::string idf(buf + 1);
 
-char buf[5] = {'\0'};
-ifile.read(buf, 4);
-ifile.close();
-std::string idf(buf + 1);
-
-if(idf == "HDF")
-    return new HDFRoot(nam, pedfile, gainfile);
-else
-    return new AsciiRoot(nam, pedfile, gainfile);
+    if(idf == "HDF")
+        return new HDFRoot(nam, pedfile, gainfile);
+    else
+        return new AsciiRoot(nam, pedfile, gainfile);
 
 }

@@ -47,7 +47,7 @@ namespace corryvreckan {
 
     private:
         std::shared_ptr<Detector> detector_;
-        DataFileRoot* ALiBaVaPointer;
+        std::shared_ptr<DataFileRoot> m_alibava;
 
         TH1F* hChargeSignal{};
         TH1F* hADCSignal{};
