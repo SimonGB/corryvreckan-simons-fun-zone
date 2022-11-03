@@ -198,7 +198,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     int return_code = m_alibava->read_event();
     
     if(return_code == 1) {
-    LOG(DEBUG) << "Successfully read event from ALiBaVa file";
+        LOG(DEBUG) << "Successfully read event from ALiBaVa file";
     } else if(return_code == -1) {
         LOG(DEBUG) << "Reached end of the ALiBaVa file, requesting end of run";
         return StatusCode::EndRun;
@@ -214,7 +214,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // The timecut is set in the ALiBaVa_loader() function.
     double TDCTime = m_alibava->time();
     if(!m_alibava->valid_time(TDCTime)) {
-        clipboard->putData(pixels, detector_->getName());
+        LOG(DEBUG) << "Event time outside of timecut limits; ignoring event";
         return StatusCode::NoData;
     }
 
@@ -222,7 +222,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     if(!clipboard->getEvent()->triggerList().empty()) {
         trigger_ts = clipboard->getEvent()->triggerList().begin()->second;
-        LOG(DEBUG) << "Using trigger timestamp " << Units::display(trigger_ts, "us") << " as cluster timestamp.";
+        LOG(DEBUG) << "Using trigger timestamp " << Units::display(trigger_ts, "us") << " as event timestamp.";
 
     } else {
         trigger_ts = 0;
