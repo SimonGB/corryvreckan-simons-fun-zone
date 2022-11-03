@@ -76,13 +76,12 @@ void EventLoaderALiBaVa::initialize() {
     // Log errors in case the files aren't found in the folder.
     // The datafile can also be supplied directly in the config.
     if(datafilename.length() == 0) {
-        LOG(ERROR) << "No data file was found for ALiBaVa in " << input_directory;
+        throw InvalidValueError(config_, "run", "No valid ALiBaVa data file with this run number was found in directory");
         return;
     }
     if(pedestalfilename.length() == 0) {
-        LOG(WARNING) << "No pedestal file was found."
-                     << "\n"
-                     << "Datafile will be used for pedestal";
+        LOG(WARNING) << "No pedestal file was found." << std::endl << "Datafile will be used for pedestal";
+        pedestalfilename = datafilename;
     }
 
 
