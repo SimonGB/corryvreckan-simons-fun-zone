@@ -23,13 +23,13 @@ for CMake to find the library link against and headers to include.
 
 ### Usage
 ```toml
-[EUDAQEventLoader]
+[EventLoaderEUDAQ]
 file_names = "rawdata/eudaq/run020808.raw"
 long_detector_id = true
 ```
 If all the devices were integrated in EUDAQ: you can process multiple files at once:
 ```toml
-[EUDAQEventLoader]
+[EventLoaderEUDAQ]
 file_names = "rawdata/eudaq/run020808.raw","rawdata/eudaq/run020810.raw"
 long_detector_id = true
 ```
