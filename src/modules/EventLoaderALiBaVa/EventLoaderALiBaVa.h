@@ -58,17 +58,10 @@ namespace corryvreckan {
         TH1F* hNoiseCorrect{};
         TProfile* hTimeProfile{};
 
-        int m_run{};
-        int m_lower_channel{};
-        int m_upper_channel{};
         double m_chargecut{};
         double m_calibration_constant{};
         std::vector<unsigned int> m_roi_ch{};
         bool m_horizontal;
-
-        std::string m_datafilename;
-        std::string m_pedestalfilename;
-        std::string m_calibrationfilename;
     };
 
 } // namespace corryvreckan

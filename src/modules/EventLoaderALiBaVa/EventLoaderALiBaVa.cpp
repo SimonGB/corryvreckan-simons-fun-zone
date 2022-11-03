@@ -46,32 +46,32 @@ void EventLoaderALiBaVa::initialize() {
     m_calibration_constant = config_.get<double>("calibration_constant");
     std::vector<unsigned int> roi = config_.getArray<unsigned int>("ROI");
     int polarity = config_.get<int>("polarity");
-
-    // Open the input directory
-    DIR* directory = opendir(input_directory.c_str());
-    if(directory == nullptr) {
-        LOG(ERROR) << "Directory \'" << input_directory << "\' does not exist or was not supplied.";
-        return;
+    
+    
+    // Check if input directory exists
+    std::filesystem::path directory = input_directory;
+    if (!std::filesystem::exists(directory)) {
+        throw InvalidValueError(config_, "input_directory", "The directory could not be found");
     }
 
     std::string datafilename;
     std::string pedestalfilename;
     
     // Read the run-files (data, pedestal and calibration) in the folder
-    dirent* entry;
-    while(entry = readdir(directory)) {
-        if(entry->d_type == DT_REG) {
-            std::string entryName = entry->d_name;
-            if(entryName.find(std::to_string(run) + ".dat") != std::string::npos ||
+    for (auto const& dir_entry : std::filesystem::directory_iterator{directory}) 
+    {
+        std::string entryName = dir_entry.path();
+        
+        if(entryName.find(std::to_string(run) + ".dat") != std::string::npos ||
                entryName.find("dat_run" + std::to_string(run) + ".hdf") != std::string::npos) {
-                datafilename = input_directory + "/" + entryName;
+                datafilename = entryName;
             }
-            if(entryName.find(std::to_string(run) + ".ped") != std::string::npos ||
+        if(entryName.find(std::to_string(run) + ".ped") != std::string::npos ||
                entryName.find("ped_run" + std::to_string(run) + ".hdf") != std::string::npos) {
-                pedestalfilename = input_directory + "/" + entryName;
+                pedestalfilename = entryName;
             }
-        }
     }
+                
 
     // Log errors in case the files aren't found in the folder.
     // The datafile can also be supplied directly in the config.
