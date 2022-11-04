@@ -113,7 +113,7 @@ void EventLoaderALiBaVa::initialize() {
 
     m_alibava->set_polarity(polarity);
 
-    const char* ped_f = "alibava_ped.ped";
+    
     // Create a pointer with the pedestal file
     DataFileRoot* PedestalPointer = DataFileRoot::OpenFile(pedestalfilename.c_str());
     PedestalPointer->set_ROI(roi);
@@ -137,15 +137,14 @@ void EventLoaderALiBaVa::initialize() {
         hPedestalCorrect->SetBinContent(chan, ped_val);
         hNoiseCorrect->SetBinContent(chan, noise_val);
     }
-
+    
     // Save the calculated pedestal information in a temporary file
-    PedestalPointer->save_pedestals(ped_f);
+    const std::string ped_f = "alibava_ped.ped";
+    PedestalPointer->save_pedestals(ped_f.c_str());
     PedestalPointer->close();
     delete PedestalPointer;
     // Load the calculated pedestal info into the original datafile
-    m_alibava->load_pedestals(ped_f, kTRUE);
-
-    int columns, rows;
+    m_alibava->load_pedestals(ped_f.c_str(), kTRUE);
 
     columns = detector_->nPixels().X();
     rows = detector_->nPixels().Y();
