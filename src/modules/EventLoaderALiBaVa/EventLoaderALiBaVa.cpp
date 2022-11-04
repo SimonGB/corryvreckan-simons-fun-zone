@@ -146,10 +146,6 @@ void EventLoaderALiBaVa::initialize() {
     // Load the calculated pedestal info into the original datafile
     m_alibava->load_pedestals(ped_f.c_str(), kTRUE);
 
-    columns = detector_->nPixels().X();
-    rows = detector_->nPixels().Y();
-
-  
 
     std::vector<unsigned int> all_ch(256);
     std::iota(all_ch.begin(), all_ch.end(), 0);
