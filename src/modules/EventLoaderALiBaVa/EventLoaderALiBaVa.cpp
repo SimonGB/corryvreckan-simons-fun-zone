@@ -90,15 +90,19 @@ void EventLoaderALiBaVa::initialize() {
 
     hSNR = new TH1F("SNRatio", "Signal to noise ratio; SNRatio; # entries", 100, -50, 200);
 
-    hPedestal = new TH1F("pedestal", "Uncorrected pedestal; # channel; Pedestal[ADC]", 256, 0, 256);
+    hPedestal = new TH1F("pedestal", "Uncorrected pedestal; # channel; Pedestal[ADC]", 256, -0.5, 255.5);
 
-    hPedestalCorrect = new TH1F("pedestalCorrect", "Corrected pedestal; # channel; Pedestal[ADC]", 256, 0, 256);
+    hPedestalCorrect = new TH1F("pedestalCorrect", "Corrected pedestal; # channel; Pedestal[ADC]", 256, -0.5, 255.5);
 
-    hNoise = new TH1F("noise", "Uncorrected Noise; # channel; Noise[ADC]", 256, 0, 256);
+    hNoise = new TH1F("noise", "Uncorrected Noise; # channel; Noise[ADC]", 256, -0.5, 255.5);
 
-    hNoiseCorrect = new TH1F("noiseCorrect", "Corrected Noise; # channel; Noise[ADC]", 256, 0, 256);
+    hNoiseCorrect = new TH1F("noiseCorrect", "Corrected Noise; # channel; Noise[ADC]", 256, -0.5, 255.5);
 
     hTimeProfile = new TProfile("timeProfile", "Time profile; Time [ns], Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
+    
+    hPedestalCorrect2D = new TH2F("pedestalCorrect2D", "Corrected pedestal in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
+    
+    hNoiseCorrect2D = new TH2F("noiseCorrect2D", "Corrected Noise in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);             
 
     // Create a shared pointer with the data file.
     m_alibava.reset(DataFileRoot::OpenFile(datafilename.c_str()));
@@ -127,8 +131,8 @@ void EventLoaderALiBaVa::initialize() {
         double ped_val, noise_val;
         ped_val = PedestalPointer->ped(chan);
         noise_val = PedestalPointer->noise(chan);
-        hPedestal->SetBinContent(chan, ped_val);
-        hNoise->SetBinContent(chan, noise_val);
+        hPedestal->SetBinContent(chan+1, ped_val);
+        hNoise->SetBinContent(chan+1, noise_val);
     }
 
     PedestalPointer->compute_cmmd_alternative();
@@ -136,8 +140,10 @@ void EventLoaderALiBaVa::initialize() {
         double ped_val, noise_val;
         ped_val = PedestalPointer->ped(chan);
         noise_val = PedestalPointer->noise(chan);
-        hPedestalCorrect->SetBinContent(chan, ped_val);
-        hNoiseCorrect->SetBinContent(chan, noise_val);
+        hPedestalCorrect->SetBinContent(chan+1, ped_val);
+        hNoiseCorrect->SetBinContent(chan+1, noise_val);
+        hPedestalCorrect2D->SetBinContent(chan+1, 1, ped_val);
+        hNoiseCorrect2D->SetBinContent(chan+1, 1, noise_val);
     }
     
     // Save the calculated pedestal information in a temporary file

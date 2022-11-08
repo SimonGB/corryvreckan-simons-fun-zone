@@ -57,6 +57,8 @@ namespace corryvreckan {
         TH1F* hPedestalCorrect{};
         TH1F* hNoiseCorrect{};
         TProfile* hTimeProfile{};
+        TH2F* hPedestalCorrect2D{};
+        TH2F* hNoiseCorrect2D{};
 
         double m_chargecut{};
         double m_calibration_constant{};
