@@ -37,3 +37,18 @@ For each detector the following plots are produced:
 * 2D Corrected noise
 * Time profile
 
+### Usage
+```toml
+[EventLoaderALiBaVa]
+type = "ALiBaVa"
+input_directory = "/home/fabian/testbeam_analysis/testdirectory/"
+run = 137
+timecut_low = 2ns
+timecut_up = 12ns
+ignore_events = 1
+chargecut = 42
+polarity = -1
+```
+
+
+
