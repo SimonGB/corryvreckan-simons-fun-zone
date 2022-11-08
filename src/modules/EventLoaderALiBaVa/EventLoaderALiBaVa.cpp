@@ -32,7 +32,7 @@ void EventLoaderALiBaVa::initialize() {
     config_.setDefault<double>("timecut_low", 0);
     config_.setDefault<double>("timecut_up", std::numeric_limits<double>::max());
     config_.setDefault<int>("ignore_events", 1);
-    config_.setDefault<double>("chargecut", std::numeric_limits<double>::max());
+    config_.setDefault<double>("chargecut", 0);
     config_.setDefault<double>("calibration_constant", 1.0);
     config_.setDefault<int>("polarity", -1);
 
