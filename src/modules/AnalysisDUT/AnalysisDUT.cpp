@@ -642,7 +642,9 @@ void AnalysisDUT::initialize() {
                                    1000);
 
     auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / inpixelBinSize_));
-    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / inpixelBinSize_));
+    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y()/4000 / inpixelBinSize_));
+    std::cout << nbins_x << std::endl;
+    std::cout << nbins_y << std::endl;
     if(nbins_x > 1e4 || nbins_y > 1e4) {
         throw InvalidValueError(config_, "inpixel_bin_size", "Too many bins for in-pixel histograms.");
     }
@@ -1039,13 +1041,13 @@ void AnalysisDUT::createGlobalResidualPlots() {
     local_directory->cd();
 
     residualsX_global =
-        new TH1F("residualsX", "Residual in global X;x_{track}-x_{hit}  [#mum];# entries", 4000, -500.5, 499.5);
+        new TH1F("residualsX", "Residual in global X;x_{track}-x_{hit}  [#mum];# entries", 1000, -500.5, 499.5);
     residualsY_global =
-        new TH1F("residualsY", "Residual in global Y;y_{track}-y_{hit}  [#mum];# entries", 4000, -500.5, 499.5);
+        new TH1F("residualsY", "Residual in global Y;y_{track}-y_{hit}  [#mum];# entries", 1000, -500.5, 499.5);
     residualsPos_global =
         new TH1F("residualsPos",
                  "Absolute distance between track and hit in global coordinates;|pos_{track}-pos_{hit}|  [#mum];# entries",
-                 4000,
+                 1000,
                  -500.5,
                  499.5);
     residualsPosVsresidualsTime_global = new TH2F(
@@ -1063,28 +1065,28 @@ void AnalysisDUT::createGlobalResidualPlots() {
         residualsXclusterColGlobal.push_back(new TH1F(
             ("residualsX" + name + "pixCol").c_str(),
             ("Residual for " + name + "-pixel clusters along column in global X;x_{track}-x_{hit} [#mum];# entries").c_str(),
-            4000,
+            1000,
             -500.5,
             499.5));
 
         residualsXclusterRowGlobal.push_back(new TH1F(
             ("residualsX" + name + "pixRow").c_str(),
             ("Residual for " + name + "-pixel clusters along row in global X;x_{track}-x_{hit} [#mum];# entries").c_str(),
-            4000,
+            1000,
             -500.5,
             499.5));
 
         residualsYclusterColGlobal.push_back(new TH1F(
             ("residualsY" + name + "pixCol").c_str(),
             ("Residual for " + name + "-pixel clusters along column in global Y;y_{track}-y_{hit} [#mum];# entries").c_str(),
-            4000,
+            1000,
             -500.5,
             499.5));
 
         residualsYclusterRowGlobal.push_back(new TH1F(
             ("residualsY" + name + "pixRow").c_str(),
             ("Residual for " + name + "-pixel clusters along row in global Y;y_{track}-y_{hit} [#mum];# entries").c_str(),
-            4000,
+            1000,
             -500.5,
             499.5));
     }
@@ -1101,13 +1103,13 @@ void AnalysisDUT::createLocalResidualPlots() {
     local_directory->cd();
 
     residualsX_local =
-        new TH1F("residualsX", "Residual in local X;x_{track}-x_{hit}  [#mum];# entries", 4000, -500.5, 499.5);
+        new TH1F("residualsX", "Residual in local X;x_{track}-x_{hit}  [#mum];# entries", 1000, -500.5, 499.5);
     residualsY_local =
-        new TH1F("residualsY", "Residual in local Y;y_{track}-y_{hit}  [#mum];# entries", 4000, -500.5, 499.5);
+        new TH1F("residualsY", "Residual in local Y;y_{track}-y_{hit}  [#mum];# entries", 1000, -500.5, 499.5);
     residualsPos_local =
         new TH1F("residualsPos",
                  "Absolute distance between track and hit in local coordinates;|pos_{track}-pos_{hit}|  [#mum];# entries",
-                 4000,
+                 1000,
                  -500.5,
                  499.5);
     residualsPosVsresidualsTime_local = new TH2F(

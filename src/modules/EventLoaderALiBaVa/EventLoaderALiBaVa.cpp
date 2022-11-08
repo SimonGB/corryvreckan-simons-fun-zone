@@ -34,7 +34,6 @@ void EventLoaderALiBaVa::initialize() {
     config_.setDefault<int>("ignore_events", 1);
     config_.setDefault<double>("chargecut", std::numeric_limits<double>::max());
     config_.setDefault<double>("calibration_constant", 1.0);
-    config_.setDefaultArray<unsigned int>("ROI", {0, 255});
     config_.setDefault<int>("polarity", -1);
 
     std::string input_directory = config_.getPath("input_directory");
@@ -44,7 +43,6 @@ void EventLoaderALiBaVa::initialize() {
     int ignore_events = config_.get<int>("ignore_events");
     m_chargecut = config_.get<double>("chargecut");
     m_calibration_constant = config_.get<double>("calibration_constant");
-    std::vector<unsigned int> roi = config_.getArray<unsigned int>("ROI");
     int polarity = config_.get<int>("polarity");
     
     
@@ -102,21 +100,25 @@ void EventLoaderALiBaVa::initialize() {
 
     hTimeProfile = new TProfile("timeProfile", "Time profile; Time [ns], Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
 
-    // Create a pointer with the data file.
+    // Create a shared pointer with the data file.
     m_alibava.reset(DataFileRoot::OpenFile(datafilename.c_str()));
-    // Sort vector to avoid errors later on
-    std::sort(roi.begin(), roi.end());
+    
+    // Find all non masked channels from the detector config and put them into a vector
+    for (int col=0; col<256; col++){
+        if (!detector_->masked(col, 0)){
+            m_roi_ch.push_back(col);
+        }
+    }
+        
     // Set the region of interest
-    m_alibava->set_ROI(roi);
-    // Get the vector with all ROI channels listed to use here
-    m_roi_ch = m_alibava->get_ROI();
-
+    m_alibava->set_ROI(m_roi_ch);
+    
+    // Set the polarity of the signal
     m_alibava->set_polarity(polarity);
-
     
     // Create a pointer with the pedestal file
     DataFileRoot* PedestalPointer = DataFileRoot::OpenFile(pedestalfilename.c_str());
-    PedestalPointer->set_ROI(roi);
+    PedestalPointer->set_ROI(m_roi_ch);
 
     // Calculate the pedestals, and compute and apply the common mode noise correction
     PedestalPointer->compute_pedestals_alternative();
@@ -145,18 +147,6 @@ void EventLoaderALiBaVa::initialize() {
     delete PedestalPointer;
     // Load the calculated pedestal info into the original datafile
     m_alibava->load_pedestals(ped_f.c_str(), kTRUE);
-
-
-    std::vector<unsigned int> all_ch(256);
-    std::iota(all_ch.begin(), all_ch.end(), 0);
-
-    std::vector<unsigned int> mask_ch;
-    std::set_difference(
-        all_ch.begin(), all_ch.end(), m_roi_ch.begin(), m_roi_ch.end(), std::inserter(mask_ch, mask_ch.begin()));
-
-    for(int i : mask_ch) {
-            detector_->maskChannel(i, 0);
-    }
 
     // Set the timecuts
     m_alibava->set_timecut(timecut_low, timecut_up);

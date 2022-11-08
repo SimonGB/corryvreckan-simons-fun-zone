@@ -81,20 +81,8 @@ void DataFileRoot::reset_data() {
     memset(&_data, 0, sizeof(_data));
 }
 
-void DataFileRoot::set_ROI(std::vector<unsigned int> bounds) {
-    int n_arrays;
-    int i, j;
-    std::vector<unsigned int> temp_array;
-
-    n_arrays = bounds.size() / 2;
-
-    for(i; i <= n_arrays - 1; i++) {
-        temp_array = {};
-        for(j = bounds[2 * i]; j <= bounds[2 * i + 1]; j++) {
-            temp_array.push_back(j);
-        }
-        _roi.insert(_roi.end(), temp_array.begin(), temp_array.end());
-    }
+void DataFileRoot::set_ROI(std::vector<unsigned int> roi) {
+    _roi = roi;
 }
 
 void DataFileRoot::set_timecut(double t1, double t2) {
