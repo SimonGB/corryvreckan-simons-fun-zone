@@ -32,8 +32,8 @@ void EventLoaderALiBaVa::initialize() {
     config_.setDefault<double>("timecut_low", 0);
     config_.setDefault<double>("timecut_up", std::numeric_limits<double>::max());
     config_.setDefault<int>("ignore_events", 1);
-    config_.setDefault<double>("chargecut", 0);
     config_.setDefault<double>("calibration_constant", 1.0);
+    config_.setDefault<double>("chargecut", 0);
     config_.setDefault<int>("polarity", -1);
 
     std::string input_directory = config_.getPath("input_directory");
@@ -41,8 +41,8 @@ void EventLoaderALiBaVa::initialize() {
     double timecut_low = config_.get<double>("timecut_low");
     double timecut_up = config_.get<double>("timecut_up");
     int ignore_events = config_.get<int>("ignore_events");
-    m_chargecut = config_.get<double>("chargecut");
     m_calibration_constant = config_.get<double>("calibration_constant");
+    m_chargecut = config_.get<double>("chargecut");
     int polarity = config_.get<int>("polarity");
     
     

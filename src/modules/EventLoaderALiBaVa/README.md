@@ -1,54 +1,39 @@
-I set everything up on the NAF using these commands, after cloning the eudaq repo and this corryvreckan repo so that you have one folder with a subfolder for corryvreckan and one for eudaq:
-```
-source corryvreckan/etc/setup_lxplus.sh
-export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
-source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
-lsetup cmake
-lsetup hdf5
-lsetup "root 6.20.02-x86_64-centos7-gcc8-opt"
-
-cd eudaq
-rm -r build
-mkdir build && cd build
-cmake .. -DEUDAQ_BUILD_EXECUTABLE=OFF -DEUDAQ_BUILD_GUI=OFF -DUSER_TLU_BUILD=ON 
-vim ../cmake/Platform.cmake //Make the following edit: set(CMAKE_CXX_STANDARD 14)  --> set(CMAKE_CXX_STANDARD 17)
-cmake ..
-make install -j8
-
-cd ../../corryvreckan
-rm -r build
-mkdir build && cd build
-cmake .. -DBUILD_EventLoaderEUDAQ2=ON -Deudaq_DIR=**YOURPATH**/eudaq/cmake
-export BUILD_EventLoaderEUDAQ2=ON
-export eudaq_DIR=**YOURPATH**/eudaq/cmake
-cmake ..
-make install -j8
-
-export HDF5_USE_FILE_LOCKING=FALSE
-```
-
-
-# EventLoaderALiBaVa
-**Maintainer**: jclercx (“jclercx”)
-**Module Type**: *DETECTOR* **Detector Type**: *<add types here>*  
+**Maintainer**: Fabian Lex (“fabianlex.fsl@gmail.com”)
+**Module Type**: *DETECTOR* **Detector Type**: *ALiBaVa*
 **Status**: Immature
 
 ### Description
-This is a demonstrator module only, taking data every detector on the clipboard and plots the pixel hit positions.
-It serves as template to create new modules.
+This module allows data recorded by the ALiBaVa system and stored in either a ALiBaVa binary or a HDF5 file to be read into Corryvreckan as raw detector data. If, in addition to the run data file, a pedestal file is provided, the pedestal and noise will be calculated from it. At the moment it is not possible to use a calibration file to convert the arbitrary ADC counts into charge. 
+
+If the binary file format is chosen, the data and pedestalfile need to include the run number in their name and end on ".dat" or ".ped" respectively. If the HDF5 format is chosen, the file name needs to include either "dat_run" or "ped_run", the run number and end on ".hdf". 
+
+It requires either another event loader of another detector type before, which defines the event start and end times by placing an Event definition on the clipboard, or an instance of the Metronome module which provides this information.
+
+The detector needs to be defined in the geometry file with n columns and 1 row (everything else will lead to strange behaviour later on). 
+
+The ROI can be set by creating a maskfile for the detector and setting all channels outside the ROI to masked. 
 
 ### Parameters
-No parameters are used from the configuration file.
+* `input_directory`: Path to the directory where the input files can be found. This parameter is mandatory
+* `run`: Number of the run to be analysed. Default is 0.
+* `timecut_low`: Readouts with a timestmap smaller than the lower limit are discarded. Each time a readout is triggered in the ALiBaVa system, the readout is given a timestamp by the ALiBaVa system in relation to its internal, 100 ns period clock cycle. Default is 0 ns
+* `timecut_up`: Readouts with a timestmap larger than the upper limit are discarded. Each time a readout is triggered in the ALiBaVa system, the readout is given a timestamp by the ALiBaVa system in relation to its internal, 100 ns period clock cycle. Default is 100 ns
+* `ignore_events`: Number of events at the start which will be ignored. This is done to ensure synchronisation between ALiBaVa system and telescope. Default is 1.
+* `calibration_constant`: Rudimentary way to allow for a conversion from ADC to kiloelectrons. Will change in the future. Default is 1.
+* `chargecut`: If the charge of a strip is below the chargecut, the strip will not be added to the current event. Default is 0. 
+* `polarity`: Correction factor for the sign of the signal. Either +1 or -1. Depending on the type of detector (p-in-n or n-in-p) the signal measured by the ALiBaVa system is negative, the polarity corrects this in the analysis. Default is -1 (needed for n-in-p sensors)
 
 ### Plots produced
-* Histogram of event numbers
-
 For each detector the following plots are produced:
 
-* 2D histogram of pixel hit positions
+* Charge of signal
+* ADC count of signal
+* Signal to noise ratio
+* Uncorrected pedestal
+* Uncorrected noise
+* Corrected pedestal
+* Corrected noise
+* 2D Corrected pedestal
+* 2D Corrected noise
+* Time profile
 
-### Usage
-```toml
-[EventLoaderALiBaVa]
-
-```
