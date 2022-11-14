@@ -18,6 +18,7 @@ using namespace corryvreckan;
 // Global container declarations
 TrackVector AlignmentDUTResidual::globalTracks;
 std::shared_ptr<Detector> AlignmentDUTResidual::globalDetector;
+ThreadPool* AlignmentDUTResidual::thread_pool;
 
 AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector) {
@@ -30,7 +31,9 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     config_.setDefault<std::string>("align_orientation_axes", "xyz");
     config_.setDefault<size_t>("max_associated_clusters", 1);
     config_.setDefault<double>("max_track_chi2ndof", 10.);
+    config_.setDefault<unsigned int>("workers", std::max(std::thread::hardware_concurrency() - 1, 1u));
 
+    m_workers = config.get<unsigned int>("workers");
     nIterations = config_.get<size_t>("iterations");
     m_pruneTracks = config_.get<bool>("prune_tracks");
 
@@ -64,14 +67,18 @@ void AlignmentDUTResidual::initialize() {
     residualsXPlot = new TH1F("residualsX", title.c_str(), 1000, -500, 500);
     title = detname + " Residuals Y;y_{track}-y [#mum];events";
     residualsYPlot = new TH1F("residualsY", title.c_str(), 1000, -500, 500);
-    title = detname + " Residual profile dY/X;x [#mum];y_{track}-y [#mum]";
-    profile_dY_X = new TProfile("profile_dY_X", title.c_str(), 1000, -500, 500);
-    title = detname + " Residual profile dY/Y;y [#mum];y_{track}-y [#mum]";
-    profile_dY_Y = new TProfile("profile_dY_Y", title.c_str(), 1000, -500, 500);
-    title = detname + " Residual profile dX/X;x [#mum];x_{track}-x [#mum]";
-    profile_dX_X = new TProfile("profile_dX_X", title.c_str(), 1000, -500, 500);
-    title = detname + " Residual profile dX/y;y [#mum];x_{track}-x [#mum]";
-    profile_dX_Y = new TProfile("profile_dX_Y", title.c_str(), 1000, -500, 500);
+    title = detname + " Residual profile dY/X;column;y_{track}-y [#mum]";
+    profile_dY_X =
+        new TProfile("profile_dY_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
+    title = detname + " Residual profile dY/Y;row;y_{track}-y [#mum]";
+    profile_dY_Y =
+        new TProfile("profile_dY_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
+    title = detname + " Residual profile dX/X;column;x_{track}-x [#mum]";
+    profile_dX_X =
+        new TProfile("profile_dX_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
+    title = detname + " Residual profile dX/y;row;x_{track}-x [#mum]";
+    profile_dX_Y =
+        new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
 }
 
 StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -118,6 +125,8 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
         for(auto& associated_cluster : associated_clusters) {
             // Local position of the cluster
             auto position = associated_cluster->local();
+            auto column = associated_cluster->column();
+            auto row = associated_cluster->row();
 
             // Get the track intercept with the detector
             auto trackIntercept = m_detector->getIntercept(track.get());
@@ -130,23 +139,15 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             // Fill the alignment residual profile plots
             residualsXPlot->Fill(static_cast<double>(Units::convert(residualX, "um")));
             residualsYPlot->Fill(static_cast<double>(Units::convert(residualY, "um")));
-            profile_dY_X->Fill(static_cast<double>(Units::convert(residualY, "um")),
-                               static_cast<double>(Units::convert(position.X(), "um")),
-                               1);
-            profile_dY_Y->Fill(static_cast<double>(Units::convert(residualY, "um")),
-                               static_cast<double>(Units::convert(position.Y(), "um")),
-                               1);
-            profile_dX_X->Fill(static_cast<double>(Units::convert(residualX, "um")),
-                               static_cast<double>(Units::convert(position.X(), "um")),
-                               1);
-            profile_dX_Y->Fill(static_cast<double>(Units::convert(residualX, "um")),
-                               static_cast<double>(Units::convert(position.Y(), "um")),
-                               1);
+            profile_dY_X->Fill(column, static_cast<double>(Units::convert(residualY, "um")), 1);
+            profile_dY_Y->Fill(row, static_cast<double>(Units::convert(residualY, "um")), 1);
+            profile_dX_X->Fill(column, static_cast<double>(Units::convert(residualX, "um")), 1);
+            profile_dX_Y->Fill(row, static_cast<double>(Units::convert(residualX, "um")), 1);
         }
     }
 
     // Store all tracks we want for alignment on the permanent storage:
-    clipboard->putPersistentData(alignmenttracks);
+    clipboard->putPersistentData(alignmenttracks, m_detector->getName());
     // Copy the objects of all associated clusters on the clipboard to persistent storage:
     clipboard->copyToPersistentData(alignmentclusters, m_detector->getName());
 
@@ -159,6 +160,8 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
 // (unbiased) residuals. It uses
 // the associated cluster container on the track (no refitting of the track)
 void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result, Double_t* par, Int_t) {
+
+    static size_t fitIterations = 0;
 
     // Pick up new alignment conditions
     AlignmentDUTResidual::globalDetector->displacement(XYZPoint(par[0], par[1], par[2]));
@@ -173,15 +176,13 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 
     LOG(DEBUG) << "Looping over " << AlignmentDUTResidual::globalTracks.size() << " tracks";
 
-    // Loop over all tracks
-    for(auto& track : AlignmentDUTResidual::globalTracks) {
+    std::vector<std::shared_future<double>> result_futures;
+    auto track_refit = [&](auto& track) {
         LOG(TRACE) << "track has chi2 " << track->getChi2();
+        double track_result = 0.;
 
         // Find the cluster that needs to have its position recalculated
         for(auto& associatedCluster : track->getAssociatedClusters(AlignmentDUTResidual::globalDetector->getName())) {
-            if(associatedCluster->detectorID() != AlignmentDUTResidual::globalDetector->getName()) {
-                continue;
-            }
 
             // Get the track intercept with the detector
             auto position = associatedCluster->local();
@@ -209,10 +210,24 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
             double deltachi2 = (residualX * residualX) / (errorX * errorX) + (residualY * residualY) / (errorY * errorY);
             LOG(TRACE) << "- delta chi2 = " << deltachi2;
             // Add the new residual2
-            result += deltachi2;
+            track_result += deltachi2;
             LOG(TRACE) << "- result is now " << result;
         }
+        return track_result;
+    };
+
+    // Loop over all tracks
+    for(auto& track : AlignmentDUTResidual::globalTracks) {
+        result_futures.push_back(AlignmentDUTResidual::thread_pool->submit(track_refit, track));
     }
+
+    for(auto& result_future : result_futures) {
+        result += result_future.get();
+    }
+
+    LOG_PROGRESS(INFO, "t") << "Refit of " << result_futures.size() << " track, MINUIT iteration " << fitIterations;
+    fitIterations++;
+    AlignmentDUTResidual::thread_pool->wait();
 }
 
 void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) {
@@ -226,7 +241,19 @@ void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& cl
     residualFitter->SetFCN(MinimiseResiduals);
 
     // Set the global parameters
-    AlignmentDUTResidual::globalTracks = clipboard->getPersistentData<Track>();
+    AlignmentDUTResidual::globalTracks = clipboard->getPersistentData<Track>(m_detector->getName());
+
+    // Create thread pool:
+    ThreadPool::registerThreadCount(m_workers);
+    AlignmentDUTResidual::thread_pool =
+        new ThreadPool(m_workers,
+                       m_workers * 1024,
+                       [log_level = corryvreckan::Log::getReportingLevel(), log_format = corryvreckan::Log::getFormat()]() {
+                           // clang-format on
+                           // Initialize the threads to the same log level and format as the master setting
+                           corryvreckan::Log::setReportingLevel(log_level);
+                           corryvreckan::Log::setFormat(log_format);
+                       });
 
     // Set the printout arguments of the fitter
     Double_t arglist[10];

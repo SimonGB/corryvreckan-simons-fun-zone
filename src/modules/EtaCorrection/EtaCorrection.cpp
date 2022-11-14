@@ -27,8 +27,8 @@ void EtaCorrection::initialize() {
 
     // Initialise histograms
     // Get info from configuration:
-    std::vector<double> m_etaConstantsX = config_.getArray<double>("eta_constants_x_" + m_detector->getName(), {});
-    std::vector<double> m_etaConstantsY = config_.getArray<double>("eta_constants_y_" + m_detector->getName(), {});
+    std::vector<double> m_etaConstantsX = config_.getArray<double>("eta_constants_x", {});
+    std::vector<double> m_etaConstantsY = config_.getArray<double>("eta_constants_y", {});
     if(!m_etaConstantsX.empty() || !m_etaConstantsY.empty()) {
         LOG(INFO) << "Found Eta correction factors for detector \"" << m_detector->getName()
                   << "\": " << (m_etaConstantsX.empty() ? "" : "X ") << (m_etaConstantsY.empty() ? "" : "Y ");

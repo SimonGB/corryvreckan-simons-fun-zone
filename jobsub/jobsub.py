@@ -270,7 +270,7 @@ def main(argv=None):
             steering_string_base = misc.ireplace("@" + key + "@", parameters[key], steering_string_base)
         except EOFError:
             if (not key == "conf_file" and not key == "logpath"): # do not warn about default content of config
-                log.warn("Parameter '" + key + "' was not found in configuration template "+args.conf_file)
+                log.warning("Parameter '" + key + "' was not found in configuration template "+args.conf_file)
 
     # CSV table
     if args.csv_file:

@@ -128,6 +128,10 @@ void PixelDetector::process_mask_file() {
     }
 }
 
+bool PixelDetector::isWithinMatrix(const int col, const int row) const {
+    return !(col > nPixels().X() - 1 || row > nPixels().Y() - 1 || col < 0 || row < 0);
+}
+
 void PixelDetector::maskChannel(int chX, int chY) {
     int channelID = chX + m_nPixels.X() * chY;
     m_masked[channelID] = true;
@@ -191,7 +195,7 @@ void PixelDetector::configure_detector(Configuration& config) const {
 
     // Pixel mask file:
     if(!m_maskfile.empty()) {
-        config.set("mask_file", m_maskfile.filename());
+        config.set("mask_file", m_maskfile.string());
     }
 
     // Region-of-interest:
@@ -296,6 +300,11 @@ PositionVector3D<Cartesian3D<double>> PixelDetector::getLocalPosition(double col
     return PositionVector3D<Cartesian3D<double>>(m_pitch.X() * (column - static_cast<double>(m_nPixels.X() - 1) / 2.),
                                                  m_pitch.Y() * (row - static_cast<double>(m_nPixels.Y() - 1) / 2.),
                                                  0.);
+}
+
+// Function to get row and column of pixel
+std::pair<int, int> PixelDetector::getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const {
+    return {floor(getColumn(localPosition) + 0.5), floor(getRow(localPosition) + 0.5)};
 }
 
 // Function to get in-pixel position
@@ -414,7 +423,7 @@ int PixelDetector::isLeft(std::pair<int, int> pt0, std::pair<int, int> pt1, std:
 bool PixelDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
                                const std::shared_ptr<Cluster>& cluster,
                                const int neighbor_radius_row,
-                               const int neighbor_radius_col) {
+                               const int neighbor_radius_col) const {
     for(const auto* pixel : cluster->pixels()) {
         int row_distance = abs(pixel->row() - neighbor->row());
         int col_distance = abs(pixel->column() - neighbor->column());
@@ -427,4 +436,24 @@ bool PixelDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
         }
     }
     return false;
+}
+
+std::set<std::pair<int, int>>
+PixelDetector::getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const {
+    std::set<std::pair<int, int>> neighbors;
+
+    for(int x = col - static_cast<int>(distance); x <= col + static_cast<int>(distance); x++) {
+        for(int y = row - static_cast<int>(distance); y <= row + static_cast<int>(distance); y++) {
+            // Check if we have one common coordinate if corners should be excluded:
+            if(!include_corners && x != col && y != row) {
+                continue;
+            }
+            if(!isWithinMatrix(x, y)) {
+                continue;
+            }
+            neighbors.insert({x, y});
+        }
+    }
+
+    return neighbors;
 }

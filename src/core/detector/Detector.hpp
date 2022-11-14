@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <set>
 #include <string>
 
 #include <Math/DisplacementVector2D.h>
@@ -157,6 +158,12 @@ namespace corryvreckan {
         virtual XYVector getPitch() const = 0;
 
         /**
+         * @brief Checks if a given pixel index lies within the pixel matrix of the detector
+         * @return True if pixel index is within matrix bounds, false otherwise
+         */
+        virtual bool isWithinMatrix(const int col, const int row) const = 0;
+
+        /**
          * @brief Get intrinsic spatial resolution of the detector
          * @return Intrinsic spatial resolution in X and Y
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
@@ -279,6 +286,9 @@ namespace corryvreckan {
         // Function to get local position from column (x) and row (y) coordinates
         virtual PositionVector3D<Cartesian3D<double>> getLocalPosition(double column, double row) const = 0;
 
+        // Function to get row and column of pixel
+        virtual std::pair<int, int> getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const = 0;
+
         /**
          * Transformation from local (sensor) coordinates to in-pixel coordinates
          * @param  column Column address ranging from int_column-0.5*pitch to int_column+0.5*pitch
@@ -345,7 +355,39 @@ namespace corryvreckan {
          * @return true if it fulfills the condition
          * @note users should define their specific clustering method in the detector class
          */
-        virtual bool isNeighbor(const std::shared_ptr<Pixel>&, const std::shared_ptr<Cluster>&, const int, const int) = 0;
+        virtual bool
+        isNeighbor(const std::shared_ptr<Pixel>&, const std::shared_ptr<Cluster>&, const int, const int) const = 0;
+
+        /**
+         * @brief Return a set containing all pixels neighboring the given one with a configurable maximum distance
+         * @param px        Pixel in question
+         * @param distance  Distance for pixels to be considered neighbors
+         * @param include_corners Boolean to select whether pixels only touching via corners should be returned
+         * @return Set of neighboring pixel indices, including the initial pixel
+         *
+         * @note The returned set should always also include the initial pixel indices the neighbors are calculated for
+         *
+         * @note alias for getNeighbors(const int col, const int row, const size_t distance, const bool include_corners)
+         */
+        std::set<std::pair<int, int>>
+        getNeighbors(const std::shared_ptr<Pixel>& px, const size_t distance, const bool include_corners) {
+            return getNeighbors(px->column(), px->row(), distance, include_corners);
+        }
+
+        /**
+         * @brief Return a set containing all pixels neighboring the given one with a configurable maximum distance
+         * @param col       Column of pixel in question
+         * @param row       Row of pixel in question
+         * @param distance  Distance for pixels to be considered neighbors
+         * @param include_corners Boolean to select whether pixels only touching via corners should be returned
+         * @return Set of neighboring pixel indices, including the initial pixel
+         *
+         * @note The returned set should always also include the initial pixel indices the neighbors are calculated for
+         *
+         * @note This method is purely virtual and must be implemented by the respective concrete detector model classes
+         */
+        virtual std::set<std::pair<int, int>>
+        getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const = 0;
 
     protected:
         // Roles of the detector
@@ -370,6 +412,7 @@ namespace corryvreckan {
         // Detector information
         std::string m_detectorType;
         std::string m_detectorName;
+        std::string m_detectorCoordinates;
 
         double m_timeOffset;
         double m_timeResolution;
@@ -393,4 +436,5 @@ namespace corryvreckan {
 } // namespace corryvreckan
 
 #include "PixelDetector.hpp"
+//#include "HexagonalPixelDetector.hpp"
 #endif // CORRYVRECKAN_DETECTOR_H

@@ -18,7 +18,6 @@
 #include <TRef.h>
 
 #include "Cluster.hpp"
-#include "core/utils/type.h"
 
 namespace corryvreckan {
 
@@ -121,7 +120,7 @@ namespace corryvreckan {
          * @brief Get the ndof for the track fit
          * @return ndof
          */
-        double getNdof() const;
+        size_t getNdof() const;
 
         /**
          * @brief Get the clusters contained in the track fit
@@ -294,21 +293,21 @@ namespace corryvreckan {
 
         Plane* get_plane(std::string detetorID);
         std::vector<PointerWrapper<Cluster>> track_clusters_;
-        std::vector<PointerWrapper<Cluster>> associated_clusters_;
+        std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;
         std::map<std::string, ROOT::Math::XYPoint> residual_local_;
         std::map<std::string, ROOT::Math::XYZPoint> residual_global_;
 
         std::vector<Plane> planes_;
 
         std::map<std::string, PointerWrapper<Cluster>> closest_cluster_;
+        size_t ndof_;
         double chi2_;
-        double ndof_;
         double chi2ndof_;
         bool isFitted_{};
         double momentum_{-1};
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(Track, 10)
+        ClassDefOverride(Track, 12)
     };
     // Vector type declaration
     using TrackVector = std::vector<std::shared_ptr<Track>>;

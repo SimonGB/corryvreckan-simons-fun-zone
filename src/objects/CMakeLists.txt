@@ -27,6 +27,7 @@ ROOT_GENERATE_DICTIONARY(CorryvreckanObjectsDictionary
     ${CMAKE_CURRENT_SOURCE_DIR}/MCParticle.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Event.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Multiplet.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Waveform.hpp
     LINKDEF
     ${CMAKE_CURRENT_SOURCE_DIR}/Linkdef.h
     OPTIONS
@@ -50,6 +51,7 @@ ADD_LIBRARY(CorryvreckanObjects SHARED
     Track.cpp
     StraightLineTrack.cpp
     GblTrack.cpp
+    MCParticle.cpp
     Event.cpp
     Multiplet.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/CorryvreckanObjectsDictionary.cxx
