@@ -1,0 +1,17 @@
+#request more cores per single job during alignment, memory is always 2GB per core
+#request_cpus            = 4
+
+output                  = corryvreckan.$(ClusterId).$(ProcId).out
+error                   = corryvreckan.$(ClusterId).$(ProcId).err
+log                     = corryvreckan.$(ClusterId).log
+
+should_transfer_files   = YES
+when_to_transfer_output = ON_EXIT_OR_EVICT
+
+getenv                  = True
+
+#JobFlavour specifies duration of the submission ranging from espresso (20 minutes) to nextweek (1 week)
+#start with single testmatch run to know how much time you need and then adapt
++JobFlavour             = "testmatch"
+
+queue
