@@ -91,6 +91,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Klaas Padeken, Bonn, HISKP, @padeken
 * Florian Pitters, HEPHY, @fpipper
 * Miljenko Suljic, CERN, @msuljic
+* Peter Svihra, CERN, @psvihra
 * Tomas Vanat, CERN, @tvanat
 * Annika Vauth, University of Hamburg/DESY, @anvauth
 * Mateus Vicente Barreto Pinto, University Geneva, @mvicente
