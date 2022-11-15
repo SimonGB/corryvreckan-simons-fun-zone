@@ -107,7 +107,7 @@ def checkSteer(sstring):
         return True
 
 def createSteeringFile(log, args, steering_string, suffix):
-    """ Create file with replacable parameters defined by @.*@ and its name. """
+    """ Create file with replaceable parameters defined by @.*@ and its name. """
     import os
 
     if not checkSteer(steering_string):
