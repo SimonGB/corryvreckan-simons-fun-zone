@@ -16,8 +16,8 @@ The ROI can be set by creating a maskfile for the detector and setting all chann
 ### Parameters
 * `input_directory`: Path to the directory where the input files can be found. This parameter is mandatory
 * `run`: Number of the run to be analysed. Default is 0.
-* `timecut_low`: Readouts with a timestmap smaller than the lower limit are discarded. Each time a readout is triggered in the ALiBaVa system, the readout is given a timestamp by the ALiBaVa system in relation to its internal, 100 ns period clock cycle. Default is 0 ns
-* `timecut_up`: Readouts with a timestmap larger than the upper limit are discarded. Each time a readout is triggered in the ALiBaVa system, the readout is given a timestamp by the ALiBaVa system in relation to its internal, 100 ns period clock cycle. Default is 100 ns
+* `timecut_low`: Readouts with a timestamp smaller than the lower limit are discarded. Each time a readout is triggered in the ALiBaVa system, the readout is given a timestamp by the ALiBaVa system in relation to its internal, 100 ns period clock cycle. Default is 0 ns
+* `timecut_up`: Readouts with a timestamp larger than the upper limit are discarded. Each time a readout is triggered in the ALiBaVa system, the readout is given a timestamp by the ALiBaVa system in relation to its internal, 100 ns period clock cycle. Default is 100 ns
 * `ignore_events`: Number of events at the start which will be ignored. This is done to ensure synchronisation between ALiBaVa system and telescope. Default is 1.
 * `calibration_constant`: Rudimentary way to allow for a conversion from ADC to kiloelectrons. Will change in the future. Default is 1.
 * `chargecut`: If the charge of a strip is below the chargecut, the strip will not be added to the current event. Default is 0. 

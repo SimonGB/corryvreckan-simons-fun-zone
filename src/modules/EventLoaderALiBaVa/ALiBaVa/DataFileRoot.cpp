@@ -247,7 +247,7 @@ void DataFileRoot::calc_common_mode_signal() {
         for(int i : _roi) {
             use_it = true;
             sig = _data.data[i] - _ped[i];
-            // In first iteration of calculation, mean ist not defined -> Use
+            // In first iteration of calculation, mean is not defined -> Use
             // all roi channels for cmmd calculation
             if(ip) {
                 // Filter out all channels for which the deviation from the mean

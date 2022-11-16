@@ -245,7 +245,7 @@ public:
     // returns the seed cut
     double seed_cut() const { return _seedcut; }
 
-    // returns the neightbour cut
+    // returns the neighbour cut
     double neigh_cut() const { return _neighcut; }
 
     // Set the seed and neighbor cuts
