@@ -45,31 +45,28 @@ void EventLoaderALiBaVa::initialize() {
     m_chargecut = config_.get<double>("chargecut");
     int polarity = config_.get<int>("polarity");
 
-
     // Check if input directory exists
     std::filesystem::path directory = input_directory;
-    if (!std::filesystem::exists(directory)) {
+    if(!std::filesystem::exists(directory)) {
         throw InvalidValueError(config_, "input_directory", "The directory could not be found");
     }
 
     std::string datafilename;
     std::string pedestalfilename;
-    
-    // Read the run-files (data, pedestal and calibration) in the folder
-    for (auto const& dir_entry : std::filesystem::directory_iterator{directory}) 
-    {
-        std::string entryName = dir_entry.path();
-        
-        if(entryName.find(std::to_string(run) + ".dat") != std::string::npos ||
-               entryName.find("dat_run" + std::to_string(run) + ".hdf") != std::string::npos) {
-                datafilename = entryName;
-            }
-        if(entryName.find(std::to_string(run) + ".ped") != std::string::npos ||
-               entryName.find("ped_run" + std::to_string(run) + ".hdf") != std::string::npos) {
-                pedestalfilename = entryName;
-            }
-    }
 
+    // Read the run-files (data, pedestal and calibration) in the folder
+    for(auto const& dir_entry : std::filesystem::directory_iterator{directory}) {
+        std::string entryName = dir_entry.path();
+
+        if(entryName.find(std::to_string(run) + ".dat") != std::string::npos ||
+           entryName.find("dat_run" + std::to_string(run) + ".hdf") != std::string::npos) {
+            datafilename = entryName;
+        }
+        if(entryName.find(std::to_string(run) + ".ped") != std::string::npos ||
+           entryName.find("ped_run" + std::to_string(run) + ".hdf") != std::string::npos) {
+            pedestalfilename = entryName;
+        }
+    }
 
     // Log errors in case the files aren't found in the folder.
     // The datafile can also be supplied directly in the config.
@@ -97,28 +94,31 @@ void EventLoaderALiBaVa::initialize() {
 
     hNoiseCorrect = new TH1F("noiseCorrect", "Corrected Noise; # channel; Noise[ADC]", 256, -0.5, 255.5);
 
-    hTimeProfile = new TProfile("timeProfile", "Time profile; Time [ns], Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
-    
-    hPedestalCorrect2D = new TH2F("pedestalCorrect2D", "Corrected pedestal in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
-    
-    hNoiseCorrect2D = new TH2F("noiseCorrect2D", "Corrected Noise in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);             
+    hTimeProfile =
+        new TProfile("timeProfile", "Time profile; Time [ns], Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
+
+    hPedestalCorrect2D = new TH2F(
+        "pedestalCorrect2D", "Corrected pedestal in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
+
+    hNoiseCorrect2D = new TH2F(
+        "noiseCorrect2D", "Corrected Noise in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
 
     // Create a shared pointer with the data file.
     m_alibava.reset(DataFileRoot::OpenFile(datafilename.c_str()));
-    
+
     // Find all non masked channels from the detector config and put them into a vector
-    for (int col=0; col<256; col++){
-        if (!detector_->masked(col, 0)){
+    for(unsigned int col = 0; col < 256; col++) {
+        if(!detector_->masked(static_cast<int>(col), 0)) {
             m_roi_ch.push_back(col);
         }
     }
-        
+
     // Set the region of interest
     m_alibava->set_ROI(m_roi_ch);
-    
+
     // Set the polarity of the signal
     m_alibava->set_polarity(polarity);
-    
+
     // Create a pointer with the pedestal file
     DataFileRoot* PedestalPointer = DataFileRoot::OpenFile(pedestalfilename.c_str());
     PedestalPointer->set_ROI(m_roi_ch);
@@ -223,7 +223,8 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
             // Create a pixel for every channel in this event with all the information and put it in the vector.
             // The value in the pixel reserved for the ADC value is used for the S/N ratio multiplied by 100000.
 
-            std::shared_ptr<Pixel> pixel = std::make_shared<Pixel>(detector_->getName(), chan, 0, SNRatio * 100000, CalSignal, trigger_ts);
+            std::shared_ptr<Pixel> pixel =
+                std::make_shared<Pixel>(detector_->getName(), chan, 0, SNRatio * 100000, CalSignal, trigger_ts);
 
             pixels.push_back(pixel);
 
