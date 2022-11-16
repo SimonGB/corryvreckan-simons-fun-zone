@@ -23,7 +23,7 @@ public:
     virtual ~HDFRoot();
 
     bool valid() const;
-    int nevents() const;
+    unsigned int nevents() const;
     void open(const char* name);
     void close();
     void rewind();

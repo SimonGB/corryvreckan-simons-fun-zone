@@ -16,8 +16,8 @@ public:
 
 private:
     AsciiRootPriv* priv;
-    unsigned long data_start;
-    unsigned long saved_state;
+    long data_start;
+    long saved_state;
     XtraValues _xtra; // extra values from header
 
 public:
@@ -43,8 +43,8 @@ public:
 
     void get_scan_values(short& delay, short& charge);
 
-    int nxtra() const { return _xtra.size(); }
-    const std::string xtra(int i) const { return _xtra[i]; }
+    size_t nxtra() const { return _xtra.size(); }
+    const std::string xtra(size_t i) const { return _xtra[i]; }
     void add_xtra(const std::string& x) { _xtra.push_back(x); }
     void add_xtra(const char* x) { _xtra.push_back(x); }
 };

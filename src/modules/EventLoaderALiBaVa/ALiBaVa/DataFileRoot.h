@@ -9,6 +9,9 @@
 #include <TH2.h>
 #include <ctime>
 
+// maximum number of channels
+#define MAX_NCHAN 256
+
 /**
  * class DataFileRoot
  *
@@ -21,34 +24,32 @@ public:
     enum RunType { UnknownRun = 0, Calibration = 1, LaserSync, Laser, RadSource, Pedestal, ChargeScan, LastRType };
 
 protected: // This is ugly but comfortable
-    static const int max_nchan = 256;
-
     RunType _type;
     time_t _t0;
     int _nchips;
     int _chip_mask;
     int _firmware;
     ScanType _scantype;
-    int _npoints;
-    int _from;
-    int _to;
-    int _step;
-    int _nevts;
+    unsigned int _npoints;
+    unsigned int _from;
+    unsigned int _to;
+    unsigned int _step;
+    unsigned int _nevts;
     int _charge;
     int _delay;
     int _nchan; // current number of channels
     double _seedcut;
     double _neighcut;
     unsigned short _header[2][16];
-    double _ped[max_nchan];
-    double _noise[max_nchan];
-    double _signal[max_nchan];
-    double _sn[max_nchan];
+    double _ped[MAX_NCHAN];
+    double _noise[MAX_NCHAN];
+    double _signal[MAX_NCHAN];
+    double _sn[MAX_NCHAN];
     double _cmmd[2];
     double _cnoise[2];
-    double _gain[max_nchan];
+    double _gain[MAX_NCHAN];
     double _average_gain;
-    bool _mask[max_nchan];
+    bool _mask[MAX_NCHAN];
     int _version;
     int _polarity;
     double _t1, _t2;
@@ -155,11 +156,11 @@ public:
      */
     virtual int read_data() = 0;
 
-    virtual void check_point(int, const char*){};
-    virtual void new_file(int, const char*) {}
-    virtual void start_of_run(int, const char*) {}
-    virtual void end_of_run(int, const char*) {}
-    virtual void new_data_block(int, const char*){};
+    virtual void check_point(unsigned int, const char*){};
+    virtual void new_file(unsigned int, const char*) {}
+    virtual void start_of_run(unsigned int, const char*) {}
+    virtual void end_of_run(unsigned int, const char*) {}
+    virtual void new_data_block(unsigned int, const char*){};
 
     // The data format version
     int version() const { return _version; }
@@ -180,32 +181,32 @@ public:
     char* date() const { return ctime(&_t0); }
 
     // returns the pedestal value of channel i
-    double ped(int i) const { return _ped[i]; }
+    double ped(unsigned int i) const { return _ped[i]; }
 
     // returns the noise value of channel i
 
-    double noise(int i) const { return _noise[i]; }
+    double noise(unsigned int i) const { return _noise[i]; }
 
     // returns the signal over noise ratio of channel i
-    double sn(int i) const { return _sn[i]; }
+    double sn(unsigned int i) const { return _sn[i]; }
 
     // returns the common mode  of chip i
-    double get_cmmd(int i) const { return _cmmd[i]; }
+    double get_cmmd(unsigned int i) const { return _cmmd[i]; }
 
     // returns the common mode noise of chip i
-    double get_cnoise(int i) const { return _cnoise[i]; }
+    double get_cnoise(unsigned int i) const { return _cnoise[i]; }
 
     /*
      * Event specific information
      */
 
     // returns the raw data of channel i
-    unsigned short data(int i) const { return _data.data[i]; }
+    unsigned short data(unsigned int i) const { return _data.data[i]; }
 
     // returns the signal value of channel i
-    double signal(int i) const { return _signal[i] / _gain[i]; }
+    double signal(unsigned int i) const { return _signal[i] / _gain[i]; }
 
-    double ADC_signal(int i) const { return _signal[i]; }
+    double ADC_signal(unsigned int i) const { return _signal[i]; }
 
     // return the scan value
     double value() const { return _data.value; }

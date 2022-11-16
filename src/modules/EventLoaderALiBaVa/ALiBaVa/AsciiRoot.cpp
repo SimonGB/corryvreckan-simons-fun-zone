@@ -20,8 +20,9 @@ struct AsciiRootPriv {
 };
 
 // decodes the header and returns a vector with the integers found
-std::vector<int> decode_header(const std::string& h, AsciiRoot::XtraValues& xtra) {
-    std::vector<int> vout;
+std::vector<unsigned int> decode_header(const std::string& h, AsciiRoot::XtraValues& xtra);
+std::vector<unsigned int> decode_header(const std::string& h, AsciiRoot::XtraValues& xtra) {
+    std::vector<unsigned int> vout;
     std::istringstream istr(h);
     char* endptr;
     char buf[256];

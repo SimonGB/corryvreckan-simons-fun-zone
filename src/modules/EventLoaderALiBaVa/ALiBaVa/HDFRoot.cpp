@@ -13,11 +13,11 @@
 #endif
 #endif
 
+#include <ctime>
+#include <hdf5.h>
 #include <iostream>
 #include "HDFRoot.h"
 #include "core/utils/log.h"
-#include <ctime>
-#include <hdf5.h>
 
 struct ScanDef {
     enum ScanTypes { Unknown, Charge, Time, Laser };
@@ -124,7 +124,7 @@ bool HDFRoot::valid() const {
     return priv->fileid != H5I_BADID;
 }
 
-int HDFRoot::nevents() const {
+unsigned int HDFRoot::nevents() const {
     return priv->nevts;
 }
 
@@ -316,7 +316,7 @@ int HDFRoot::read_event() {
         // return rc;
         return 4;
 
-    int ij = 0, nm = 0;
+    int ij = 0;
     for(int ichip = 0; ichip < _nchips; ichip++) {
         for(int ih = 0; ih < 16; ih++, ij++)
             _header[ichip][ih] = priv->data.header[ij];
