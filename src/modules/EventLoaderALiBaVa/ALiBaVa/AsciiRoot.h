@@ -21,7 +21,7 @@ private:
     XtraValues _xtra; // extra values from header
 
 public:
-    AsciiRoot(const char* nam = 0, const char* pedfile = 0, const char* gainfile = 0);
+    AsciiRoot(const char* nam = nullptr, const char* pedfile = nullptr, const char* gainfile = nullptr);
     virtual ~AsciiRoot();
 
     bool valid() const;

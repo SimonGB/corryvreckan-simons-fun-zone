@@ -109,7 +109,7 @@ herr_t read_file_data(hid_t data_set, int offset, int ncols, void* dest) {
 }
 
 HDFRoot::HDFRoot(const char* nam, const char* pedfile, const char* gainfile)
-    : DataFileRoot(nam, pedfile, gainfile), priv(0) {
+    : DataFileRoot(nam, pedfile, gainfile), priv(nullptr) {
     priv = new HDFRootPrivate;
     if(nam)
         open(nam);
@@ -347,5 +347,3 @@ double HDFRoot::temp() const {
 unsigned int HDFRoot::clock_counter() const {
     return priv->data.clock;
 }
-
-

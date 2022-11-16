@@ -19,7 +19,7 @@ private:
     void next_scan_point();
 
 public:
-    HDFRoot(const char* nam = 0, const char* pedfile = 0, const char* gainfile = 0);
+    HDFRoot(const char* nam = nullptr, const char* pedfile = nullptr, const char* gainfile = nullptr);
     virtual ~HDFRoot();
 
     bool valid() const;

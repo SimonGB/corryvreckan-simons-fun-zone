@@ -44,8 +44,8 @@ void EventLoaderALiBaVa::initialize() {
     m_calibration_constant = config_.get<double>("calibration_constant");
     m_chargecut = config_.get<double>("chargecut");
     int polarity = config_.get<int>("polarity");
-    
-    
+
+
     // Check if input directory exists
     std::filesystem::path directory = input_directory;
     if (!std::filesystem::exists(directory)) {
@@ -69,7 +69,7 @@ void EventLoaderALiBaVa::initialize() {
                 pedestalfilename = entryName;
             }
     }
-                
+
 
     // Log errors in case the files aren't found in the folder.
     // The datafile can also be supplied directly in the config.
@@ -179,7 +179,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     // Read a data event from the ALiBaVa data file
     // Give feedback according to return code
     int return_code = m_alibava->read_event();
-    
+
     if(return_code == 1) {
         LOG(DEBUG) << "Successfully read event from ALiBaVa file";
     } else if(return_code == -1) {

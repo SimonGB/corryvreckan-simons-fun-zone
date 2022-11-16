@@ -16,7 +16,7 @@
 struct AsciiRootPriv {
     std::ifstream* ifile;
 
-    AsciiRootPriv() : ifile(0) {}
+    AsciiRootPriv() : ifile(nullptr) {}
 };
 
 // decodes the header and returns a vector with the integers found
@@ -48,14 +48,14 @@ std::vector<int> decode_header(const std::string& h, AsciiRoot::XtraValues& xtra
             if(!sout.empty())
                 xtra.push_back(sout);
         } else {
-            vout.push_back(atoi(buf));
+            vout.push_back(static_cast<unsigned int>(atoi(buf)));
         }
     }
     return vout;
 }
 
 AsciiRoot::AsciiRoot(const char* nam, const char* pedfile, const char* gainfile)
-    : DataFileRoot(nam, pedfile, gainfile), priv(0) {
+    : DataFileRoot(nam, pedfile, gainfile), priv(nullptr) {
     priv = new AsciiRootPriv;
 
     if(nam)
@@ -74,7 +74,7 @@ int AsciiRoot::nevents() const {
 }
 
 bool AsciiRoot::valid() const {
-    return (priv->ifile != 0);
+    return (priv->ifile != nullptr);
 }
 
 void AsciiRoot::open(const char* name) {
@@ -82,7 +82,7 @@ void AsciiRoot::open(const char* name) {
     if(!(*priv->ifile)) {
         std::cout << "Could not open data file: " << name << std::endl;
         delete priv->ifile;
-        priv->ifile = 0;
+        priv->ifile = nullptr;
         return;
     }
     std::string header;
@@ -168,7 +168,7 @@ void AsciiRoot::close() {
     if(priv->ifile) {
         priv->ifile->close();
         delete priv->ifile;
-        priv->ifile = 0;
+        priv->ifile = nullptr;
     }
 }
 
@@ -180,7 +180,7 @@ void AsciiRoot::get_scan_values(short& delay, short& charge) {
 int AsciiRoot::read_event() {
     if(priv->ifile) {
         unsigned int header, size, user = 0, code = 0;
-        char* block_data = 0;
+        char* block_data = nullptr;
         if(_version) {
             do {
                 do {
@@ -250,7 +250,7 @@ int AsciiRoot::read_event() {
                 }
                 if(block_data) {
                     delete[] block_data;
-                    block_data = 0;
+                    block_data = nullptr;
                 }
 
             } while(code != DataBlock && !(priv->ifile->bad() || priv->ifile->eof()));

@@ -80,7 +80,7 @@ public:
      * in electrons).
      *
      */
-    DataFileRoot(const char* nam = 0, const char* pedfile = 0, const char* gainfile = 0);
+    DataFileRoot(const char* nam = nullptr, const char* pedfile = nullptr, const char* gainfile = nullptr);
 
     /**
      * Destructor
@@ -92,7 +92,7 @@ public:
      * It will return the corresponding handler. The parameters are the same as
      * for the constructor:
      */
-    static DataFileRoot* OpenFile(const char* nam = 0, const char* pedfile = 0, const char* gainfile = 0);
+    static DataFileRoot* OpenFile(const char* nam = nullptr, const char* pedfile = nullptr, const char* gainfile = nullptr);
 
     /**
      * These are the file operation methods that need to be
@@ -105,7 +105,7 @@ public:
      * of non "standard" values. If data==0, then only the number
      * of channels is changed
      */
-    void set_data(int nchan, const unsigned short* data = 0);
+    void set_data(int nchan, const unsigned short* data = nullptr);
 
     /**
      * Tells if the data stream is valid.

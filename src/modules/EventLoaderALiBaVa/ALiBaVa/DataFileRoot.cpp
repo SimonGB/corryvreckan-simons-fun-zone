@@ -195,7 +195,7 @@ void DataFileRoot::save_pedestals(const char* fnam) {
         std::cout << "Could not open " << fnam << " to save pedestals." << std::endl;
         return;
     }
-    
+
     ofile << _cmmd[0] << "\n";
 
     int i;
@@ -205,7 +205,7 @@ void DataFileRoot::save_pedestals(const char* fnam) {
     ofile.close();
 }
 
-void DataFileRoot::load_pedestals(const char* fnam, bool show) {
+void DataFileRoot::load_pedestals(const char* fnam, bool) {
     std::ifstream ifile(fnam);
     if(!ifile) {
         std::cout << "Could not open " << fnam << " to load pedestals." << std::endl;
@@ -286,11 +286,11 @@ double DataFileRoot::temp() const {
 DataFileRoot* DataFileRoot::OpenFile(const char* nam, const char* pedfile, const char* gainfile) {
     struct stat sb;
     if(stat(nam, &sb) == -1)
-        return 0;
-        
+        return nullptr;
+
     std::ifstream ifile(nam);
     if(!ifile)
-        return 0;
+        return nullptr;
 
     char buf[5] = {'\0'};
     ifile.read(buf, 4);
