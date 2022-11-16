@@ -86,7 +86,7 @@ herr_t read_file_data(hid_t data_set, unsigned int offset, int ncols, void* dest
      */
     int rank = (ncols > 1 ? 2 : 1);
     hsize_t mdims[2] = {1, static_cast<hsize_t>(ncols)};
-    hid_t m_sid = H5Screate_simple(rank, mdims, NULL);
+    hid_t m_sid = H5Screate_simple(rank, mdims, nullptr);
 
     /*
      * ...and select the hyperslab in the file dataset
@@ -94,7 +94,7 @@ herr_t read_file_data(hid_t data_set, unsigned int offset, int ncols, void* dest
     hsize_t start[2] = {static_cast<hsize_t>(offset), 0};
     hsize_t count[2] = {1, static_cast<hsize_t>(ncols)};
     hid_t sid = H5Dget_space(data_set); /* A copy of data space for writing */
-    H5Sselect_hyperslab(sid, H5S_SELECT_SET, start, NULL, count, NULL);
+    H5Sselect_hyperslab(sid, H5S_SELECT_SET, start, nullptr, count, nullptr);
 
     /*
      * Now read
@@ -207,12 +207,12 @@ void HDFRoot::open(const char* name) {
 
     hsize_t dims[2];
     hid_t dspace = H5Dget_space(priv->timeID);
-    H5Sget_simple_extent_dims(dspace, dims, NULL);
+    H5Sget_simple_extent_dims(dspace, dims, nullptr);
     H5Sclose(dspace);
     priv->nevts = static_cast<unsigned int>(dims[0]);
 
     dspace = H5Dget_space(priv->startID);
-    H5Sget_simple_extent_dims(dspace, dims, NULL);
+    H5Sget_simple_extent_dims(dspace, dims, nullptr);
     H5Sclose(dspace);
     priv->npoints = static_cast<unsigned int>(dims[0]);
 
