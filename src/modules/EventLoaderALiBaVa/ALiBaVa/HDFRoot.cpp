@@ -78,7 +78,8 @@ struct HDFRootPrivate {
           saved_point(0) {}
 };
 
-herr_t read_file_data(hid_t data_set, int offset, int ncols, void* dest) {
+herr_t read_file_data(hid_t data_set, unsigned int offset, int ncols, void* dest);
+herr_t read_file_data(hid_t data_set, unsigned int offset, int ncols, void* dest) {
     /*
      * Create the memory data space.
      * The one we want to add
@@ -160,7 +161,7 @@ void HDFRoot::open(const char* name) {
     if(H5Aexists(scan, "scan_definition")) {
         setup = H5Aopen(scan, "scan_definition", H5P_DEFAULT);
         dtype = H5Aget_type(setup);
-        ret = H5Aread(setup, dtype, &H.scan);
+        H5Aread(setup, dtype, &H.scan);
         H5Aclose(setup);
         H5Tclose(dtype);
     }
@@ -181,13 +182,13 @@ void HDFRoot::open(const char* name) {
 
     // Get pedestals and noise
     hid_t dset = H5Dopen2(priv->fileid, "/header/pedestal", H5P_DEFAULT);
-    herr_t rc = read_file_data(dset, 0, _nchan, H.pedestals);
+    read_file_data(dset, 0, _nchan, H.pedestals);
     for(int ic = 0; ic < _nchan; ic++)
         _ped[ic] = H.pedestals[ic];
     H5Dclose(dset);
 
     dset = H5Dopen2(priv->fileid, "/header/noise", H5P_DEFAULT);
-    rc = read_file_data(dset, 0, _nchan, H.noise);
+    read_file_data(dset, 0, _nchan, H.noise);
     for(int ic = 0; ic < _nchan; ic++)
         _noise[ic] = H.noise[ic];
     H5Dclose(dset);
@@ -242,11 +243,10 @@ void HDFRoot::close() {
 }
 
 void HDFRoot::next_scan_point() {
-    herr_t rc;
     if(priv->ipoint < priv->npoints) {
-        rc = read_file_data(priv->scvalID, priv->ipoint, 1, &priv->scan.value);
-        rc = read_file_data(priv->startID, priv->ipoint, 1, &priv->scan.start);
-        rc = read_file_data(priv->endID, priv->ipoint, 1, &priv->scan.end);
+        read_file_data(priv->scvalID, priv->ipoint, 1, &priv->scan.value);
+        read_file_data(priv->startID, priv->ipoint, 1, &priv->scan.start);
+        read_file_data(priv->endID, priv->ipoint, 1, &priv->scan.end);
         _data.value = priv->scan.value;
         priv->ipoint++;
     }

@@ -15,11 +15,7 @@
 #include <sys/stat.h>
 
 #ifdef HAVE_CONFIG_H
-#ifdef G_OS_WIN32
-#include "config_win.h"
-#else
 #include <config.h>
-#endif
 #endif
 
 #include "AsciiRoot.h"
@@ -29,17 +25,9 @@
 #ifdef __APPLE__
 #define sighandler_t sig_t
 #endif
-#ifdef __WIN32__
-#define sighandler_t __p_sig_fn_t
-#endif
-#ifdef __MINGW32__
-#define sighandler_t __p_sig_fn_t
-#endif
-#if _WINDOWS
-typedef void (*sighandler_t)(int);
-#endif
 
 bool _A_do_run = true;
+void _A_got_intr(int);
 void _A_got_intr(int) {
     _A_do_run = false;
 }
