@@ -88,15 +88,15 @@ void AsciiRoot::open(const char* name) {
     std::string header;
     unsigned int ic, lheader;
     char c;
-    priv->ifile->read((char*)&_t0, sizeof(time_t));
-    priv->ifile->read((char*)&_type, sizeof(int));
+    priv->ifile->read(reinterpret_cast<char*>(&_t0), sizeof(time_t));
+    priv->ifile->read(reinterpret_cast<char*>(&_type), sizeof(int));
     if(_type > LastRType) {
         priv->ifile->seekg(0, std::ios::beg);
-        priv->ifile->read((char*)&_t0, sizeof(int));
-        priv->ifile->read((char*)&_type, sizeof(int));
+        priv->ifile->read(reinterpret_cast<char*>(&_t0), sizeof(int));
+        priv->ifile->read(reinterpret_cast<char*>(&_type), sizeof(int));
     }
 
-    priv->ifile->read((char*)&lheader, sizeof(unsigned int));
+    priv->ifile->read(reinterpret_cast<char*>(&lheader), sizeof(unsigned int));
     for(ic = 0; ic < 80; ic++) {
         priv->ifile->read(&c, sizeof(char));
         header.append(1, c);
@@ -106,13 +106,13 @@ void AsciiRoot::open(const char* name) {
     if(header[0] != 'V' && header[0] != 'v') {
         _version = 0;
     } else {
-        _version = int(header[1] - '0');
+        _version = header[1] - '0';
         header = header.substr(5);
     }
 
-    std::vector<int> param = decode_header(header, _xtra);
-    priv->ifile->read((char*)_ped, max_nchan * sizeof(double));
-    priv->ifile->read((char*)_noise, max_nchan * sizeof(double));
+    auto param = decode_header(header, _xtra);
+    priv->ifile->read(reinterpret_cast<char*>(_ped), MAX_NCHAN * sizeof(double));
+    priv->ifile->read(reinterpret_cast<char*>(_noise), MAX_NCHAN * sizeof(double));
     switch(_type) {
     case 1: // calibration
     case 2: // laser sync
@@ -173,8 +173,8 @@ void AsciiRoot::close() {
 }
 
 void AsciiRoot::get_scan_values(short& delay, short& charge) {
-    delay = int(value()) >> 16;
-    charge = int(value()) & 0xffff;
+    delay = static_cast<short>(int(value()) >> 16);
+    charge = static_cast<short>(int(value()) & 0xffff);
 }
 
 int AsciiRoot::read_event() {
@@ -184,7 +184,7 @@ int AsciiRoot::read_event() {
         if(_version) {
             do {
                 do {
-                    priv->ifile->read((char*)&header, sizeof(unsigned int));
+                    priv->ifile->read(reinterpret_cast<char*>(&header), sizeof(unsigned int));
                     if(priv->ifile->bad() || priv->ifile->eof())
                         return -1;
 
@@ -195,19 +195,19 @@ int AsciiRoot::read_event() {
                 user = header & 0x1000;
                 switch(code) {
                 case NewFile:
-                    priv->ifile->read((char*)&size, sizeof(unsigned int));
+                    priv->ifile->read(reinterpret_cast<char*>(&size), sizeof(unsigned int));
                     block_data = new char[size];
                     priv->ifile->read(block_data, size);
                     new_file(size, block_data);
                     break;
                 case StartOfRun:
-                    priv->ifile->read((char*)&size, sizeof(unsigned int));
+                    priv->ifile->read(reinterpret_cast<char*>(&size), sizeof(unsigned int));
                     block_data = new char[size];
                     priv->ifile->read(block_data, size);
                     start_of_run(size, block_data);
                     break;
                 case DataBlock:
-                    priv->ifile->read((char*)&size, sizeof(unsigned int));
+                    priv->ifile->read(reinterpret_cast<char*>(&size), sizeof(unsigned int));
                     if(user) {
                         reset_data();
                         block_data = new char[size];
@@ -215,32 +215,33 @@ int AsciiRoot::read_event() {
                         new_data_block(size, block_data);
                     } else {
                         if(_version == 1) {
-                            priv->ifile->read((char*)&_data, sizeof(EventData));
+                            priv->ifile->read(reinterpret_cast<char*>(&_data), sizeof(EventData));
                             for(int ii = 0; ii < 2; ii++)
                                 memset(_header[ii], 0, 16 * sizeof(unsigned short));
 
                         } else {
-                            priv->ifile->read((char*)&_data.value, sizeof(double));
+                            priv->ifile->read(reinterpret_cast<char*>(&_data.value), sizeof(double));
                             if(_version > 2)
-                                priv->ifile->read((char*)&_data.clock, sizeof(unsigned int));
-                            priv->ifile->read((char*)&_data.time, sizeof(unsigned int));
-                            priv->ifile->read((char*)&_data.temp, sizeof(unsigned short));
+                                priv->ifile->read(reinterpret_cast<char*>(&_data.clock), sizeof(unsigned int));
+                            priv->ifile->read(reinterpret_cast<char*>(&_data.time), sizeof(unsigned int));
+                            priv->ifile->read(reinterpret_cast<char*>(&_data.temp), sizeof(unsigned short));
                             for(int ii = 0; ii < 2; ii++) {
-                                priv->ifile->read((char*)_header[ii], 16 * sizeof(unsigned short));
-                                priv->ifile->read((char*)&_data.data[ii * 128], 128 * sizeof(unsigned short));
+                                priv->ifile->read(reinterpret_cast<char*>(_header[ii]), 16 * sizeof(unsigned short));
+                                priv->ifile->read(reinterpret_cast<char*>(&_data.data[ii * 128]),
+                                                  128 * sizeof(unsigned short));
                             }
                         }
                     }
 
                     break;
                 case CheckPoint:
-                    priv->ifile->read((char*)&size, sizeof(unsigned int));
+                    priv->ifile->read(reinterpret_cast<char*>(&size), sizeof(unsigned int));
                     block_data = new char[size];
                     priv->ifile->read(block_data, size);
                     check_point(size, block_data);
                     break;
                 case EndOfRun:
-                    priv->ifile->read((char*)&size, sizeof(unsigned int));
+                    priv->ifile->read(reinterpret_cast<char*>(&size), sizeof(unsigned int));
                     block_data = new char[size];
                     priv->ifile->read(block_data, size);
                     end_of_run(size, block_data);
@@ -255,7 +256,7 @@ int AsciiRoot::read_event() {
 
             } while(code != DataBlock && !(priv->ifile->bad() || priv->ifile->eof()));
         } else {
-            priv->ifile->read((char*)&_data, sizeof(EventData));
+            priv->ifile->read(reinterpret_cast<char*>(&_data), sizeof(EventData));
             for(int ii = 0; ii < 2; ii++)
                 memset(_header[ii], 0, 16 * sizeof(unsigned short));
         }
@@ -272,11 +273,11 @@ int AsciiRoot::read_event() {
 }
 
 double AsciiRoot::time() const {
-    unsigned short fpart = _data.time & 0xffff;
-    short ipart = (_data.time & 0xffff0000) >> 16;
+    short fpart = static_cast<short>(_data.time & 0xffff);
+    short ipart = static_cast<short>((_data.time & 0xffff0000) >> 16);
     if(ipart < 0)
-        fpart *= -1;
-    double tt = 100.0 * (ipart + (fpart / 65535.));
+        fpart = static_cast<short>(fpart * -1);
+    double tt = 100.0 * (ipart + (static_cast<unsigned short>(fpart) / 65535.));
     return tt;
 }
 

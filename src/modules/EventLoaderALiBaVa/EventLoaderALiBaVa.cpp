@@ -82,7 +82,6 @@ void EventLoaderALiBaVa::initialize() {
         pedestalfilename = datafilename;
     }
 
-
     // Create histograms
     hChargeSignal = new TH1F("chargeSignal", "Charge of signal; Charge [e]; # entries", 100, -96000, 32000);
 
@@ -127,25 +126,25 @@ void EventLoaderALiBaVa::initialize() {
     // Calculate the pedestals, and compute and apply the common mode noise correction
     PedestalPointer->compute_pedestals_alternative();
 
-    for(int chan : m_roi_ch) {
+    for(auto chan : m_roi_ch) {
         double ped_val, noise_val;
         ped_val = PedestalPointer->ped(chan);
         noise_val = PedestalPointer->noise(chan);
-        hPedestal->SetBinContent(chan+1, ped_val);
-        hNoise->SetBinContent(chan+1, noise_val);
+        hPedestal->SetBinContent(static_cast<int>(chan + 1), ped_val);
+        hNoise->SetBinContent(static_cast<int>(chan + 1), noise_val);
     }
 
     PedestalPointer->compute_cmmd_alternative();
-    for(int chan : m_roi_ch) {
+    for(auto chan : m_roi_ch) {
         double ped_val, noise_val;
         ped_val = PedestalPointer->ped(chan);
         noise_val = PedestalPointer->noise(chan);
-        hPedestalCorrect->SetBinContent(chan+1, ped_val);
-        hNoiseCorrect->SetBinContent(chan+1, noise_val);
-        hPedestalCorrect2D->SetBinContent(chan+1, 1, ped_val);
-        hNoiseCorrect2D->SetBinContent(chan+1, 1, noise_val);
+        hPedestalCorrect->SetBinContent(static_cast<int>(chan + 1), ped_val);
+        hNoiseCorrect->SetBinContent(static_cast<int>(chan + 1), noise_val);
+        hPedestalCorrect2D->SetBinContent(static_cast<int>(chan + 1), 1, ped_val);
+        hNoiseCorrect2D->SetBinContent(static_cast<int>(chan + 1), 1, noise_val);
     }
-    
+
     // Save the calculated pedestal information in a temporary file
     const std::string ped_f = "alibava_ped.ped";
     PedestalPointer->save_pedestals(ped_f.c_str());
@@ -162,11 +161,6 @@ void EventLoaderALiBaVa::initialize() {
         m_alibava->read_event();
     }
 }
-
-
-
-
-
 
 StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) {
     // During running, every Corryvreckan event will get one ALiBaVa event
@@ -214,7 +208,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     double max_signal = 0;
     // This loops over the channels in the current ALiBaVa event
-    for(int chan : m_roi_ch) {
+    for(auto chan : m_roi_ch) {
         double ADCSignal = m_alibava->ADC_signal(chan);
         double SNRatio = m_alibava->sn(chan);
         double CalSignal = ADCSignal * m_calibration_constant;
@@ -254,6 +248,6 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
 void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
     m_alibava->close();
-    //delete m_alibava;
+    // delete m_alibava;
     m_alibava.reset();
 }

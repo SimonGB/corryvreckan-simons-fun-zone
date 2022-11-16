@@ -2,7 +2,7 @@
 #include <TROOT.h>
 
 TCanvas* create_canvas(const char* name, const char* title, int wx, int wy) {
-    TCanvas* cnvs = (TCanvas*)gROOT->FindObject("name");
+    TCanvas* cnvs = static_cast<TCanvas*>(gROOT->FindObject("name"));
     if(cnvs)
         delete cnvs;
 
@@ -15,7 +15,7 @@ TCanvas* create_canvas(const char* name, const char* title, int wx, int wy) {
 }
 
 TH1* create_h1(const char* name, const char* tit, int n, double x1, double x2) {
-    TH1* hst = (TH1*)gROOT->FindObject(name);
+    TH1* hst = static_cast<TH1*>(gROOT->FindObject(name));
     if(hst)
         delete hst;
 
@@ -24,7 +24,7 @@ TH1* create_h1(const char* name, const char* tit, int n, double x1, double x2) {
 }
 
 TH2* create_h2(const char* name, const char* tit, int nx, double x1, double x2, int ny, double y1, double y2) {
-    TH2* hst = (TH2*)gROOT->FindObject(name);
+    TH2* hst = static_cast<TH2*>(gROOT->FindObject(name));
     if(hst)
         delete hst;
 
@@ -33,7 +33,7 @@ TH2* create_h2(const char* name, const char* tit, int nx, double x1, double x2, 
 }
 
 TProfile* create_profile(const char* name, const char* tit, int n, double x1, double x2, double y1, double y2) {
-    TProfile* hst = (TProfile*)gROOT->FindObject(name);
+    TProfile* hst = static_cast<TProfile*>(gROOT->FindObject(name));
     if(hst)
         delete hst;
 
@@ -42,7 +42,7 @@ TProfile* create_profile(const char* name, const char* tit, int n, double x1, do
 }
 
 TProfile2D* create_profile2d(const char* name, const char* tit, int nx, double x1, double x2, int ny, double y1, double y2) {
-    TProfile2D* hst = (TProfile2D*)gROOT->FindObject(name);
+    TProfile2D* hst = static_cast<TProfile2D*>(gROOT->FindObject(name));
     if(hst)
         delete hst;
 

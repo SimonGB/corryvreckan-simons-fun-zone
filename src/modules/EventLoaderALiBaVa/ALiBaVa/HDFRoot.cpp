@@ -143,11 +143,11 @@ void HDFRoot::open(const char* name) {
     hid_t header = H5Gopen2(priv->fileid, "/header", H5P_DEFAULT);
     hid_t setup = H5Aopen(header, "setup", H5P_DEFAULT);
     hid_t dtype = H5Aget_type(setup);
-    herr_t ret = H5Aread(setup, dtype, &H);
+    H5Aread(setup, dtype, &H);
     H5Aclose(setup);
     H5Tclose(dtype);
 
-    _type = (RunType)H.run_type;
+    _type = static_cast<RunType>(H.run_type);
     _t0 = mktime(&H.time);
 
     _nchips = H.nchips;
@@ -168,15 +168,15 @@ void HDFRoot::open(const char* name) {
     _from = H.scan.from;
     _to = H.scan.to;
     _nevts = H.scan.nevts;
-    _charge = H.scan.charge;
-    _delay = H.scan.delay;
-    _scantype = (DataFileRoot::ScanType)H.scan.type;
+    _charge = static_cast<int>(H.scan.charge);
+    _delay = static_cast<int>(H.scan.delay);
+    _scantype = static_cast<DataFileRoot::ScanType>(H.scan.type);
     if(_npoints > 0)
         _step = (_from - _to) / _npoints;
     else
         _step = 0;
 
-    LOG(DEBUG) << "Run type: " << _type << " acquired on " << ctime(&_t0);
+    LOG(DEBUG) << "Run type: " << static_cast<int>(_type) << " acquired on " << ctime(&_t0);
     LOG(DEBUG) << _t0;
 
     // Get pedestals and noise
@@ -208,12 +208,12 @@ void HDFRoot::open(const char* name) {
     hid_t dspace = H5Dget_space(priv->timeID);
     H5Sget_simple_extent_dims(dspace, dims, NULL);
     H5Sclose(dspace);
-    priv->nevts = dims[0];
+    priv->nevts = static_cast<unsigned int>(dims[0]);
 
     dspace = H5Dget_space(priv->startID);
     H5Sget_simple_extent_dims(dspace, dims, NULL);
     H5Sclose(dspace);
-    priv->npoints = dims[0];
+    priv->npoints = static_cast<unsigned int>(dims[0]);
 
     LOG(DEBUG) << "Nr. of evts. " << priv->nevts << " - Nr. of points " << priv->npoints << std::endl;
 
@@ -322,7 +322,7 @@ int HDFRoot::read_event() {
             _header[ichip][ih] = priv->data.header[ij];
     }
     priv->ievt++;
-    if(priv->ievt >= priv->scan.end)
+    if(priv->ievt >= static_cast<unsigned int>(priv->scan.end))
         next_scan_point();
 
     return 1;
@@ -330,11 +330,11 @@ int HDFRoot::read_event() {
 
 void HDFRoot::get_scan_values(short& delay, short& charge) {
     if(scan_type() == DataFileRoot::Charge) {
-        charge = value() / 1024;
-        delay = _delay;
+        charge = static_cast<short>(value() / 1024);
+        delay = static_cast<short>(_delay);
     } else {
-        delay = value();
-        charge = _charge / 1024;
+        delay = static_cast<short>(value());
+        charge = static_cast<short>(_charge / 1024);
     }
 }
 

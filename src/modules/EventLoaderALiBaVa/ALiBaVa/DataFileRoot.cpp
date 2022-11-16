@@ -126,12 +126,12 @@ void DataFileRoot::compute_pedestals_alternative() {
     for(unsigned int i : _roi) {
         pedestal_average[i] = std::accumulate(pedestal_data[i].begin(), pedestal_data[i].end(), 0.0);
 
-        pedestal_average[i] = pedestal_average[i] / pedestal_data[i].size();
+        pedestal_average[i] = pedestal_average[i] / static_cast<double>(pedestal_data[i].size());
 
         pedestal_stdev[i] =
             std::inner_product(pedestal_data[i].begin(), pedestal_data[i].end(), pedestal_data[i].begin(), 0.0);
-        pedestal_stdev[i] =
-            std::sqrt(pedestal_stdev[i] / pedestal_data[i].size() - pedestal_average[i] * pedestal_average[i]);
+        pedestal_stdev[i] = std::sqrt(pedestal_stdev[i] / static_cast<double>(pedestal_data[i].size()) -
+                                      pedestal_average[i] * pedestal_average[i]);
 
         _ped[i] = pedestal_average[i];
         _noise[i] = pedestal_stdev[i];
@@ -163,7 +163,7 @@ void DataFileRoot::compute_cmmd_alternative() {
         for(unsigned int i : _roi) {
             event_sum += (_data.data[i] - _ped[i]);
         }
-        event_bias = event_sum / (_roi.size());
+        event_bias = event_sum / static_cast<double>(_roi.size());
         cmn += event_bias;
         for(unsigned int i : _roi) {
             corrected_pedestal_data[i].push_back(_data.data[i] - event_bias);
@@ -175,12 +175,12 @@ void DataFileRoot::compute_cmmd_alternative() {
     for(unsigned int i : _roi) {
 
         pedestal_average[i] = std::accumulate(corrected_pedestal_data[i].begin(), corrected_pedestal_data[i].end(), 0.0);
-        pedestal_average[i] = pedestal_average[i] / corrected_pedestal_data[i].size();
+        pedestal_average[i] = pedestal_average[i] / static_cast<double>(corrected_pedestal_data[i].size());
 
         pedestal_stdev[i] = std::inner_product(
             corrected_pedestal_data[i].begin(), corrected_pedestal_data[i].end(), corrected_pedestal_data[i].begin(), 0.0);
-        pedestal_stdev[i] =
-            std::sqrt(pedestal_stdev[i] / corrected_pedestal_data[i].size() - pedestal_average[i] * pedestal_average[i]);
+        pedestal_stdev[i] = std::sqrt(pedestal_stdev[i] / static_cast<double>(corrected_pedestal_data[i].size()) -
+                                      pedestal_average[i] * pedestal_average[i]);
 
         _ped[i] = pedestal_average[i];
         _noise[i] = pedestal_stdev[i];
