@@ -226,7 +226,7 @@ fmt:codespell:
     extends: .format
     script:
         - cd ../
-        - codespell --ignore-words .gitlab/ci/codespell_ignored_words.txt --quiet-level 2 --skip ".git,.gitlab,cmake,3rdparty,*.svg"
+        - codespell --ignore-words .gitlab/ci/codespell_ignored_words.txt --quiet-level 2 --skip ".git,.gitlab,cmake,3rdparty,*.svg,*.pdf"
 
 
 #############################
