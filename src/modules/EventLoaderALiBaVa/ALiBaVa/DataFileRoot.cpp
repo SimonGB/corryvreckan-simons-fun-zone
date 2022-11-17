@@ -15,11 +15,7 @@
 #include <sys/stat.h>
 
 #ifdef HAVE_CONFIG_H
-#ifdef G_OS_WIN32
-#include "config_win.h"
-#else
 #include <config.h>
-#endif
 #endif
 
 #include "AsciiRoot.h"
@@ -29,27 +25,19 @@
 #ifdef __APPLE__
 #define sighandler_t sig_t
 #endif
-#ifdef __WIN32__
-#define sighandler_t __p_sig_fn_t
-#endif
-#ifdef __MINGW32__
-#define sighandler_t __p_sig_fn_t
-#endif
-#if _WINDOWS
-typedef void (*sighandler_t)(int);
-#endif
 
 bool _A_do_run = true;
+void _A_got_intr(int);
 void _A_got_intr(int) {
     _A_do_run = false;
 }
 
-DataFileRoot::DataFileRoot(const char* nam, const char* pedfile, const char* gainfile)
-    : _nchan(max_nchan), _seedcut(5.), _neighcut(3.), _average_gain(1.), _version(2), _polarity(1), _t1(0.0), _t2(99999.),
+DataFileRoot::DataFileRoot(const char*, const char* pedfile, const char*)
+    : _nchan(MAX_NCHAN), _seedcut(5.), _neighcut(3.), _average_gain(1.), _version(2), _polarity(1), _t1(0.0), _t2(99999.),
       _roi({}) {
     int i;
 
-    for(i = 0; i < max_nchan; i++) {
+    for(i = 0; i < MAX_NCHAN; i++) {
         _ped[i] = 0.;
         _gain[i] = 1.;
         _noise[i] = 1.;
@@ -106,10 +94,10 @@ bool DataFileRoot::valid_time(double tim) const {
 void DataFileRoot::compute_pedestals_alternative() {
     int mxevts = 10000000;
 
-    int i, ievt;
-    std::vector<double> pedestal_data[max_nchan];
-    double pedestal_average[max_nchan];
-    double pedestal_stdev[max_nchan];
+    int ievt;
+    std::vector<double> pedestal_data[MAX_NCHAN];
+    double pedestal_average[MAX_NCHAN];
+    double pedestal_stdev[MAX_NCHAN];
 
     if(!valid())
         return;
@@ -126,12 +114,12 @@ void DataFileRoot::compute_pedestals_alternative() {
     for(unsigned int i : _roi) {
         pedestal_average[i] = std::accumulate(pedestal_data[i].begin(), pedestal_data[i].end(), 0.0);
 
-        pedestal_average[i] = pedestal_average[i] / pedestal_data[i].size();
+        pedestal_average[i] = pedestal_average[i] / static_cast<double>(pedestal_data[i].size());
 
         pedestal_stdev[i] =
             std::inner_product(pedestal_data[i].begin(), pedestal_data[i].end(), pedestal_data[i].begin(), 0.0);
-        pedestal_stdev[i] =
-            std::sqrt(pedestal_stdev[i] / pedestal_data[i].size() - pedestal_average[i] * pedestal_average[i]);
+        pedestal_stdev[i] = std::sqrt(pedestal_stdev[i] / static_cast<double>(pedestal_data[i].size()) -
+                                      pedestal_average[i] * pedestal_average[i]);
 
         _ped[i] = pedestal_average[i];
         _noise[i] = pedestal_stdev[i];
@@ -142,17 +130,16 @@ void DataFileRoot::compute_pedestals_alternative() {
 
 void DataFileRoot::compute_cmmd_alternative() {
     int mxevts = 10000000;
-    int max_nchan = _nchan; // was 128 originally
     int nEvents = 0;
 
-    int i, ievt;
+    int ievt;
 
     double event_bias = 0; // common mode noise per pedestal events
     double cmn = 0;        // common mode noise averaged over all pedestal events
 
-    std::vector<double> corrected_pedestal_data[max_nchan];
-    double pedestal_average[max_nchan];
-    double pedestal_stdev[max_nchan];
+    std::vector<double> corrected_pedestal_data[MAX_NCHAN];
+    double pedestal_average[MAX_NCHAN];
+    double pedestal_stdev[MAX_NCHAN];
 
     if(!valid())
         return;
@@ -163,7 +150,7 @@ void DataFileRoot::compute_cmmd_alternative() {
         for(unsigned int i : _roi) {
             event_sum += (_data.data[i] - _ped[i]);
         }
-        event_bias = event_sum / (_roi.size());
+        event_bias = event_sum / static_cast<double>(_roi.size());
         cmn += event_bias;
         for(unsigned int i : _roi) {
             corrected_pedestal_data[i].push_back(_data.data[i] - event_bias);
@@ -175,12 +162,12 @@ void DataFileRoot::compute_cmmd_alternative() {
     for(unsigned int i : _roi) {
 
         pedestal_average[i] = std::accumulate(corrected_pedestal_data[i].begin(), corrected_pedestal_data[i].end(), 0.0);
-        pedestal_average[i] = pedestal_average[i] / corrected_pedestal_data[i].size();
+        pedestal_average[i] = pedestal_average[i] / static_cast<double>(corrected_pedestal_data[i].size());
 
         pedestal_stdev[i] = std::inner_product(
             corrected_pedestal_data[i].begin(), corrected_pedestal_data[i].end(), corrected_pedestal_data[i].begin(), 0.0);
-        pedestal_stdev[i] =
-            std::sqrt(pedestal_stdev[i] / corrected_pedestal_data[i].size() - pedestal_average[i] * pedestal_average[i]);
+        pedestal_stdev[i] = std::sqrt(pedestal_stdev[i] / static_cast<double>(corrected_pedestal_data[i].size()) -
+                                      pedestal_average[i] * pedestal_average[i]);
 
         _ped[i] = pedestal_average[i];
         _noise[i] = pedestal_stdev[i];
@@ -195,7 +182,7 @@ void DataFileRoot::save_pedestals(const char* fnam) {
         std::cout << "Could not open " << fnam << " to save pedestals." << std::endl;
         return;
     }
-    
+
     ofile << _cmmd[0] << "\n";
 
     int i;
@@ -205,7 +192,7 @@ void DataFileRoot::save_pedestals(const char* fnam) {
     ofile.close();
 }
 
-void DataFileRoot::load_pedestals(const char* fnam, bool show) {
+void DataFileRoot::load_pedestals(const char* fnam, bool) {
     std::ifstream ifile(fnam);
     if(!ifile) {
         std::cout << "Could not open " << fnam << " to load pedestals." << std::endl;
@@ -215,7 +202,7 @@ void DataFileRoot::load_pedestals(const char* fnam, bool show) {
     ifile >> _cmmd[0] >> std::ws;
 
     int i;
-    for(i = 0; i < max_nchan; i++) {
+    for(i = 0; i < MAX_NCHAN; i++) {
         if(ifile.eof())
             break;
 
@@ -227,16 +214,16 @@ void DataFileRoot::load_pedestals(const char* fnam, bool show) {
 // This function processes the event, it subtracts pedestals and common mode from data
 // and fills in the signal/noise ratio
 
-void DataFileRoot::process_event(bool do_cmmd) {
-    for(int i : _roi) {
+void DataFileRoot::process_event(bool) {
+    for(auto i : _roi) {
         _signal[i] = (_data.data[i] - _ped[i] - _cmmd_roi) * _polarity;
         _sn[i] = _signal[i] / _noise[i];
     }
 }
 
 void DataFileRoot::calc_common_mode_signal() {
-    int ip, i, n;
-    double mean, st_dev, sig, signal_square, signal_sum, tmp;
+    int ip, n;
+    double mean = 0, st_dev = 0, sig, signal_square, signal_sum, tmp;
     bool use_it;
 
     // Iterate common mode calculation three times to get better result
@@ -244,7 +231,7 @@ void DataFileRoot::calc_common_mode_signal() {
         n = 0;
         signal_square = signal_sum = 0;
         // Use only channels in ROI
-        for(int i : _roi) {
+        for(auto i : _roi) {
             use_it = true;
             sig = _data.data[i] - _ped[i];
             // In first iteration of calculation, mean is not defined -> Use
@@ -286,11 +273,11 @@ double DataFileRoot::temp() const {
 DataFileRoot* DataFileRoot::OpenFile(const char* nam, const char* pedfile, const char* gainfile) {
     struct stat sb;
     if(stat(nam, &sb) == -1)
-        return 0;
-        
+        return nullptr;
+
     std::ifstream ifile(nam);
     if(!ifile)
-        return 0;
+        return nullptr;
 
     char buf[5] = {'\0'};
     ifile.read(buf, 4);
@@ -301,5 +288,4 @@ DataFileRoot* DataFileRoot::OpenFile(const char* nam, const char* pedfile, const
         return new HDFRoot(nam, pedfile, gainfile);
     else
         return new AsciiRoot(nam, pedfile, gainfile);
-
 }

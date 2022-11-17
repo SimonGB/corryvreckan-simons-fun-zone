@@ -13,11 +13,11 @@
 #endif
 #endif
 
+#include <ctime>
+#include <hdf5.h>
 #include <iostream>
 #include "HDFRoot.h"
 #include "core/utils/log.h"
-#include <ctime>
-#include <hdf5.h>
 
 struct ScanDef {
     enum ScanTypes { Unknown, Charge, Time, Laser };
@@ -78,14 +78,15 @@ struct HDFRootPrivate {
           saved_point(0) {}
 };
 
-herr_t read_file_data(hid_t data_set, int offset, int ncols, void* dest) {
+herr_t read_file_data(hid_t data_set, unsigned int offset, int ncols, void* dest);
+herr_t read_file_data(hid_t data_set, unsigned int offset, int ncols, void* dest) {
     /*
      * Create the memory data space.
      * The one we want to add
      */
     int rank = (ncols > 1 ? 2 : 1);
     hsize_t mdims[2] = {1, static_cast<hsize_t>(ncols)};
-    hid_t m_sid = H5Screate_simple(rank, mdims, NULL);
+    hid_t m_sid = H5Screate_simple(rank, mdims, nullptr);
 
     /*
      * ...and select the hyperslab in the file dataset
@@ -93,7 +94,7 @@ herr_t read_file_data(hid_t data_set, int offset, int ncols, void* dest) {
     hsize_t start[2] = {static_cast<hsize_t>(offset), 0};
     hsize_t count[2] = {1, static_cast<hsize_t>(ncols)};
     hid_t sid = H5Dget_space(data_set); /* A copy of data space for writing */
-    H5Sselect_hyperslab(sid, H5S_SELECT_SET, start, NULL, count, NULL);
+    H5Sselect_hyperslab(sid, H5S_SELECT_SET, start, nullptr, count, nullptr);
 
     /*
      * Now read
@@ -109,7 +110,7 @@ herr_t read_file_data(hid_t data_set, int offset, int ncols, void* dest) {
 }
 
 HDFRoot::HDFRoot(const char* nam, const char* pedfile, const char* gainfile)
-    : DataFileRoot(nam, pedfile, gainfile), priv(0) {
+    : DataFileRoot(nam, pedfile, gainfile), priv(nullptr) {
     priv = new HDFRootPrivate;
     if(nam)
         open(nam);
@@ -124,7 +125,7 @@ bool HDFRoot::valid() const {
     return priv->fileid != H5I_BADID;
 }
 
-int HDFRoot::nevents() const {
+unsigned int HDFRoot::nevents() const {
     return priv->nevts;
 }
 
@@ -143,11 +144,11 @@ void HDFRoot::open(const char* name) {
     hid_t header = H5Gopen2(priv->fileid, "/header", H5P_DEFAULT);
     hid_t setup = H5Aopen(header, "setup", H5P_DEFAULT);
     hid_t dtype = H5Aget_type(setup);
-    herr_t ret = H5Aread(setup, dtype, &H);
+    H5Aread(setup, dtype, &H);
     H5Aclose(setup);
     H5Tclose(dtype);
 
-    _type = (RunType)H.run_type;
+    _type = static_cast<RunType>(H.run_type);
     _t0 = mktime(&H.time);
 
     _nchips = H.nchips;
@@ -160,7 +161,7 @@ void HDFRoot::open(const char* name) {
     if(H5Aexists(scan, "scan_definition")) {
         setup = H5Aopen(scan, "scan_definition", H5P_DEFAULT);
         dtype = H5Aget_type(setup);
-        ret = H5Aread(setup, dtype, &H.scan);
+        H5Aread(setup, dtype, &H.scan);
         H5Aclose(setup);
         H5Tclose(dtype);
     }
@@ -168,26 +169,26 @@ void HDFRoot::open(const char* name) {
     _from = H.scan.from;
     _to = H.scan.to;
     _nevts = H.scan.nevts;
-    _charge = H.scan.charge;
-    _delay = H.scan.delay;
-    _scantype = (DataFileRoot::ScanType)H.scan.type;
+    _charge = static_cast<int>(H.scan.charge);
+    _delay = static_cast<int>(H.scan.delay);
+    _scantype = static_cast<DataFileRoot::ScanType>(H.scan.type);
     if(_npoints > 0)
         _step = (_from - _to) / _npoints;
     else
         _step = 0;
 
-    LOG(DEBUG) << "Run type: " << _type << " acquired on " << ctime(&_t0);
+    LOG(DEBUG) << "Run type: " << static_cast<int>(_type) << " acquired on " << ctime(&_t0);
     LOG(DEBUG) << _t0;
 
     // Get pedestals and noise
     hid_t dset = H5Dopen2(priv->fileid, "/header/pedestal", H5P_DEFAULT);
-    herr_t rc = read_file_data(dset, 0, _nchan, H.pedestals);
+    read_file_data(dset, 0, _nchan, H.pedestals);
     for(int ic = 0; ic < _nchan; ic++)
         _ped[ic] = H.pedestals[ic];
     H5Dclose(dset);
 
     dset = H5Dopen2(priv->fileid, "/header/noise", H5P_DEFAULT);
-    rc = read_file_data(dset, 0, _nchan, H.noise);
+    read_file_data(dset, 0, _nchan, H.noise);
     for(int ic = 0; ic < _nchan; ic++)
         _noise[ic] = H.noise[ic];
     H5Dclose(dset);
@@ -206,14 +207,14 @@ void HDFRoot::open(const char* name) {
 
     hsize_t dims[2];
     hid_t dspace = H5Dget_space(priv->timeID);
-    H5Sget_simple_extent_dims(dspace, dims, NULL);
+    H5Sget_simple_extent_dims(dspace, dims, nullptr);
     H5Sclose(dspace);
-    priv->nevts = dims[0];
+    priv->nevts = static_cast<unsigned int>(dims[0]);
 
     dspace = H5Dget_space(priv->startID);
-    H5Sget_simple_extent_dims(dspace, dims, NULL);
+    H5Sget_simple_extent_dims(dspace, dims, nullptr);
     H5Sclose(dspace);
-    priv->npoints = dims[0];
+    priv->npoints = static_cast<unsigned int>(dims[0]);
 
     LOG(DEBUG) << "Nr. of evts. " << priv->nevts << " - Nr. of points " << priv->npoints << std::endl;
 
@@ -242,11 +243,10 @@ void HDFRoot::close() {
 }
 
 void HDFRoot::next_scan_point() {
-    herr_t rc;
     if(priv->ipoint < priv->npoints) {
-        rc = read_file_data(priv->scvalID, priv->ipoint, 1, &priv->scan.value);
-        rc = read_file_data(priv->startID, priv->ipoint, 1, &priv->scan.start);
-        rc = read_file_data(priv->endID, priv->ipoint, 1, &priv->scan.end);
+        read_file_data(priv->scvalID, priv->ipoint, 1, &priv->scan.value);
+        read_file_data(priv->startID, priv->ipoint, 1, &priv->scan.start);
+        read_file_data(priv->endID, priv->ipoint, 1, &priv->scan.end);
         _data.value = priv->scan.value;
         priv->ipoint++;
     }
@@ -316,13 +316,13 @@ int HDFRoot::read_event() {
         // return rc;
         return 4;
 
-    int ij = 0, nm = 0;
+    int ij = 0;
     for(int ichip = 0; ichip < _nchips; ichip++) {
         for(int ih = 0; ih < 16; ih++, ij++)
             _header[ichip][ih] = priv->data.header[ij];
     }
     priv->ievt++;
-    if(priv->ievt >= priv->scan.end)
+    if(priv->ievt >= static_cast<unsigned int>(priv->scan.end))
         next_scan_point();
 
     return 1;
@@ -330,11 +330,11 @@ int HDFRoot::read_event() {
 
 void HDFRoot::get_scan_values(short& delay, short& charge) {
     if(scan_type() == DataFileRoot::Charge) {
-        charge = value() / 1024;
-        delay = _delay;
+        charge = static_cast<short>(value() / 1024);
+        delay = static_cast<short>(_delay);
     } else {
-        delay = value();
-        charge = _charge / 1024;
+        delay = static_cast<short>(value());
+        charge = static_cast<short>(_charge / 1024);
     }
 }
 
@@ -347,5 +347,3 @@ double HDFRoot::temp() const {
 unsigned int HDFRoot::clock_counter() const {
     return priv->data.clock;
 }
-
-

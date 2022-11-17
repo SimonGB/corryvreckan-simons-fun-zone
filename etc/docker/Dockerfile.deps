@@ -102,6 +102,6 @@ RUN mkdir -p ${EUDAQ2PATH}/{src,build} && \
     rm -rf ${EUDAQ2PATH}/{src,build}
 
 # Install Corryvreckan dependencies
-RUN apt-get install -y libeigen3-dev python3-lxml
+RUN apt-get install -y libeigen3-dev python3-lxml libhdf5-dev
 
 CMD ["bash"]
