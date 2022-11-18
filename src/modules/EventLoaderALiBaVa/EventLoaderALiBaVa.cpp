@@ -95,7 +95,7 @@ void EventLoaderALiBaVa::initialize() {
     hNoiseCorrect = new TH1F("noiseCorrect", "Corrected Noise; # channel; Noise[ADC]", 256, -0.5, 255.5);
 
     hTimeProfile =
-        new TProfile("timeProfile", "Time profile; Time [ns], Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
+        new TProfile("timeProfile", "Time profile; Time [ns]; Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
 
     hPedestalCorrect2D = new TH2F(
         "pedestalCorrect2D", "Corrected pedestal in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
