@@ -95,6 +95,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Tomas Vanat, CERN, @tvanat
 * Annika Vauth, University of Hamburg/DESY, @anvauth
 * Mateus Vicente Barreto Pinto, University Geneva, @mvicente
+* Gianpiero Vignola, DESY, @gvignola
 * Morag Williams, University of Glasgow/CERN, @williamm
 * Philipp Windischhofer, University of Chicago, @phwindis
 * Yitao Wu, University of Science and Technology of China, @yitao
