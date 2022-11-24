@@ -61,7 +61,7 @@ void EtaCalculation::initialize() {
                                             pitch_x / 2,
                                             -pitch_x / 2,
                                             pitch_x / 2);
-    title = "#eta distribution Y;" + mod_axes_x;
+    title = "#eta distribution Y;" + mod_axes_y;
     etaDistributionYprofile_ = new TProfile("etaDistributionYprofile",
                                             title.c_str(),
                                             static_cast<int>(Units::convert(pitch_y, "um") * 2),
@@ -158,10 +158,10 @@ void EtaCalculation::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     std::stringstream config;
     config << "eta_formula_x = \"" << config_.get<std::string>("eta_formula_x") << "\"" << std::endl
-           << "eta_constants_x_" << detector_->getName() << " = "
+           << "eta_constants_x" << " = "
            << fit("eta_formula_x", detector_->getPitch().X(), etaDistributionXprofile_) << std::endl
            << "eta_formula_y = \"" << config_.get<std::string>("eta_formula_y") << "\"" << std::endl
-           << "eta_constants_y_" << detector_->getName() << " = "
+           << "eta_constants_y" << " = "
            << fit("eta_formula_y", detector_->getPitch().Y(), etaDistributionYprofile_);
 
     LOG(INFO) << "To apply this correction, place the following in the configuration:" << std::endl
