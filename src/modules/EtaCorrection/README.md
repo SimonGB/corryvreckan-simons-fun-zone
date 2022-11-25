@@ -16,12 +16,14 @@ To use different eta correction factors for different detectors, named module in
 * `eta_constants_x` / `eta_constants_y`: Vector of correction factors, representing the parameters of the above correction function, in X and Y coordinates, respectively. Defaults to an empty vector, i.e. by default no correction is applied.
 
 ### Plots produced
-Currently, no plots are produced. The result of the $`\eta`$-correction is best observed in residual distributions of the respective detector.
+For each detector the following plots are produced:
+
+* Profile plot of the applied $`\eta`$-correction, for X and Y respectively
 
 ### Usage
 ```toml
 [EtaCorrection]
 name = "dut"
 eta_formula_x = [0] + [1]*x + [2]*x^2 + [3]*x^3 + [4]*x^4 + [5]*x^5
-eta_constants_x = 0.025 0.038  6.71 -323.58  5950.3 -34437.5
+eta_constants_x = 0.025 0.038 6.71 -323.58 5950.3 -34437.5
 ```
