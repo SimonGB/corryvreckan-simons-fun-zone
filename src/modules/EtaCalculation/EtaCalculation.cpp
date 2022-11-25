@@ -158,11 +158,11 @@ void EtaCalculation::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     std::stringstream config;
     config << "eta_formula_x = \"" << config_.get<std::string>("eta_formula_x") << "\"" << std::endl
-           << "eta_constants_x" << " = "
-           << fit("eta_formula_x", detector_->getPitch().X(), etaDistributionXprofile_) << std::endl
+           << "eta_constants_x"
+           << " = " << fit("eta_formula_x", detector_->getPitch().X(), etaDistributionXprofile_) << std::endl
            << "eta_formula_y = \"" << config_.get<std::string>("eta_formula_y") << "\"" << std::endl
-           << "eta_constants_y" << " = "
-           << fit("eta_formula_y", detector_->getPitch().Y(), etaDistributionYprofile_);
+           << "eta_constants_y"
+           << " = " << fit("eta_formula_y", detector_->getPitch().Y(), etaDistributionYprofile_);
 
     LOG(INFO) << "To apply this correction, place the following in the configuration:" << std::endl
               << "[EtaCorrection]" << std::endl

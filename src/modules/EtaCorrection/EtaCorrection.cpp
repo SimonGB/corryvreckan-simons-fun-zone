@@ -72,7 +72,7 @@ void EtaCorrection::initialize() {
 
     if(!etaConstantsY_.empty()) {
         correctY_ = true;
-        etaCorrectorY_ = 
+        etaCorrectorY_ =
             new TF1("etaCorrectorY", etaFormulaY_.c_str(), -1 * detector_->getPitch().Y(), detector_->getPitch().Y());
         for(size_t y = 0; y < etaConstantsY_.size(); y++) {
             etaCorrectorY_->SetParameter(static_cast<int>(y), etaConstantsY_[y]);
