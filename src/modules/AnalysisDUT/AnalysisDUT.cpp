@@ -1118,7 +1118,7 @@ void AnalysisDUT::createLocalResidualPlots() {
     residualsXVsTime_local =
         new TProfile("residualsXVsEventTime", "#Deltax vs time; time [ns]; #Deltax [mm]", 3000000, 0, 3e12);
     residualsYVsTime_local =
-        new TProfile("residualsYVsEventNumber", "#Deltay vs time; time [ns]; #Deltay [mm]", 3000000, 0, 3e12);
+        new TProfile("residualsYVsEventTime", "#Deltay vs time; time [ns]; #Deltay [mm]", 3000000, 0, 3e12);
     residualsPos_local =
         new TH1F("residualsPos",
                  "Absolute distance between track and hit in local coordinates;|pos_{track}-pos_{hit}|  [#mum];# entries",
