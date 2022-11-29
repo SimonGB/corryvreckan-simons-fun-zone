@@ -482,7 +482,7 @@ namespace corryvreckan {
         double m_timeResolution;
         double m_materialBudget;
 
-        // Alignment and coordinate transofrmation information:
+        // Alignment and coordinate transformation information:
         std::shared_ptr<Alignment> alignment_;
 
         // Path of calibration file
