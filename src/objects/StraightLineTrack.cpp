@@ -132,7 +132,9 @@ void StraightLineTrack::fit() {
         double y = cluster->global().y();
         double z = cluster->global().z();
         Eigen::Vector2d pos(x, y);
-        Eigen::Matrix2d V = cluster->errorMatrixGlobal().topLeftCorner(2, 2);
+        auto errorMatrix = cluster->errorMatrixGlobal();
+        Eigen::Matrix2d V;
+        V << errorMatrix(0, 0), errorMatrix(0, 1), errorMatrix(1, 0), errorMatrix(1, 1);
         Eigen::Matrix<double, 2, 4> C;
         C << 1., z, 0., 0., 0., 0., 1., z;
 

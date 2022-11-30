@@ -14,6 +14,7 @@
 #include "Math/RotationY.h"
 #include "Math/RotationZ.h"
 #include "Math/RotationZYX.h"
+#include "TMatrixD.h"
 
 #include "PixelDetector.hpp"
 #include "core/utils/log.h"
@@ -177,13 +178,12 @@ void PixelDetector::initialise() {
         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
 
     // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
-    Eigen::Matrix3d locToGlob;
-    Eigen::Matrix3d globToLoc;
-    Eigen::Matrix3d errorMatrix;
+    TMatrixD errorMatrix(3, 3);
+    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
+    errorMatrix(0, 0) = m_spatial_resolution.x() * m_spatial_resolution.x();
+    errorMatrix(1, 1) = m_spatial_resolution.y() * m_spatial_resolution.y();
     m_localToGlobal.Rotation().GetRotationMatrix(locToGlob);
     m_globalToLocal.Rotation().GetRotationMatrix(globToLoc);
-    errorMatrix << m_spatial_resolution.x() * m_spatial_resolution.x(), 0, 0, 0,
-        m_spatial_resolution.y() * m_spatial_resolution.y(), 0, 0, 0, 0;
     m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 }
 
