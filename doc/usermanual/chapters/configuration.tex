@@ -391,6 +391,4 @@ position_parameters = -100um, 0.8um, 0.007, 408.979um, 0.01um, 21.5mm
 alignment_update_granularity = 10s
 \end{minted}
 
-, and to pass their values using the \command{position_parameters} keyword, using explicit units. This feature is not supported together with detector alignment modules.
-
-The following procedure is suggested to perform time-dependent alignment. First, run the alignment modules on a small number of events, such that statistics is sufficient for alignment but the relative drifts are negligible. Second, process the full run without using alignment modules. Third, check \command{residualsXVsEventTime} and \command{residualsYVsEventTime} and fit an arbitrary function describing the profile, choosing an appropriate binning (so as not to artificially improve the residual width). In the last step the fitted functions are passed to corry, as discussed above, and the run is re-processed.
+, and to pass their values using the \command{position_parameters} keyword, using explicit units. This feature is not supported together with detector alignment modules. A procedure to obtain time dependent-alignment functions is described in section~\ref{sec:align_dut}.
