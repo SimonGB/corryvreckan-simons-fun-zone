@@ -13,7 +13,7 @@ The following help text is printed when invoking `jobsub` with the `-h` argument
 ```result
 usage: jobsub.py [-h] [--option NAME=VALUE] [-c FILE] [-csv FILE]
                  [--log-file FILE] [-l LEVEL] [-s] [--dry-run]
-		 [--batch FILE] [--subdir]
+                 [--batch FILE] [--subdir]
                  jobtask [runs [runs ...]]
 
 A tool for the convenient run-specific modification of Corryvreckan steering files and their execution through the Marlin processor
@@ -55,12 +55,17 @@ optional arguments:
                         all in the base path
   --plain               Output written to stdout/stderr and log file in
                         prefix-less format i.e. without time stamping
+  -j N, --cores N       Number of cores used for the local job submission, by default 1
   --zfill N             Fill run number with zeros up to the defined number of
                         digits
 ```
 
 If running on `lxplus`, the environment variables need to be set by running ```source etc/setup_lxplus.sh```.
-When using a submission file, `getenv = True` should be used as shown in `example.sub`.
+When using a submission file, `getenv = True` should be used as shown in `_htcondor.sub`.
+
+The multicore job submission works best on `lxplus` or `local machine` (for the batch submission, only the actual submission not the execution will use multiple cores).
+It is important to note the by-default implemented parallelism of the alignment modules in `corry`.
+In case of multicore submission, one should restrict the number of alignment workers in the config file using the `workers` flag.
 
 ### Preparation of Configuration File Templates
 
@@ -135,6 +140,8 @@ However, a set or range can only be used for one parameter, i.e. multi-dimension
 * `"{string,with,comma}"` which translates to `string`, `with`, `comma` in consecutive jobs for the same run number
 * `"\"string in quotes\""` translates to `"string in quotes"`
 
+The same expansion is also implemented for the run numbers, simplifying the manual creation of the file.
+
 If a range or set of parameters is detector, the naming scheme of the auto-generated configuration files is extended from `MyAnalysis_run@RunNUmber@.conf` to `MyAnalysis_run@RunNUmber@_OtherParameter@OtherParameter@.conf`
 
 It must be insured by the user that the output ROOT file is not simply called `histograms_@RunNumber@.root` but rather `histograms_@RunNumber@_OtherParameter@OtherParameter@.root` to prevent overwriting the output file.
@@ -147,15 +154,19 @@ The CSV file could have the following form:
 # This is an example.
 RunNumber,  ExampleParameter,   AnotherParameter
 100,        "{3-5}",            10ns
-101,        3,                  "{10ns, 20ns}"
+{101-103},  3,                  "{10ns, 20ns}"
 ```
 Using this table, the placeholders `@RunNUmber@`, `@ExampleParameter@`, and `@AnotherParameter@` in the template file `AnalysisExample.conf` would be replaced by the values corresponding to the current run number and the following configuration files would be generated:
 ```
-AnalysisExample_run100_exampleparameter3.conf
-AnalysisExample_run100_exampleparameter4.conf
-AnalysisExample_run100_exampleparameter5.conf
-AnalysisExample_run101_anotherparameter10ns.conf
-AnalysisExample_run101_anotherparameter20ns.conf
+AnalysisExample_run100_exampleparameter:3.conf
+AnalysisExample_run100_exampleparameter:4.conf
+AnalysisExample_run100_exampleparameter:5.conf
+AnalysisExample_run101_anotherparameter:10ns.conf
+AnalysisExample_run101_anotherparameter:20ns.conf
+AnalysisExample_run102_anotherparameter:10ns.conf
+AnalysisExample_run102_anotherparameter:20ns.conf
+AnalysisExample_run103_anotherparameter:10ns.conf
+AnalysisExample_run103_anotherparameter:20ns.conf
 ```
 ### Example Usage with a Batch File:
 
@@ -164,7 +175,7 @@ Example command line usage:
 ./jobsub.py -c /path/to/example.conf -v DEBUG --batch /path/to/example.sub --subdir <run_number>
 ```
 
-An example batch file is provided in the repository as `htcondor.sub`.
+An example batch file is provided in the repository as `_htcondor.sub`, examples of the configuration files are `_corry.conf` and for the list of options in `_options.csv`.
 Complicated and error-prone `transfer_output_files` commands can be avoided. It is much simpler to set an absolute path like
 ```
 output_directory = "/eos/user/y/yourname/whateveryouwant/run@RunNumber@"

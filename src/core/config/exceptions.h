@@ -168,6 +168,24 @@ namespace corryvreckan {
                                 std::initializer_list<std::string> keys,
                                 const std::string& reason = "");
     };
+
+    class ModuleIdentifier;
+    /**
+     * @ingroup Exceptions
+     * @brief Indicates that a given ModuleIdentifier was not found in the module identifier list
+     */
+    class ModuleIdentifierNotFoundError : public LogicError {
+    public:
+        explicit ModuleIdentifierNotFoundError(const ModuleIdentifier& identifier);
+    };
+    /**
+     * @ingroup Exceptions
+     * @brief Indicates that a given ModuleIdentifier is already in the module identifier list
+     */
+    class ModuleIdentifierAlreadyAddedError : public LogicError {
+    public:
+        explicit ModuleIdentifierAlreadyAddedError(const ModuleIdentifier& identifier);
+    };
 } // namespace corryvreckan
 
 #endif /* CORRYVRECKAN_CONFIG_EXCEPTIONS_H */
