@@ -278,7 +278,7 @@ align_orientation=false #<-- disable rotational alignment
 align_position=true
 \end{minted}
 
-For long runs it can occur that the DUT position changes with respect to the beam telescope, e.g. due to a missmatch of thermal expansion coefficients. For such cases it is possible to define functions describing this drift to the detector configuration file, as disussed in section~\ref{sec:alignTimeDep}. The following procedure is suggested to perform time-dependent alignment:
+For long runs it can occur that the DUT position drifts with respect to the beam telescope, e.g. due to a mismatch of thermal expansion coefficients. For such cases it is possible to add functions describing the drift to the detector configuration file, as disussed in section~\ref{sec:alignTimeDep}. The following procedure is suggested to perform time-dependent alignment:
 \begin{enumerate}
 \item Run the alignment modules on a small number of events, such that statistics is sufficient for alignment but the relative drifts are negligible.
 \item Process the full run without using alignment modules.
