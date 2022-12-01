@@ -10,9 +10,11 @@ If the binary file format is chosen, the data and pedestal files need to include
 
 It requires either another event loader of another detector type before, which defines the event start and end times by placing an Event definition on the clipboard, or an instance of the Metronome module which provides this information.
 
-The detector needs to be defined in the geometry file with n columns and 1 row (everything else will lead to strange behaviour later on).
+The detector needs to be defined in the geometry file with n columns and 1 row (everything else will lead to strange behavior later on).
 
 The ROI can be set by creating a mask file for the detector and setting all channels outside the ROI to masked.
+
+The code for reading and interpreting ALiBaVa data is based on analysis scripts originally written by [Alibava Systems S.L.](https://alibavasystems.com/alibava-system-classic/) and is published here with their consent. All related code is located in the `ALiBaVa` sub-folder of the module source.
 
 ### Parameters
 * `input_directory`: Path to the directory where the input files can be found. This parameter is mandatory
