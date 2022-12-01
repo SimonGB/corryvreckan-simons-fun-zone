@@ -183,6 +183,13 @@ namespace corryvreckan {
         virtual ROOT::Math::XYZPoint getState(const std::string& detectorID) const;
 
         /**
+         * @brief Get the track state uncertainty at a detector
+         * @param detectorID Name of detector
+         * @return ROOT::Math::XYZPoint state uncertainy at detetcor layer
+         */
+        virtual ROOT::Math::XYZPoint getStateUncertainty(const std::string& detectorID) const;
+
+        /**
          * @brief Get the track direction at a detector
          * @param detectorID Name of detector
          * @return ROOT::Math::XYZPoint direction at detetcor layer

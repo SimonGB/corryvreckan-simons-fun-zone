@@ -47,6 +47,8 @@ namespace corryvreckan {
          */
         ROOT::Math::XYZPoint getState(const std::string& detectorID) const override;
 
+        ROOT::Math::XYZPoint getStateUncertainty(const std::string& detectorID) const override;
+
         /**
          * @brief Get the track direction at a detector
          * @param detectorID Name of detector
@@ -116,6 +118,7 @@ namespace corryvreckan {
         bool use_volume_scatter_{};
 
         std::map<std::string, ROOT::Math::XYPoint> local_track_points_{};
+        std::map<std::string, ROOT::Math::XYZPoint> local_fitted_track_points_error{};
         std::map<std::string, ROOT::Math::XYZPoint> local_fitted_track_points_{};
         std::map<std::string, ROOT::Math::XYPoint> initital_residual_{};
         std::map<std::string, ROOT::Math::XYPoint> kink_{};
