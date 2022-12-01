@@ -179,6 +179,13 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
     std::vector<std::shared_future<double>> result_futures;
     auto track_refit = [&](auto& track) {
         LOG(TRACE) << "track has chi2 " << track->getChi2();
+
+        // Update geometry of plane with new detector geometry
+        track->registerPlane(AlignmentDUTResidual::globalDetector->getName(),
+                             AlignmentDUTResidual::globalDetector->origin().z(),
+                             AlignmentDUTResidual::globalDetector->materialBudget(),
+                             AlignmentDUTResidual::globalDetector->toLocal());
+
         double track_result = 0.;
 
         // Find the cluster that needs to have its position recalculated

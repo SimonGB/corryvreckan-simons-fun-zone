@@ -243,7 +243,7 @@ void Track::registerPlane(const std::string& name, double z, double x0, Transfor
     }
 }
 
-Track::Plane* Track::get_plane(std::string detetorID) {
+const Track::Plane* Track::get_plane(const std::string& detetorID) const {
     auto plane =
         std::find_if(planes_.begin(), planes_.end(), [&detetorID](Plane const& p) { return p.getName() == detetorID; });
     if(plane == planes_.end()) {

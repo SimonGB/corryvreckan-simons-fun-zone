@@ -18,6 +18,7 @@
 #include <Math/DisplacementVector2D.h>
 #include <Math/Vector2D.h>
 #include <Math/Vector3D.h>
+#include <TMatrixD.h>
 #include "Math/Transform3D.h"
 #include "Math/Vector3D.h"
 
@@ -169,6 +170,12 @@ namespace corryvreckan {
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
          */
         virtual XYVector getSpatialResolution() const = 0;
+
+        /**
+         * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @return Intrinsic spatial resolution in global X and Y
+         */
+        virtual TMatrixD getSpatialResolutionMatrixGlobal() const = 0;
 
         /**
          * @brief Get number of pixels in x and y

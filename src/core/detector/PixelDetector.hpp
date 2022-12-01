@@ -172,6 +172,12 @@ namespace corryvreckan {
          */
         XYVector getSpatialResolution() const override { return m_spatial_resolution; }
 
+        /**
+         * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @return Intrinsic spatial resolution in global X and Y
+         */
+        TMatrixD getSpatialResolutionMatrixGlobal() const override { return m_spatial_resolution_matrix_global; }
+
         /*
          * @brief Get number of pixels in x and y
          * @return Number of two dimensional pixels
@@ -215,6 +221,7 @@ namespace corryvreckan {
         // For planar detector
         XYVector m_pitch{};
         XYVector m_spatial_resolution{};
+        TMatrixD m_spatial_resolution_matrix_global{3, 3};
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> m_nPixels{};
         std::vector<std::vector<int>> m_roi{};
         // Displacement and rotation in x,y,z

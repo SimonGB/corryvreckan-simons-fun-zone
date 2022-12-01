@@ -14,6 +14,7 @@
 #include "Math/RotationY.h"
 #include "Math/RotationZ.h"
 #include "Math/RotationZYX.h"
+#include "TMatrixD.h"
 
 #include "PixelDetector.hpp"
 #include "core/utils/log.h"
@@ -27,13 +28,13 @@ PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
     // Set detector position and direction from configuration file
     SetPostionAndOrientation(config);
 
-    // initialize transform
-    this->initialise();
-
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         build_axes(config);
     }
+
+    // initialize transform
+    this->initialise();
 }
 
 void PixelDetector::build_axes(const Configuration& config) {
@@ -179,6 +180,15 @@ void PixelDetector::initialise() {
     localZ = m_localToGlobal * localZ;
     m_normal = PositionVector3D<Cartesian3D<double>>(
         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
+
+    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
+    TMatrixD errorMatrix(3, 3);
+    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
+    errorMatrix(0, 0) = m_spatial_resolution.x() * m_spatial_resolution.x();
+    errorMatrix(1, 1) = m_spatial_resolution.y() * m_spatial_resolution.y();
+    m_localToGlobal.Rotation().GetRotationMatrix(locToGlob);
+    m_globalToLocal.Rotation().GetRotationMatrix(globToLoc);
+    m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 }
 
 // Only if detector is not auxiliary
@@ -210,26 +220,7 @@ void PixelDetector::configure_pos_and_orientation(Configuration& config) const {
 
 // Function to get global intercept with a track
 PositionVector3D<Cartesian3D<double>> PixelDetector::getIntercept(const Track* track) const {
-
-    // FIXME: this is else statement can only be temporary
-    if(track->getType() == "GblTrack") {
-        return track->getState(getName());
-    } else {
-        // Get the distance from the plane to the track initial state
-        double distance = (m_origin.X() - track->getState(m_detectorName).X()) * m_normal.X();
-        distance += (m_origin.Y() - track->getState(m_detectorName).Y()) * m_normal.Y();
-        distance += (m_origin.Z() - track->getState(m_detectorName).Z()) * m_normal.Z();
-        distance /= (track->getDirection(m_detectorName).X() * m_normal.X() +
-                     track->getDirection(m_detectorName).Y() * m_normal.Y() +
-                     track->getDirection(m_detectorName).Z() * m_normal.Z());
-
-        // Propagate the track
-        PositionVector3D<Cartesian3D<double>> globalIntercept(
-            track->getState(m_detectorName).X() + distance * track->getDirection(m_detectorName).X(),
-            track->getState(m_detectorName).Y() + distance * track->getDirection(m_detectorName).Y(),
-            track->getState(m_detectorName).Z() + distance * track->getDirection(m_detectorName).Z());
-        return globalIntercept;
-    }
+    return track->getState(getName());
 }
 
 PositionVector3D<Cartesian3D<double>> PixelDetector::getLocalIntercept(const Track* track) const {
