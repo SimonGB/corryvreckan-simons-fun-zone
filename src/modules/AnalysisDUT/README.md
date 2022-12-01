@@ -21,8 +21,8 @@ If a region of interest (ROI) is defined for the detector under investigation, o
 * `raw_histo_range`: Axis range for pixel raw values axes in histograms. Defaults to charge_histo_range if not specified.
 * `correlations`: If `true`, correlation plots between all (before and after applying cuts) tracks and all clusters on the DUT (i.e. associated + non-associated) are created. Defaults to `false`.
 * `inpixel_bin_size`: The bin size for inpixel plots. Defaults to `500 nm`
-### Plots produced
 
+### Plots produced
 For the DUT, the following plots are produced:
 
 * 2D histograms:
