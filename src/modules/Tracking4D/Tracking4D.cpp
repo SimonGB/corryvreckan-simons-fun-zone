@@ -132,11 +132,11 @@ void Tracking4D::initialize() {
 
         title = detectorID + "local track resolution x; resolution x [mm] ;events";
         local_resolution_x_[detectorID] =
-            new TH1F("LocalTRackResolutionX", title.c_str(), 500,0, detector->getPitch().X()/5.);
+            new TH1F("LocalTRackResolutionX", title.c_str(), 500, 0, detector->getPitch().X() / 5.);
 
         title = detectorID + "local track resolution y; resolution x [mm]; events";
         local_resolution_y_[detectorID] =
-            new TH1F("LocalTRackResolutionY", title.c_str(), 500, 0,  detector->getPitch().Y()/5.);
+            new TH1F("LocalTRackResolutionY", title.c_str(), 500, 0, detector->getPitch().Y() / 5.);
 
         // Do not create plots for detectors not participating in the tracking:
         if(exclude_DUT_ && detector->isDUT()) {
