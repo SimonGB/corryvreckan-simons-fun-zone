@@ -253,6 +253,9 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
                 // need to return to uphold communication with module manager
                 return nullptr;
             }
+            // if new data is incoming reset logging timer
+            time_of_last_log_for_monitoring_ = std::chrono::steady_clock::now();
+
             // Build buffer from all sub-events:
             auto subevents = new_event->GetSubEvents();
             events_raw_ = std::queue(std::deque(subevents.begin(), subevents.end()));
