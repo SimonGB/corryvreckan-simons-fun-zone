@@ -47,7 +47,19 @@ namespace corryvreckan {
          */
         ROOT::Math::XYZPoint getState(const std::string& detectorID) const override;
 
-        ROOT::Math::XYZPoint getStateUncertainty(const std::string& detectorID) const override;
+        /**
+         * @brief Get the track state uncertainty at a detector in global coordinates
+         * @param detectorID Name of detector
+         * @return ROOT::Math::XYZPoint state at detetcor layer
+         */
+        ROOT::Math::XYZPoint getGlobalStateUncertainty(const std::string& detectorID) const override;
+
+        /**
+         * @brief Get the track state uncertainty at a detector in global coordinates
+         * @param detectorID Name of detector
+         * @return ROOT::Math::XYZPoint state at detetcor layer
+         */
+        ROOT::Math::XYZPoint getLocalStateUncertainty(const std::string& detectorID) const override;
 
         /**
          * @brief Get the track direction at a detector
