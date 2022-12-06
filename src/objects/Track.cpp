@@ -210,7 +210,11 @@ XYZPoint Track::getState(const std::string&) const {
     return ROOT::Math::XYZPoint(0.0, 0.0, 0.0);
 }
 
-XYZPoint Track::getStateUncertainty(const std::string&) const {
+XYZPoint Track::getLocalStateUncertainty(const std::string&) const {
+    return ROOT::Math::XYZPoint(0.0, 0.0, 0.0);
+}
+
+XYZPoint Track::getGlobalStateUncertainty(const std::string&) const {
     return ROOT::Math::XYZPoint(0.0, 0.0, 0.0);
 }
 

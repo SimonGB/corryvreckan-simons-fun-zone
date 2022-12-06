@@ -393,18 +393,24 @@ ROOT::Math::XYZPoint GblTrack::getState(const std::string& detectorID) const {
     return (p->getToGlobal() * local_fitted_track_points_.at(detectorID));
 }
 
-XYZPoint GblTrack::getStateUncertainty(const std::string& detectorID) const {
+XYZPoint GblTrack::getLocalStateUncertainty(const std::string& detectorID) const {
     if(!isFitted_) {
         throw TrackError(typeid(GblTrack), " has no defined state for " + detectorID + " before fitting");
     }
     if(local_fitted_track_points_.count(detectorID) != 1) {
         throw TrackError(typeid(GblTrack), " does not have any entry for detector " + detectorID);
     }
+
+    return (local_fitted_track_points_error.at(detectorID));
+}
+
+XYZPoint GblTrack::getGlobalStateUncertainty(const std::string& detectorID) const {
     // The local track position can simply be transformed to global coordinates
     auto p = std::find_if(
         planes_.begin(), planes_.end(), [detectorID](const auto& plane) { return (plane.getName() == detectorID); });
 
-    return (p->getToGlobal().Rotation() * local_fitted_track_points_error.at(detectorID));
+    // only the rotation is relevant for the uncertainty calculation in global coordinates
+    return (p->getToGlobal().Rotation() * getLocalStateUncertainty(detectorID));
 }
 
 void GblTrack::set_seed_cluster(const Cluster* cluster) {

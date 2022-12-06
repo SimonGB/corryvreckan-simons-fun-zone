@@ -635,7 +635,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             }
 
             XYPoint kink = track->getKinkAt(det);
-            auto error = track->getStateUncertainty(det);
+            auto error = track->getLocalStateUncertainty(det);
             kinkX.at(det)->Fill(kink.x());
             kinkY.at(det)->Fill(kink.y());
             local_resolution_x_[det]->Fill(error.X());
