@@ -15,8 +15,8 @@
 #include <Math/Point3D.h>
 #include <Math/Transform3D.h>
 #include <Math/Vector3D.h>
-#include <TRef.h>
 #include <TMatrixD.h>
+#include <TRef.h>
 
 #include "Cluster.hpp"
 
@@ -188,14 +188,14 @@ namespace corryvreckan {
          * @param detectorID Name of detector
          * @return ROOT::Math::XYZPoint state uncertainy at detetcor layer
          */
-        virtual TMatrixD getLocalStateUncertainty(const std::string& detectorID) const =0;
+        virtual TMatrixD getLocalStateUncertainty(const std::string& detectorID) const = 0;
 
         /**
          * @brief Get the track state uncertainty at a detector
          * @param detectorID Name of detector
          * @return ROOT::Math::XYZPoint state uncertainy at detetcor layer
          */
-        virtual TMatrixD getGlobalStateUncertainty(const std::string& detectorID) const =0;
+        virtual TMatrixD getGlobalStateUncertainty(const std::string& detectorID) const = 0;
 
         /**
          * @brief Get the track direction at a detector

@@ -638,8 +638,8 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto error = track->getLocalStateUncertainty(det);
             kinkX.at(det)->Fill(kink.x());
             kinkY.at(det)->Fill(kink.y());
-            local_resolution_x_[det]->Fill(error.X());
-            local_resolution_y_[det]->Fill(error.Y());
+            local_resolution_x_[det]->Fill(error(0, 0));
+            local_resolution_y_[det]->Fill(error(1, 1));
         }
     }
     tracksPerEvent->Fill(static_cast<double>(tracks.size()));
