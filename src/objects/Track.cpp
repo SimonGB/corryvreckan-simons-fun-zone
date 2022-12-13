@@ -210,6 +210,16 @@ XYZPoint Track::getState(const std::string&) const {
     return ROOT::Math::XYZPoint(0.0, 0.0, 0.0);
 }
 
+TMatrixD Track::getLocalStateUncertainty(const std::string&) const {
+    TMatrixD error(3, 3);
+    return error;
+}
+
+TMatrixD Track::getGlobalStateUncertainty(const std::string&) const {
+    TMatrixD error(3, 3);
+    return error;
+}
+
 XYZVector Track::getDirection(const std::string&) const {
     return ROOT::Math::XYZVector(0.0, 0.0, 0.0);
 }
