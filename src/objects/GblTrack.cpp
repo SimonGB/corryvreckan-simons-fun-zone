@@ -412,10 +412,9 @@ TMatrixD GblTrack::getGlobalStateUncertainty(const std::string& detectorID) cons
         planes_.begin(), planes_.end(), [detectorID](const auto& plane) { return (plane.getName() == detectorID); });
 
     // rotate the to global coordinates
-    TMatrixD ltg(3, 3), gtl(3, 3);
+    TMatrixD ltg(3, 3);
     p->getToGlobal().Rotation().GetRotationMatrix(ltg);
-    p->getToLocal().Rotation().GetRotationMatrix(gtl);
-    return (ltg * getLocalStateUncertainty(detectorID) * gtl);
+    return (ltg * getLocalStateUncertainty(detectorID));
 }
 
 void GblTrack::set_seed_cluster(const Cluster* cluster) {
