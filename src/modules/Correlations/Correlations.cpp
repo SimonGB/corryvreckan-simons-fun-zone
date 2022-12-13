@@ -85,7 +85,8 @@ void Correlations::initialize() {
 
     if(corr_vs_time_) {
         if((time_cut_ / time_binning_) > 1e3)
-            LOG(WARNING) << "Very large 2D histograms are created with ((2 * time_cut_ / time_binning_ * 3e3) =" << (2 * time_cut_ / time_binning_ * 3e3)
+            LOG(WARNING) << "Very large 2D histograms are created with ((2 * time_cut_ / time_binning_ * 3e3) ="
+                         << (2 * time_cut_ / time_binning_ * 3e3)
                          << ") bins. This might lead to crashes if limited memory is available.";
         title = m_detector->getName() + " Correlation X versus time;t [s];x_{ref}-x [mm];events";
         std::string name = "correlationXVsTime";
