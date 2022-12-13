@@ -35,8 +35,8 @@ PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
     TMatrixD locToGlob(3, 3), globToLoc(3, 3);
     errorMatrix(0, 0) = m_spatial_resolution.x() * m_spatial_resolution.x();
     errorMatrix(1, 1) = m_spatial_resolution.y() * m_spatial_resolution.y();
-    m_localToGlobal.Rotation().GetRotationMatrix(locToGlob);
-    m_globalToLocal.Rotation().GetRotationMatrix(globToLoc);
+    alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
+    alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
     m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
