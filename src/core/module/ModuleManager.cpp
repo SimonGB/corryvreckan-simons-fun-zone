@@ -709,6 +709,22 @@ void ModuleManager::initializeAll() {
         Log::setSection(old_section_name);
         set_module_after(old_settings);
     }
+    // check if the new detector geometry exists/could be written:
+    Configuration& global_config = conf_manager_->getGlobalConfiguration();
+    if(global_config.has("detectors_file_updated")) {
+        std::string path = global_config.getPath("detectors_file_updated");
+        // Check if the file exists
+        if(std::filesystem::is_regular_file(path)) {
+            if(global_config.get<bool>("deny_overwrite", false)) {
+                throw RuntimeError("Overwriting of existing detectors file " + path + " denied");
+            }
+            LOG(WARNING) << "Detectors file " << path << " exists and will be overwritten at end of run.";
+        }
+        std::ofstream file(path);
+        if(!file) {
+            throw RuntimeError("Cannot create detectors file " + path);
+        }
+    }
 }
 
 // Finalise all modules
