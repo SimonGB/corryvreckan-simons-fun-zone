@@ -46,6 +46,11 @@ PolarDetector::PolarDetector(const Configuration& config) : Detector(config) {
         LOG(TRACE) << "====> " << val;
     }
 
+    LOG(TRACE) << "====> Strip lengths:";
+    for(const auto val : strip_length) {
+        LOG(TRACE) << "====> " << val;
+    }
+
     LOG(TRACE) << "====> Angular pitch:";
     for(const auto val : angular_pitch) {
         LOG(TRACE) << "====> " << val;
@@ -74,6 +79,11 @@ void PolarDetector::build_axes(const Configuration& config) {
 
     // Set reasonable pixel pitch placeholders - length of the strip edge and strip length
     m_pitch = {row_radius.at(1) * angular_pitch.at(0), row_radius.at(1) - row_radius.at(0)};
+
+    // Calculate strip lengths
+    for (unsigned int i = 1; i < row_radius.size(); i++) {
+        strip_length.push_back(row_radius.at(i) - row_radius.at(i-1));
+    }
 
     LOG(TRACE) << "Initialized \"" << m_detectorType;
 
@@ -207,6 +217,15 @@ void PolarDetector::initialise() {
     localZ = m_localToGlobal * localZ;
     m_normal = PositionVector3D<Cartesian3D<double>>(
         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
+
+    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
+    TMatrixD errorMatrix(3, 3);
+    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
+    errorMatrix(0, 0) = m_spatial_resolution.x() * m_spatial_resolution.x();
+    errorMatrix(1, 1) = m_spatial_resolution.y() * m_spatial_resolution.y();
+    m_localToGlobal.Rotation().GetRotationMatrix(locToGlob);
+    m_globalToLocal.Rotation().GetRotationMatrix(globToLoc);
+    m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 }
 
 // Only if detector is not auxiliary
@@ -530,7 +549,7 @@ int PolarDetector::isLeft(std::pair<int, int> pt0, std::pair<int, int> pt1, std:
 bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
                                const std::shared_ptr<Cluster>& cluster,
                                const int neighbor_radius_row,
-                               const int neighbor_radius_col) {
+                               const int neighbor_radius_col) const {
     for(const auto* pixel : cluster->pixels()) {
         int row_distance = abs(pixel->row() - neighbor->row());
         int col_distance = abs(pixel->column() - neighbor->column());
@@ -561,4 +580,51 @@ XYVector PolarDetector::getSpatialResolution(double, double row) const {
 // Function to get row and column of pixel
 std::pair<int, int> PolarDetector::getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const {
     return {floor(getColumn(localPosition)), floor(getRow(localPosition))};
+}
+
+bool PolarDetector::isWithinMatrix(const int col, const int row) const {
+    return true;
+}
+
+std::set<std::pair<int, int>> PolarDetector::getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const{
+    // Vector to hold the neighbor indices
+    std::set<std::pair<int, int>> neighbors;
+
+    // Position of the global seed in polar coordinates
+    auto seed_pol = getPositionPolar(getLocalPosition(col, row));
+
+    // Iterate over eligible strip rows
+    for(int y = static_cast<int>(-distance); y <= static_cast<int>(distance); y++) {
+        // Skip row if outside of strip matrix
+        if(!isWithinMatrix(0, row + y)) {
+            continue;
+        }
+
+        // Set starting position of a row seed to the global seed position
+        auto row_seed_r = seed_pol.r();
+
+        // Move row seed position to the center of a requested row
+        for(unsigned int shift_y = 1; shift_y <= std::labs(y); shift_y++) {
+            // Add or subtract position based on whether given row is below or above global seed
+            row_seed_r += (y < 0) ? -strip_length.at(static_cast<unsigned int>(row) - shift_y + 1) / 2 -
+                                        strip_length.at(static_cast<unsigned int>(row) - shift_y) / 2
+                                  : strip_length.at(static_cast<unsigned int>(row) + shift_y - 1) / 2 +
+                                        strip_length.at(static_cast<unsigned int>(row) + shift_y) / 2;
+        }
+
+        // Get cartesian position and pixel indices of the row seed
+        auto row_seed = getPositionCartesian({row_seed_r, 0, seed_pol.phi()});
+        auto row_seed_x = static_cast<int>(getColumn(row_seed));
+        auto row_seed_y = static_cast<int>(getRow(row_seed));
+
+        // Iterate over potential neighbors of the row seed
+        for(int j = static_cast<int>(-distance); j <= static_cast<int>(distance); j++) {
+            // Add to final neighbors if strip is within the pixel matrix
+            if(isWithinMatrix(row_seed_x + j, row_seed_y)) {
+                neighbors.insert({row_seed_x + j, row_seed_y});
+            }
+        }
+    }
+
+    return {neighbors.begin(), neighbors.end()};
 }

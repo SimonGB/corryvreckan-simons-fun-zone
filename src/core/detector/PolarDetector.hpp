@@ -178,7 +178,7 @@ namespace corryvreckan {
          * @note users should define their specific clustering method in the detector class, for pixel detector, the default
          * is 2D clustering
          */
-        bool isNeighbor(const std::shared_ptr<Pixel>&, const std::shared_ptr<Cluster>&, const int, const int) override;
+        bool isNeighbor(const std::shared_ptr<Pixel>&, const std::shared_ptr<Cluster>&, const int, const int) const override;
 
         /**
          * @brief Converts the local position in cartesian coordinates to polar coordinates
@@ -206,7 +206,34 @@ namespace corryvreckan {
         double getCenterRadius() const { return (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2; }
 
         // Function to get row and column of pixel
-        virtual std::pair<int, int> getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const;
+        std::pair<int, int> getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const override;
+
+        /**
+         * @brief Checks if a given strip index lies within the strip matrix of the detector
+         * @return True if strip index is within matrix bounds, false otherwise
+         */
+        bool isWithinMatrix(const int col, const int row) const override;
+
+        /**
+         * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @return Intrinsic spatial resolution in global X and Y
+         */
+        virtual TMatrixD getSpatialResolutionMatrixGlobal() const override {
+            return m_spatial_resolution_matrix_global;
+        }
+
+        /**
+         * @brief Return a set containing all strips neighboring the given one with a configurable maximum distance
+         * @param col       Column of strip in question
+         * @param row       Row of strip in question
+         * @param distance  Distance for strips to be considered neighbors
+         * @param include_corners Boolean to select whether strips only touching via corners should be returned
+         * @return Set of neighboring strip indices, including the initial strip
+         *
+         * @note The returned set should always also include the initial pixel indices the neighbors are calculated for
+         */
+        std::set<std::pair<int, int>>
+        getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
 
     private:
         // Initialize coordinate transformations
@@ -234,6 +261,7 @@ namespace corryvreckan {
         // For planar detector
         XYVector m_pitch{};
         XYVector m_spatial_resolution{};
+        TMatrixD m_spatial_resolution_matrix_global{3, 3};
         std::vector<std::vector<int>> m_roi{};
         // Displacement and rotation in x,y,z
         ROOT::Math::XYZPoint m_displacement;
@@ -244,6 +272,7 @@ namespace corryvreckan {
         std::vector<unsigned int> number_of_strips{};
         std::vector<double> row_radius{};
         std::vector<double> angular_pitch{};
+        std::vector<double> strip_length{};
         double stereo_angle{};
         PositionVector3D<Cartesian3D<double>> focus_translation;
     };
