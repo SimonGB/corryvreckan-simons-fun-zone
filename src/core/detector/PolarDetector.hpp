@@ -212,7 +212,9 @@ namespace corryvreckan {
          * @brief Checks if a given strip index lies within the strip matrix of the detector
          * @return True if strip index is within matrix bounds, false otherwise
          */
-        bool isWithinMatrix(const int col, const int row) const override;
+        bool isWithinMatrix(const int col, const int row) const override {
+            return !(row < 0 || row >= nPixels().y() || col < 0 || col >= static_cast<int>(number_of_strips.at(static_cast<unsigned int>(row))));
+        }
 
         /**
          * @brief Get intrinsic spatial resolution in global coordinates of the detector

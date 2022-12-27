@@ -582,11 +582,7 @@ std::pair<int, int> PolarDetector::getInterceptPixel(PositionVector3D<Cartesian3
     return {floor(getColumn(localPosition)), floor(getRow(localPosition))};
 }
 
-bool PolarDetector::isWithinMatrix(const int col, const int row) const {
-    return true;
-}
-
-std::set<std::pair<int, int>> PolarDetector::getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const{
+std::set<std::pair<int, int>> PolarDetector::getNeighbors(const int col, const int row, const size_t distance, const bool) const{
     // Vector to hold the neighbor indices
     std::set<std::pair<int, int>> neighbors;
 
