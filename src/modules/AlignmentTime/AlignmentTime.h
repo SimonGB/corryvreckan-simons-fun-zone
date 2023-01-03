@@ -51,11 +51,12 @@ namespace corryvreckan {
     private:
         std::string reference_name_;
         std::map<std::string, std::vector<double>> timestamps_;
+        bool reference_filled_;
 
         std::map<std::string, TH1D*> hTimeStamps;
         std::map<std::string, TH1D*> hTimeStamps_long;
-        std::map<std::string, TH1D*> hTimeStampsRef;
-        std::map<std::string, TH1D*> hTimeStampsRef_long;
+        TH1D* hTimeStampsRef;
+        TH1D* hTimeStampsRef_long;
 
         int m_eventNumber;
     };
