@@ -49,6 +49,15 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
+        // container for the timestamps
+        std::map<std::string, std::vector<double>> timestamps_;
+
+        std::map<std::string, TH1D*> hTimeStamps;
+        std::map<std::string, TH1D*> hTimeStamps_long;
+        std::map<std::string, TH1D*> hTimeStampsRef;
+        std::map<std::string, TH1D*> hTimeStampsRef_long;
+
+        std::string reference_name_;
         int m_eventNumber;
     };
 

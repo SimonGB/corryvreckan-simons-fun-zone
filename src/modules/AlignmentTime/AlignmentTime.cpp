@@ -13,12 +13,35 @@
 using namespace corryvreckan;
 
 AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> detector)
-    : Module(config, std::move(detector)) {}
+    : Module(config, std::move(detector)) {
+
+    // get the name of the detector used as time reference
+    config_.setDefault<std::string>("reference_name", "noname");
+    reference_name_ = config_.get<std::string>("reference_name");
+    if(strcmp(reference_name_.c_str(), "noname")){
+        LOG(WARNING) << "Module called without reference_name";
+    }
+
+}
 
 void AlignmentTime::initialize() {
 
     for(auto& detector : get_detectors()) {
-        LOG(DEBUG) << "Initialise for detector " + detector->getName();
+        std::string detectorName = detector->getName();
+        LOG(DEBUG) << "Initialise for detector " + detectorName;
+
+        timestamps_[detectorName] = {};
+
+        // time stamp histograms
+        std::string title = detectorName + ";pixel timestamps [ms]; # entries";
+        hTimeStamps[detectorName] = new TH1D("timeStamps", title.c_str(), 3e6, 0, 3e3);
+        title = detectorName + ";pixel timestamps [s]; # entries";
+        hTimeStamps_long[detectorName] = new TH1D("timeStampsRef_long", title.c_str(), 3e6, 0, 3e3);
+        title = reference_name_ + ";pixel timestamps [ms]; # entries";
+        hTimeStampsRef[detectorName] = new TH1D("timeStampsRef", title.c_str(), 3e6, 0, 3e3);
+        title = reference_name_ + ";pixel timestamps [s]; # entries";
+        hTimeStampsRef_long[detectorName] = new TH1D("timeStampsRef_long", title.c_str(), 3e6, 0, 3e3);
+
     }
 
     // Initialise member variables
