@@ -21,7 +21,6 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
     if(strcmp(reference_name_.c_str(), "noname")){
         LOG(WARNING) << "Module called without reference_name";
     }
-
 }
 
 void AlignmentTime::initialize() {
@@ -48,13 +47,28 @@ void AlignmentTime::initialize() {
     m_eventNumber = 0;
 }
 
-StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>&) {
+StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     // Loop over all detectors
     for(auto& detector : get_detectors()) {
         // Get the detector name
         std::string detectorName = detector->getName();
         LOG(DEBUG) << "Detector with name " << detectorName;
+
+        // Get all pixels for this detector
+        auto pixels = clipboard->getData<Pixel>(detectorName);
+        if(pixels.empty()) {
+            LOG(DEBUG) << "Detector " << detectorName << " does not have any pixels on the clipboard";
+            return StatusCode::Success;
+        }
+        LOG(DEBUG) << "Picked up " << pixels.size() << " pixels for device " << detectorName;
+
+        // Iterate pixels
+        for(size_t iP = 0; iP < pixels.size(); iP++) {
+            Pixel* pixel = pixels[iP].get();
+            // Fill the timestamps of this pixel into container
+            timestamps_[detectorName].emplace_back(pixel->timestamp());
+        }
     }
 
     // Increment event counter
@@ -65,6 +79,27 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>&) {
 }
 
 void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
+
+    // Loop over all detectors
+    for(auto& detector : get_detectors()) {
+        // Get the detector name
+        std::string detectorName = detector->getName();
+        LOG(DEBUG) << "Detector with name " << detectorName;
+
+        // Iterate timestamps
+        if(strcmp(detectorName.c_str(), reference_name_.c_str())){
+            for(auto timestamp : timestamps_[detectorName]){
+                hTimeStampsRef[detectorName]->Fill(timestamp);
+                hTimeStampsRef_long[detectorName]->Fill(timestamp);
+            }
+        }
+        else{
+            for(auto timestamp : timestamps_[detectorName]){
+                hTimeStamps[detectorName]->Fill(timestamp);
+                hTimeStamps_long[detectorName]->Fill(timestamp);
+            }
+        }
+    }
 
     LOG(DEBUG) << "Analysed " << m_eventNumber << " events";
 }
