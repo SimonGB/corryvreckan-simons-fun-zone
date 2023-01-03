@@ -15,11 +15,41 @@ using namespace corryvreckan;
 AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, std::move(detector)) {
 
-    // get the name of the detector used as time reference
+    // Get the name of the detector used as time reference
     config_.setDefault<std::string>("reference_name", "");
     reference_name_ = config_.get<std::string>("reference_name");
     if(reference_name_.empty()) {
-        LOG(WARNING) << "Module called without reference_name " << reference_name_.c_str();
+        LOG(WARNING) << "Module called without reference_name. Output plots will be empty";
+    }
+
+    // Get the scan parameters
+    // TODO: Should I make better use of the configuration class?
+    config_.setDefault<double>("shift_start", 0);
+    config_.setDefault<double>("shift_end", 0);
+    config_.setDefault<uint64_t>("shift_n", 0);
+    config_.setDefault<double>("time_scale", 0);
+    config_.setDefault<uint64_t>("time_nbins", 0);
+    shift_start_ = config_.get<double>("shift_start");
+    shift_end_ = config_.get<double>("shift_end");
+    shift_n_ = config_.get<uint64_t>("shift_n");
+    time_scale_ = config_.get<double>("time_scale");
+    time_nbins_ = config_.get<uint64_t>("time_nbins");
+
+    // Checking user input
+    shift_user_ = true;
+    LOG(INFO) << "Configured to scan from shift_start = " << shift_start_;
+    LOG(INFO) << "to shift_end = " << shift_end_;
+    LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
+    if(shift_start_ == shift_end_ || shift_n_ == 0) {
+        shift_user_ = false;
+        LOG(INFO) << "Attempting to guess reasonable scan parameters.";
+    }
+    time_user_ = true;
+    LOG(INFO) << "Using time scale of time_scale = " << time_scale_;
+    LOG(INFO) << "and time_nbins = " << time_nbins_;
+    if(time_scale_ == 0 || time_nbins_ == 0) {
+        time_user_ = false;
+        LOG(INFO) << "Attempting to guess reasonable range and binning.";
     }
 }
 
@@ -125,6 +155,49 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
     }
 
     LOG(DEBUG) << "Analysed " << m_eventNumber << " events";
+}
+
+// Calculating parameters from user input, or guess.
+void AlignmentTime::calculateParameters(std::string detectorName) {
+
+    // Steps need to be smaller than the trigger period.
+    // Take difference between first and last and divide by size.
+    double start = timestamps_[detectorName].at(0);
+    double end = timestamps_[detectorName].at(timestamps_[detectorName].size() - 1);
+    double period = (end - start) / timestamps_[detectorName].size();
+
+    if(shift_user_) {
+        shift_step_ = (shift_end_ - shift_start_) / shift_n_;
+    } else {
+        // And make it 20 times smaller (my guess is as good as yours).
+        shift_step_ = period / 20.;
+        // Lets make 200 steps around 0.
+        shift_n_ = 200;
+        shift_start_ = -shift_step_ * shift_n_ / 2.;
+        shift_end_ = shift_step_ * shift_n_ / 2.;
+        // And tell the world.
+        LOG(INFO) << "Calculated to scan from shift_start = " << shift_start_;
+        LOG(INFO) << "to shift_end = " << shift_end_;
+        LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
+    }
+
+    if(!time_user_) {
+        // Same as range above
+        time_scale_ = period * 5;
+        time_nbins_ = 200;
+        // Tell the world.
+        LOG(INFO) << "Using calculated time scale of time_scale = " << time_scale_;
+        LOG(INFO) << "and time_nbins = " << time_nbins_;
+    }
+
+    // TODO: Should probably catch cases where user try to use overly large histograms.
+
+    return;
+}
+
+// Scan delay
+void AlignmentTime::scanDelay(std::string detectorName) {
+    return;
 }
 
 // Modiefied Binary search algorithm adapted from

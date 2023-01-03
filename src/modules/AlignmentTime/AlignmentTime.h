@@ -56,6 +56,22 @@ namespace corryvreckan {
         // Container for time stamps
         std::map<std::string, std::vector<double>> timestamps_;
 
+        // Scan parameters
+        double shift_start_;
+        double shift_step_;
+        double shift_end_;
+        uint64_t shift_n_;
+        bool shift_user_;
+        // Vertical axis
+        double time_scale_;
+        uint64_t time_nbins_;
+        bool time_user_;
+        // Calculating parameters from user input, or guess.
+        void calculateParameters(std::string detectorName);
+
+        // Scan delay
+        void scanDelay(std::string detectorName);
+
         // Returns the array element closest to the target value.
         double findClosest(std::vector<double> const&, double);
         // Helper for findClosest.
