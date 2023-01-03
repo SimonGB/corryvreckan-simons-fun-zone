@@ -16,10 +16,10 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
     : Module(config, std::move(detector)) {
 
     // get the name of the detector used as time reference
-    config_.setDefault<std::string>("reference_name", "noname");
+    config_.setDefault<std::string>("reference_name", "");
     reference_name_ = config_.get<std::string>("reference_name");
-    if(strcmp(reference_name_.c_str(), "noname")){
-        LOG(WARNING) << "Module called without reference_name";
+    if(reference_name_.empty()){
+        LOG(WARNING) << "Module called without reference_name " << reference_name_.c_str();
     }
 }
 
