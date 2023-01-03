@@ -18,7 +18,7 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
     // get the name of the detector used as time reference
     config_.setDefault<std::string>("reference_name", "");
     reference_name_ = config_.get<std::string>("reference_name");
-    if(reference_name_.empty()){
+    if(reference_name_.empty()) {
         LOG(WARNING) << "Module called without reference_name " << reference_name_.c_str();
     }
 }
@@ -77,10 +77,9 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
     }
 
     // Fill also reference timestamps, once
-    if(reference_filled_){
+    if(reference_filled_) {
         LOG(DEBUG) << "Reference detector already filled";
-    }
-    else{
+    } else {
         // Get all pixels for this detector
         auto pixels = clipboard->getData<Pixel>(reference_name_);
         if(pixels.empty()) {
@@ -108,7 +107,7 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
 void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     // Loop over time stamps in reference detector
-    for(auto ts : timestamps_[reference_name_]){
+    for(auto ts : timestamps_[reference_name_]) {
         hTimeStampsRef->Fill(static_cast<double>(Units::convert(ts, "ms")));
         hTimeStampsRef_long->Fill(static_cast<double>(Units::convert(ts, "s")));
     }
@@ -119,9 +118,9 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         std::string detectorName = detector->getName();
         LOG(DEBUG) << "Detector with name " << detectorName;
 
-        for(auto ts : timestamps_[detectorName]){
-                hTimeStamps[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")));
-                hTimeStamps_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")));
+        for(auto ts : timestamps_[detectorName]) {
+            hTimeStamps[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")));
+            hTimeStamps_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")));
         }
     }
 
