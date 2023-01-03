@@ -49,10 +49,20 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
+        // Handling time reference
         std::string reference_name_;
-        std::map<std::string, std::vector<double>> timestamps_;
         bool reference_filled_;
 
+        // Container for time stamps
+        std::map<std::string, std::vector<double>> timestamps_;
+
+        // Returns the array element closest to the target value.
+        double findClosest(std::vector<double> const&, double);
+        // Helper for findClosest.
+        // Compares two values to target and returns the closer one.
+        double whichCloser(double, double, double);
+
+        // Histograms
         std::map<std::string, TH1D*> hTimeStamps;
         std::map<std::string, TH1D*> hTimeStamps_long;
         TH1D* hTimeStampsRef;
