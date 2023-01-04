@@ -154,7 +154,6 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
         if(timestamps_[detectorName].size() == 0) {
             LOG(ERROR) << "No timestamps found for " << detectorName;
-            // TODO: There are some histograms which will not be initialized. Will this cause crashes?
             continue;
         }
         for(auto ts : timestamps_[detectorName]) {
