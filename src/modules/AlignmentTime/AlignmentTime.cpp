@@ -37,15 +37,16 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 
     // Checking user input
     shift_user_ = true;
-    LOG(INFO) << "Configured to scan from shift_start = " << static_cast<double>(Units::convert(shift_start_,"ms")) << " ms";
-    LOG(INFO) << "to shift_end = " << static_cast<double>(Units::convert(shift_end_,"ms")) << " ms";
+    LOG(INFO) << "Configured to scan from shift_start = " << static_cast<double>(Units::convert(shift_start_, "ms"))
+              << " ms";
+    LOG(INFO) << "to shift_end = " << static_cast<double>(Units::convert(shift_end_, "ms")) << " ms";
     LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
     if(shift_start_ == shift_end_ || shift_n_ == 0) {
         shift_user_ = false;
         LOG(INFO) << "Attempting to guess reasonable scan parameters.";
     }
     time_user_ = true;
-    LOG(INFO) << "Using time scale of time_scale = " << static_cast<double>(Units::convert(time_scale_,"ms")) << " ms";
+    LOG(INFO) << "Using time scale of time_scale = " << static_cast<double>(Units::convert(time_scale_, "ms")) << " ms";
     LOG(INFO) << "and time_nbins = " << time_nbins_;
     if(time_scale_ == 0 || time_nbins_ == 0) {
         time_user_ = false;
@@ -188,8 +189,9 @@ void AlignmentTime::calculateParameters(std::string detectorName) {
         shift_start_ = -shift_step_ * static_cast<double>(shift_n_) / 2.;
         shift_end_ = shift_step_ * static_cast<double>(shift_n_) / 2.;
         // And tell the world.
-        LOG(INFO) << "Calculated to scan from shift_start = " << static_cast<double>(Units::convert(shift_start_,"ms")) << " ms";
-        LOG(INFO) << "to shift_end = " << static_cast<double>(Units::convert(shift_end_,"ms")) << " ms";
+        LOG(INFO) << "Calculated to scan from shift_start = " << static_cast<double>(Units::convert(shift_start_, "ms"))
+                  << " ms";
+        LOG(INFO) << "to shift_end = " << static_cast<double>(Units::convert(shift_end_, "ms")) << " ms";
         LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
     }
 
@@ -198,7 +200,8 @@ void AlignmentTime::calculateParameters(std::string detectorName) {
         time_scale_ = period * 5.;
         time_nbins_ = 200;
         // Tell the world.
-        LOG(INFO) << "Using calculated time scale of time_scale = " << static_cast<double>(Units::convert(time_scale_,"ms")) << " ms";
+        LOG(INFO) << "Using calculated time scale of time_scale = " << static_cast<double>(Units::convert(time_scale_, "ms"))
+                  << " ms";
         LOG(INFO) << "and time_nbins = " << time_nbins_;
     }
 
@@ -212,16 +215,21 @@ void AlignmentTime::scanDelay(std::string detectorName) {
 
     // Create histogram
     std::string title = detectorName + ";time shift [ms]; #Deltat [ms]; # entries";
-    hResidualVsShift[detectorName] = new TH2D(
-        "hResidualVsShift", title.c_str(), shift_n_, shift_start_/1e6-shift_step_/2e6, shift_end_/1e6-shift_step_/2e6, time_nbins_, -time_scale_/1e6, time_scale_/1e6);
+    hResidualVsShift[detectorName] = new TH2D("hResidualVsShift",
+                                              title.c_str(),
+                                              shift_n_,
+                                              shift_start_ / 1e6 - shift_step_ / 2e6,
+                                              shift_end_ / 1e6 - shift_step_ / 2e6,
+                                              time_nbins_,
+                                              -time_scale_ / 1e6,
+                                              time_scale_ / 1e6);
 
     // Scanning the shift
     uint64_t counter = 0;
     for(auto shift = shift_start_; shift < shift_end_; shift += shift_step_) {
         // Satisfy my impatiance
         if(0 == counter % 10) {
-            LOG(DEBUG) << "  testing shift "
-                       << static_cast<double>(Units::convert(shift,"ms")) << " ms";
+            LOG(DEBUG) << "  testing shift " << static_cast<double>(Units::convert(shift, "ms")) << " ms";
         }
 
         // Iterate hits in the detector
