@@ -136,6 +136,11 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
 
 void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
+    // check if reference timestamps are filled
+    if(timestamps_[reference_name_].size() == 0) {
+        LOG(ERROR) << "No timestamps found for time reference";
+        return;
+    }
     // Loop over time stamps in reference detector
     for(auto ts : timestamps_[reference_name_]) {
         hTimeStampsRef->Fill(static_cast<double>(Units::convert(ts, "ms")));
@@ -148,6 +153,11 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         std::string detectorName = detector->getName();
         LOG(DEBUG) << "Detector with name " << detectorName;
 
+        if(timestamps_[detectorName].size() == 0) {
+            LOG(ERROR) << "No timestamps found for " << detectorName;
+            // TODO: There are some histograms which will not be initialized. Will this cause crashes?
+            continue;
+        }
         for(auto ts : timestamps_[detectorName]) {
             hTimeStamps[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")));
             hTimeStamps_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")));
