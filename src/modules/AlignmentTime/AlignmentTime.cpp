@@ -213,7 +213,7 @@ void AlignmentTime::scanDelay(std::string detectorName) {
     // Create histogram
     std::string title = detectorName + ";time shift [ms]; #Deltat [ms]; # entries";
     hResidualVsShift[detectorName] = new TH2D(
-        "hResidualVsShift", title.c_str(), shift_n_, shift_start_/1e6, shift_end_/1e6, time_nbins_, -time_scale_/1e6, time_scale_/1e6);
+        "hResidualVsShift", title.c_str(), shift_n_, shift_start_/1e6-shift_step_/2e6, shift_end_/1e6-shift_step_/2e6, time_nbins_, -time_scale_/1e6, time_scale_/1e6);
 
     // Scanning the shift
     uint64_t counter = 0;
