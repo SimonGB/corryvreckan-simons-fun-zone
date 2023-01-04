@@ -164,17 +164,17 @@ void AlignmentTime::calculateParameters(std::string detectorName) {
     // Take difference between first and last and divide by size.
     double start = timestamps_[detectorName].at(0);
     double end = timestamps_[detectorName].at(timestamps_[detectorName].size() - 1);
-    double period = (end - start) / timestamps_[detectorName].size();
+    double period = (end - start) / static_cast<double>(timestamps_[detectorName].size());
 
     if(shift_user_) {
-        shift_step_ = (shift_end_ - shift_start_) / shift_n_;
+        shift_step_ = (shift_end_ - shift_start_) / static_cast<double>(shift_n_);
     } else {
         // And make it 20 times smaller (my guess is as good as yours).
         shift_step_ = period / 20.;
         // Lets make 200 steps around 0.
         shift_n_ = 200;
-        shift_start_ = -shift_step_ * shift_n_ / 2.;
-        shift_end_ = shift_step_ * shift_n_ / 2.;
+        shift_start_ = -shift_step_ * static_cast<double>(shift_n_) / 2.;
+        shift_end_ = shift_step_ * static_cast<double>(shift_n_) / 2.;
         // And tell the world.
         LOG(INFO) << "Calculated to scan from shift_start = " << shift_start_;
         LOG(INFO) << "to shift_end = " << shift_end_;
@@ -183,7 +183,7 @@ void AlignmentTime::calculateParameters(std::string detectorName) {
 
     if(!time_user_) {
         // Same as range above
-        time_scale_ = period * 5;
+        time_scale_ = period * 5.;
         time_nbins_ = 200;
         // Tell the world.
         LOG(INFO) << "Using calculated time scale of time_scale = " << time_scale_;
