@@ -60,11 +60,11 @@ namespace corryvreckan {
         double shift_start_;
         double shift_step_;
         double shift_end_;
-        uint64_t shift_n_;
+        int shift_n_;
         bool shift_user_;
         // Vertical axis
         double time_scale_;
-        uint64_t time_nbins_;
+        int time_nbins_;
         bool time_user_;
         // Calculating parameters from user input, or guess.
         void calculateParameters(std::string detectorName);

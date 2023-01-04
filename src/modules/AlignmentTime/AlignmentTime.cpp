@@ -26,14 +26,14 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
     // TODO: Should I make better use of the configuration class?
     config_.setDefault<double>("shift_start", 0);
     config_.setDefault<double>("shift_end", 0);
-    config_.setDefault<uint64_t>("shift_n", 0);
+    config_.setDefault<int>("shift_n", 0);
     config_.setDefault<double>("time_scale", 0);
-    config_.setDefault<uint64_t>("time_nbins", 0);
+    config_.setDefault<int>("time_nbins", 0);
     shift_start_ = config_.get<double>("shift_start");
     shift_end_ = config_.get<double>("shift_end");
-    shift_n_ = config_.get<uint64_t>("shift_n");
+    shift_n_ = config_.get<int>("shift_n");
     time_scale_ = config_.get<double>("time_scale");
-    time_nbins_ = config_.get<uint64_t>("time_nbins");
+    time_nbins_ = config_.get<int>("time_nbins");
 
     // Checking user input
     shift_user_ = true;
@@ -54,7 +54,6 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 }
 
 void AlignmentTime::initialize() {
-
     timestamps_[reference_name_] = {};
 
     // Reference time stamp histograms
