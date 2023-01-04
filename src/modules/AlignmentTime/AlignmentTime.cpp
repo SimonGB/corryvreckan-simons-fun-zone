@@ -161,6 +161,10 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             hTimeStamps[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")));
             hTimeStamps_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")));
         }
+
+        // calculate final scan parameters and perform scan
+        calculateParameters(detectorName);
+        scanDelay(detectorName);
     }
 
     LOG(DEBUG) << "Analysed " << m_eventNumber << " events";
@@ -206,6 +210,30 @@ void AlignmentTime::calculateParameters(std::string detectorName) {
 
 // Scan delay
 void AlignmentTime::scanDelay(std::string detectorName) {
+
+    // Create histogram
+    std::string title = detectorName + ";time shift [ms]; #Deltat [ms]; # entries";
+    hResidualVsShift[detectorName] = new TH2D(
+        "hResidualVsShift", title.c_str(), shift_n_, shift_start_, shift_end_, time_nbins_, -time_scale_, time_scale_);
+
+    // Scanning the shift
+    uint64_t counter = 0;
+    for(auto shift = shift_start_; shift < shift_end_; shift += shift_step_) {
+        // Satisfy my impatiance
+        if(0 == counter % 10) {
+            LOG(DEBUG) << "  testing shift " << shift;
+        }
+
+        // Iterate hits in the detector
+        for(auto detector_ts : timestamps_[detectorName]) {
+            // Apply shift
+            auto detector_ts_shifted = detector_ts - shift;
+            // Fill difference between best match w.r.t. reference time stamp
+            hResidualVsShift[detectorName]->Fill(
+                shift, detector_ts_shifted - findClosest(timestamps_[reference_name_], detector_ts_shifted));
+        }
+        counter++;
+    }
     return;
 }
 

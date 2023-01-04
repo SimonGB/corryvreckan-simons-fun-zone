@@ -83,6 +83,7 @@ namespace corryvreckan {
         std::map<std::string, TH1D*> hTimeStamps_long;
         TH1D* hTimeStampsRef;
         TH1D* hTimeStampsRef_long;
+        std::map<std::string, TH2D*> hResidualVsShift;
 
         int m_eventNumber;
     };
