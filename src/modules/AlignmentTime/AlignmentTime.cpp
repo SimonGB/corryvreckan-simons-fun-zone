@@ -235,7 +235,7 @@ void AlignmentTime::scanDelay(std::string detectorName) {
         // Iterate hits in the detector
         for(auto detector_ts : timestamps_[detectorName]) {
             // Apply shift
-            auto detector_ts_shifted = detector_ts - shift;
+            auto detector_ts_shifted = detector_ts + shift;
             // Calculate difference between shifted ts and best matching reference ts.
             auto residual = detector_ts_shifted - findClosest(timestamps_[reference_name_], detector_ts_shifted);
             hResidualVsShift[detectorName]->Fill(static_cast<double>(Units::convert(shift, "ms")),
