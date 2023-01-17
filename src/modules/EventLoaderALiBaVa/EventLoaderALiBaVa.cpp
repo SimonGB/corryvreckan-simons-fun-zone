@@ -192,7 +192,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     double TDCTime = m_alibava->time();
     if(!m_alibava->valid_time(TDCTime)) {
         LOG(DEBUG) << "Event time of " << TDCTime << " ns outside of timecut limits; ignoring event";
-        return StatusCode::NoData;
+        return StatusCode::DeadTime;
     }
 
     double trigger_ts;

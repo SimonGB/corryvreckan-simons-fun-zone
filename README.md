@@ -71,6 +71,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Joshua Clercx, DESY, @jclercx
 * Manuel Colocci, CERN, @mcolocci
 * Dominik Dannheim, CERN, @dannheim
+* Naomi Davis, DESY, @naomi 
 * Jens Dopke, STFC RAL, @jdopke
 * Katharina Dort, University of Giessen/CERN, @kdort
 * Jordi Duarte-Campderros, IFCA, @duarte
