@@ -96,9 +96,14 @@ void DUTAssociation::initialize() {
                  -1000,
                  1000);
 
-    hDist2D = new TH2D("hDist_trackCluster_2D","2D distance between cluster center and track; dx [mm]; dy [mm] ",
-                       500, -m_detector->getSize().X(), m_detector->getSize().X(),
-                       500, -m_detector->getSize().X(), m_detector->getSize().X());
+    hDist2D = new TH2D("hDist_trackCluster_2D",
+                       "2D distance between cluster center and track; dx [mm]; dy [mm] ",
+                       500,
+                       -m_detector->getSize().X(),
+                       m_detector->getSize().X(),
+                       500,
+                       -m_detector->getSize().X(),
+                       m_detector->getSize().X());
     // Nr of associated clusters per track
     title = m_detector->getName() + ": number of associated clusters per track;associated clusters;events";
     hNoAssocCls = new TH1F("no_assoc_cls", title.c_str(), 10, -0.5, 9.5);
@@ -149,7 +154,7 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
 
             hDistX->Fill(static_cast<double>(Units::convert(xdistance_centre - xdistance_nearest, "um")));
             hDistY->Fill(static_cast<double>(Units::convert(ydistance_centre - ydistance_nearest, "um")));
-            hDist2D->Fill(interceptLocal.X() - cluster->local().x(),interceptLocal.y() - cluster->local().y());
+            hDist2D->Fill(interceptLocal.X() - cluster->local().x(), interceptLocal.y() - cluster->local().y());
             if(cluster->columnWidth() == 1) {
                 hDistX_1px->Fill(static_cast<double>(Units::convert(xdistance_centre - xdistance_nearest, "um")));
             }
