@@ -22,10 +22,11 @@
 #include <TProfile.h>
 #include <TProfile2D.h>
 
+#include <eudaq/FileReader.hh>
+#include <eudaq/StandardEvent.hh>
+#include <eudaq/StdEventConverter.hh>
+
 #include "core/module/Module.hpp"
-#include "eudaq/FileReader.hh"
-#include "eudaq/StandardEvent.hh"
-#include "eudaq/StdEventConverter.hh"
 #include "objects/Cluster.hpp"
 #include "objects/Pixel.hpp"
 #include "objects/Track.hpp"
@@ -112,6 +113,7 @@ namespace corryvreckan {
         bool ignore_bore_{};
         bool veto_triggers_{};
         bool inclusive_{};
+        bool sync_by_trigger_{};
         double skip_time_{};
         Matrix<std::string> adjust_event_times_;
         int buffer_depth_;

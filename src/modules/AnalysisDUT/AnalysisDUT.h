@@ -37,6 +37,23 @@ namespace corryvreckan {
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
+    protected:
+        virtual void fillClusterHistograms(const std::shared_ptr<Cluster>& cluster);
+        virtual bool acceptTrackDUT(const std::shared_ptr<Track>& track);
+
+    public:
+        enum ETrackSelection {
+            kAllTrack,
+            kHighChi2Ndf,
+            kOutsideDUT,
+            kOutsideROI,
+            kCloseToMask,
+            kTimeLimit,
+            kPass,
+            kAssociated,
+            kNSelection
+        };
+
     private:
         std::shared_ptr<Detector> m_detector;
 
@@ -59,7 +76,7 @@ namespace corryvreckan {
         TH1F* associatedTracksVersusTime;
 
         // local
-        TH2F* residualsPosVsresidualsTime_local;
+        TH2F *residualsPosVsresidualsTime_local, *resX_vs_col, *resY_vs_col, *resX_vs_row, *resY_vs_row;
         TH1F *residualsX_local, *residualsY_local, *residualsPos_local;
         std::vector<TH1F*> residualsXclusterColLocal, residualsYclusterRowLocal;
 
@@ -93,6 +110,7 @@ namespace corryvreckan {
         TH2F* residualsTimeVsSignal;
         TH2F* hAssociatedTracksGlobalPosition;
         TH2F* hAssociatedTracksLocalPosition;
+        TH2F* hUnassociatedTracksLocalPosition;
         TH2F* hUnassociatedTracksGlobalPosition;
 
         TH1F* pxTimeMinusSeedTime;
@@ -102,7 +120,13 @@ namespace corryvreckan {
         TH2F* pxTimeMinusSeedTime_vs_pxCharge_4px;
 
         TH2F* track_trackDistance;
+
+        TProfile2D* htimeDelay_trackPos_TProfile;
+        TH2D* htimeRes_trackPos_TProfile;
+        TProfile2D* hclusterSize_trackPos_TProfile;
+
         // Member variables
+        double inpixelBinSize_;
         double time_cut_frameedge_;
         double spatial_cut_sensoredge_;
         double chi2_ndof_cut_;

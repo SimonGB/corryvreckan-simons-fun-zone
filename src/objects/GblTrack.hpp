@@ -23,6 +23,7 @@ namespace corryvreckan {
      */
 
     class GblTrack : public Track {
+        using Jacobian = Eigen::Matrix<double, 6, 6>;
 
     public:
         void print(std::ostream& out) const override;
@@ -110,7 +111,7 @@ namespace corryvreckan {
         ROOT::Math::XYZPoint get_position_outside_telescope(double z) const;
 
         // Member variables
-        TRef seed_cluster_{nullptr};
+        PointerWrapper<Cluster> seed_cluster_{nullptr};
         double scattering_length_volume_{};
         bool use_volume_scatter_{};
 
@@ -121,7 +122,7 @@ namespace corryvreckan {
         std::map<std::string, unsigned int> plane_to_gblpoint_{};
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(GblTrack, 5);
+        ClassDefOverride(GblTrack, 6);
     };
 } // namespace corryvreckan
 

@@ -51,6 +51,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     exclude_DUT_ = config_.get<bool>("exclude_dut");
 
     require_detectors_ = config_.getArray<std::string>("require_detectors", {});
+    exclude_from_seed_ = config_.getArray<std::string>("exclude_from_seed", {});
     timestamp_from_ = config_.get<std::string>("timestamp_from", {});
     if(!timestamp_from_.empty() &&
        std::find(require_detectors_.begin(), require_detectors_.end(), timestamp_from_) == require_detectors_.end()) {
@@ -122,7 +123,7 @@ void Tracking4D::initialize() {
 
         local_intersects_[detectorID] = new TH2F("local_intersect",
                                                  "local intersect, col, row",
-                                                 detector->nPixels().Y(),
+                                                 detector->nPixels().X(),
                                                  0,
                                                  detector->nPixels().X(),
                                                  detector->nPixels().Y(),
@@ -274,10 +275,15 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             trees[detector].buildTrees(tempClusters);
 
             // Get first and last detectors with clusters on them:
-            if(!reference_first) {
-                reference_first = detector;
+            if(std::find(exclude_from_seed_.begin(), exclude_from_seed_.end(), detector->getName()) ==
+               exclude_from_seed_.end()) {
+                if(!reference_first) {
+                    reference_first = detector;
+                }
+                reference_last = detector;
+            } else {
+                LOG(DEBUG) << "Not using " << detector->getName() << " as seed as chosen by config file.";
             }
-            reference_last = detector;
         }
     }
 
@@ -311,6 +317,14 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             refTrack.addCluster(clusterLast.get());
             auto averageTimestamp = calculate_average_timestamp(&refTrack);
             refTrack.setTimestamp(averageTimestamp);
+            refTrack.registerPlane(reference_first->getName(),
+                                   reference_first->displacement().z(),
+                                   reference_first->materialBudget(),
+                                   reference_first->toLocal());
+            refTrack.registerPlane(reference_last->getName(),
+                                   reference_last->displacement().z(),
+                                   reference_last->materialBudget(),
+                                   reference_last->toLocal());
 
             // Make a new track
             auto track = Track::Factory(track_model_);
@@ -332,6 +346,8 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 }
                 auto detectorID = detector->getName();
                 LOG(TRACE) << "added material budget for " << detectorID << " at z = " << detector->displacement().z();
+                refTrack.registerPlane(
+                    detectorID, detector->displacement().z(), detector->materialBudget(), detector->toLocal());
                 track->registerPlane(
                     detectorID, detector->displacement().z(), detector->materialBudget(), detector->toLocal());
 
@@ -382,7 +398,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 // Now look for the spatially closest cluster on the next plane
                 refTrack.fit();
 
-                PositionVector3D<Cartesian3D<double>> interceptPoint = detector->getIntercept(&refTrack);
+                PositionVector3D<Cartesian3D<double>> interceptPoint = detector->getLocalIntercept(&refTrack);
                 double interceptX = interceptPoint.X();
                 double interceptY = interceptPoint.Y();
 
@@ -390,8 +406,8 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     auto newCluster = neighbors[ne].get();
 
                     // Calculate the distance to the previous plane's cluster/intercept
-                    double distanceX = interceptX - newCluster->global().x();
-                    double distanceY = interceptY - newCluster->global().y();
+                    double distanceX = interceptX - newCluster->local().x();
+                    double distanceY = interceptY - newCluster->local().y();
                     double distance = sqrt(distanceX * distanceX + distanceY * distanceY);
 
                     // Check if newCluster lies within ellipse defined by spatial cuts around intercept,

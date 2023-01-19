@@ -14,6 +14,7 @@
 #include "Math/RotationY.h"
 #include "Math/RotationZ.h"
 #include "Math/RotationZYX.h"
+#include "TMatrixD.h"
 
 #include "PixelDetector.hpp"
 #include "core/utils/log.h"
@@ -27,13 +28,13 @@ PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
     // Set detector position and direction from configuration file
     SetPostionAndOrientation(config);
 
-    // initialize transform
-    this->initialise();
-
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         build_axes(config);
     }
+
+    // initialize transform
+    this->initialise();
 }
 
 void PixelDetector::build_axes(const Configuration& config) {
@@ -128,6 +129,10 @@ void PixelDetector::process_mask_file() {
     }
 }
 
+bool PixelDetector::isWithinMatrix(const int col, const int row) const {
+    return !(col > nPixels().X() - 1 || row > nPixels().Y() - 1 || col < 0 || row < 0);
+}
+
 void PixelDetector::maskChannel(int chX, int chY) {
     int channelID = chX + m_nPixels.X() * chY;
     m_masked[channelID] = true;
@@ -175,6 +180,15 @@ void PixelDetector::initialise() {
     localZ = m_localToGlobal * localZ;
     m_normal = PositionVector3D<Cartesian3D<double>>(
         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
+
+    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
+    TMatrixD errorMatrix(3, 3);
+    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
+    errorMatrix(0, 0) = m_spatial_resolution.x() * m_spatial_resolution.x();
+    errorMatrix(1, 1) = m_spatial_resolution.y() * m_spatial_resolution.y();
+    m_localToGlobal.Rotation().GetRotationMatrix(locToGlob);
+    m_globalToLocal.Rotation().GetRotationMatrix(globToLoc);
+    m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 }
 
 // Only if detector is not auxiliary
@@ -206,26 +220,7 @@ void PixelDetector::configure_pos_and_orientation(Configuration& config) const {
 
 // Function to get global intercept with a track
 PositionVector3D<Cartesian3D<double>> PixelDetector::getIntercept(const Track* track) const {
-
-    // FIXME: this is else statement can only be temporary
-    if(track->getType() == "GblTrack") {
-        return track->getState(getName());
-    } else {
-        // Get the distance from the plane to the track initial state
-        double distance = (m_origin.X() - track->getState(m_detectorName).X()) * m_normal.X();
-        distance += (m_origin.Y() - track->getState(m_detectorName).Y()) * m_normal.Y();
-        distance += (m_origin.Z() - track->getState(m_detectorName).Z()) * m_normal.Z();
-        distance /= (track->getDirection(m_detectorName).X() * m_normal.X() +
-                     track->getDirection(m_detectorName).Y() * m_normal.Y() +
-                     track->getDirection(m_detectorName).Z() * m_normal.Z());
-
-        // Propagate the track
-        PositionVector3D<Cartesian3D<double>> globalIntercept(
-            track->getState(m_detectorName).X() + distance * track->getDirection(m_detectorName).X(),
-            track->getState(m_detectorName).Y() + distance * track->getDirection(m_detectorName).Y(),
-            track->getState(m_detectorName).Z() + distance * track->getDirection(m_detectorName).Z());
-        return globalIntercept;
-    }
+    return track->getState(getName());
 }
 
 PositionVector3D<Cartesian3D<double>> PixelDetector::getLocalIntercept(const Track* track) const {
@@ -296,6 +291,11 @@ PositionVector3D<Cartesian3D<double>> PixelDetector::getLocalPosition(double col
     return PositionVector3D<Cartesian3D<double>>(m_pitch.X() * (column - static_cast<double>(m_nPixels.X() - 1) / 2.),
                                                  m_pitch.Y() * (row - static_cast<double>(m_nPixels.Y() - 1) / 2.),
                                                  0.);
+}
+
+// Function to get row and column of pixel
+std::pair<int, int> PixelDetector::getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const {
+    return {floor(getColumn(localPosition) + 0.5), floor(getRow(localPosition) + 0.5)};
 }
 
 // Function to get in-pixel position
@@ -414,7 +414,7 @@ int PixelDetector::isLeft(std::pair<int, int> pt0, std::pair<int, int> pt1, std:
 bool PixelDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
                                const std::shared_ptr<Cluster>& cluster,
                                const int neighbor_radius_row,
-                               const int neighbor_radius_col) {
+                               const int neighbor_radius_col) const {
     for(const auto* pixel : cluster->pixels()) {
         int row_distance = abs(pixel->row() - neighbor->row());
         int col_distance = abs(pixel->column() - neighbor->column());
@@ -427,4 +427,24 @@ bool PixelDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
         }
     }
     return false;
+}
+
+std::set<std::pair<int, int>>
+PixelDetector::getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const {
+    std::set<std::pair<int, int>> neighbors;
+
+    for(int x = col - static_cast<int>(distance); x <= col + static_cast<int>(distance); x++) {
+        for(int y = row - static_cast<int>(distance); y <= row + static_cast<int>(distance); y++) {
+            // Check if we have one common coordinate if corners should be excluded:
+            if(!include_corners && x != col && y != row) {
+                continue;
+            }
+            if(!isWithinMatrix(x, y)) {
+                continue;
+            }
+            neighbors.insert({x, y});
+        }
+    }
+
+    return neighbors;
 }

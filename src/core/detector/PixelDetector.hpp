@@ -59,6 +59,12 @@ namespace corryvreckan {
         void SetPostionAndOrientation(const Configuration& config);
 
         /**
+         * @brief Checks if a given pixel index lies within the pixel matrix of the detector
+         * @return True if pixel index is within matrix bounds, false otherwise
+         */
+        bool isWithinMatrix(const int col, const int row) const override;
+
+        /**
          * @brief Update detector position in the world
          * @param displacement Vector with three position coordinates
          */
@@ -116,6 +122,9 @@ namespace corryvreckan {
         // Function to get local position from column (x) and row (y) coordinates
         PositionVector3D<Cartesian3D<double>> getLocalPosition(double column, double row) const override;
 
+        // Function to get row and column of pixel
+        std::pair<int, int> getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const override;
+
         /**
          * Transformation from local (sensor) coordinates to in-pixel coordinates
          * @param  column Column address ranging from int_column-0.5*pitch to int_column+0.5*pitch
@@ -163,6 +172,12 @@ namespace corryvreckan {
          */
         XYVector getSpatialResolution() const override { return m_spatial_resolution; }
 
+        /**
+         * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @return Intrinsic spatial resolution in global X and Y
+         */
+        TMatrixD getSpatialResolutionMatrixGlobal() const override { return m_spatial_resolution_matrix_global; }
+
         /*
          * @brief Get number of pixels in x and y
          * @return Number of two dimensional pixels
@@ -175,9 +190,12 @@ namespace corryvreckan {
          * @note users should define their specific clustering method in the detector class, for pixel detector, the default
          * is 2D clustering
          */
-        bool isNeighbor(const std::shared_ptr<Pixel>&, const std::shared_ptr<Cluster>&, const int, const int) override;
+        bool isNeighbor(const std::shared_ptr<Pixel>&, const std::shared_ptr<Cluster>&, const int, const int) const override;
 
-    private:
+        std::set<std::pair<int, int>>
+        getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
+
+    protected:
         // Initialize coordinate transformations
         void initialise() override;
 
@@ -203,6 +221,7 @@ namespace corryvreckan {
         // For planar detector
         XYVector m_pitch{};
         XYVector m_spatial_resolution{};
+        TMatrixD m_spatial_resolution_matrix_global{3, 3};
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> m_nPixels{};
         std::vector<std::vector<int>> m_roi{};
         // Displacement and rotation in x,y,z

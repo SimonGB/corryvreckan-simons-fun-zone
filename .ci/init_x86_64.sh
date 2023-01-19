@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2018-2022 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # Determine which OS you are using
 if [ "$(uname)" = "Linux" ]; then
     if [ "$( cat /etc/*-release | grep "CentOS Linux 7" )" ]; then
@@ -8,6 +11,9 @@ if [ "$(uname)" = "Linux" ]; then
     elif [ "$( cat /etc/*-release | grep "CentOS Linux 8" )" ] || [ "$( cat /etc/*-release | grep "CentOS Stream release 8" )" ]; then
         echo "Detected CentOS Linux 8"
         OS=centos8
+    elif [ "$( cat /etc/*-release | grep "CentOS Stream release 9" )" ]; then
+        echo "Detected CentOS Linux 9"
+        OS=centos9
     else
         echo "Cannot detect OS, falling back to CentOS7"
         OS=centos7
@@ -15,7 +21,9 @@ if [ "$(uname)" = "Linux" ]; then
 elif [ "$(uname)" = "Darwin" ]; then
     MACOS_MAJOR=$(sw_vers -productVersion | awk -F '.' '{print $1}')
     MACOS_MINOR=$(sw_vers -productVersion | awk -F '.' '{print $2}')
-    if [ $MACOS_MAJOR = "11" ]; then
+    if [ $MACOS_MAJOR = "12" ]; then
+        OS=mac12
+    elif [ $MACOS_MAJOR = "11" ]; then
         OS=mac11
     elif [ "${MACOS_MAJOR}.${MACOS_MINOR}" = "10.15" ]; then
         OS=mac1015
@@ -30,7 +38,7 @@ fi
 
 # Determine is you have CVMFS installed
 CVMFS_MOUNT=""
-if [ "$OS" = mac1015 ] || [ "$OS" = mac11 ] ; then
+if [ "$OS" = mac1015 ] || [ "$OS" = mac11 ] || [ "$OS" = mac12 ] ; then
     CVMFS_MOUNT="/Users/Shared"
 fi
 
@@ -43,18 +51,13 @@ if [ ! -d "${CVMFS_MOUNT}/cvmfs/sft.cern.ch" ]; then
     echo "No SFT CVMFS repository detected, please make sure it is available."
     exit 1
 fi
-if [ ! -d "${CVMFS_MOUNT}/cvmfs/geant4.cern.ch" ]; then
-    echo "No Geant4 CVMFS repository detected, please make sure it is available."
-    exit 1
-fi
-
 
 # Determine which LCG version to use
-DEFAULT_LCG="LCG_101"
+DEFAULT_LCG="LCG_102"
 
-if [ -z ${ALLPIX_LCG_VERSION} ]; then
+if [ -z ${CORRY_LCG_VERSION} ]; then
     echo "No explicit LCG version set, using ${DEFAULT_LCG}."
-    ALLPIX_LCG_VERSION=${DEFAULT_LCG}
+    CORRY_LCG_VERSION=${DEFAULT_LCG}
 fi
 
 # Determine which compiler to use
@@ -93,12 +96,9 @@ export BUILD_FLAVOUR=x86_64-${OS}-${COMPILER_VERSION}-${BUILD_TYPE}
 #     Source dependencies
 #--------------------------------------------------------------------------------
 
-export LCG_VIEW=${SFTREPO}/lcg/views/${ALLPIX_LCG_VERSION}/${BUILD_FLAVOUR}/setup.sh
+export LCG_VIEW=${SFTREPO}/lcg/views/${CORRY_LCG_VERSION}/${BUILD_FLAVOUR}/setup.sh
 source ${LCG_VIEW} || echo "yes"
 
 if [ -n "${CI}" ] && [ "$(uname)" = "Darwin" ]; then
     source $ROOTSYS/bin/thisroot.sh
-    cd $G4INSTALL/bin/
-    source geant4.sh
-    cd -
 fi
