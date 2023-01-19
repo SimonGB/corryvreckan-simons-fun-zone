@@ -120,6 +120,7 @@ StatusCode Clustering4D::run(const std::shared_ptr<Clipboard>& clipboard) {
     auto pixels = clipboard->getData<Pixel>(m_detector->getName());
     if(pixels.empty()) {
         LOG(DEBUG) << "Detector " << m_detector->getName() << " does not have any pixels on the clipboard";
+        clusterMultiplicity->Fill(0);
         return StatusCode::Success;
     }
     LOG(DEBUG) << "Picked up " << pixels.size() << " pixels for device " << m_detector->getName();
@@ -333,6 +334,7 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
 
     // Set uncertainty on position from intrinstic detector spatial resolution:
     cluster->setError(m_detector->getSpatialResolution());
+    cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal());
 
     cluster->setTimestamp(timestamp);
     cluster->setDetectorID(detectorID);

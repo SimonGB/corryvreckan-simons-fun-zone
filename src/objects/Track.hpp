@@ -18,7 +18,6 @@
 #include <TRef.h>
 
 #include "Cluster.hpp"
-#include "core/utils/type.h"
 
 namespace corryvreckan {
 
@@ -292,9 +291,9 @@ namespace corryvreckan {
         void loadHistory() override;
         void petrifyHistory() override;
 
-        Plane* get_plane(std::string detetorID);
+        const Plane* get_plane(const std::string& detetorID) const;
         std::vector<PointerWrapper<Cluster>> track_clusters_;
-        std::vector<PointerWrapper<Cluster>> associated_clusters_;
+        std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;
         std::map<std::string, ROOT::Math::XYPoint> residual_local_;
         std::map<std::string, ROOT::Math::XYZPoint> residual_global_;
 
@@ -308,7 +307,7 @@ namespace corryvreckan {
         double momentum_{-1};
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(Track, 11)
+        ClassDefOverride(Track, 12)
     };
     // Vector type declaration
     using TrackVector = std::vector<std::shared_ptr<Track>>;

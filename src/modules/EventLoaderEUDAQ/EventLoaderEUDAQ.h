@@ -43,7 +43,7 @@ namespace corryvreckan {
         // Member variables
         std::vector<std::filesystem::path> m_filenames{};
         bool m_longID;
-
+        std::map<std::string, std::string> detector_id_map_;
         std::map<std::string, TH2F*> hitmap;
     };
 } // namespace corryvreckan

@@ -258,13 +258,18 @@ void ModuleManager::load_modules() {
             ModuleIdentifier identifier = id_mod.first;
 
             // Check if the unique instantiation already exists
-            auto iter = id_to_module_.find(identifier);
+            auto iter = std::find_if(id_to_module_.begin(), id_to_module_.end(), [&identifier](const auto& mapv) {
+                return identifier.getUniqueName() == mapv.first.getUniqueName();
+            });
             if(iter != id_to_module_.end()) {
                 // Unique name exists, check if its needs to be replaced
                 if(identifier.getPriority() < iter->first.getPriority()) {
                     // Priority of new instance is higher, replace the instance
                     LOG(TRACE) << "Replacing model instance " << iter->first.getUniqueName()
                                << " with instance with higher priority.";
+
+                    // Drop configuration from replaced module
+                    conf_manager_->dropInstanceConfiguration(iter->first);
 
                     module_execution_time_.erase(iter->second->get());
                     iter->second = m_modules.erase(iter->second);
@@ -274,7 +279,9 @@ void ModuleManager::load_modules() {
                     if(identifier.getPriority() == iter->first.getPriority()) {
                         throw AmbiguousInstantiationError(config.getName());
                     }
-                    // Priority is lower, do not add this module to the run list
+                    // Priority is lower, do not add this module to the run list, drop config
+                    conf_manager_->dropInstanceConfiguration(identifier);
+                    module_execution_time_.erase(id_mod.second);
                     continue;
                 }
             }
@@ -290,6 +297,18 @@ void ModuleManager::load_modules() {
     }
 
     LOG_PROGRESS(STATUS, "MOD_LOAD_LOOP") << "Loaded " << m_modules.size() << " module instances";
+}
+
+/**
+ * Calls config_manager->addInstanceConfiguration(identifier, config) while handling ModuleIdentifierAlreadyAddedError
+ */
+static inline Configuration&
+add_instance_configuration(ConfigManager* config_manager, const ModuleIdentifier& identifier, const Configuration& config) {
+    try {
+        return config_manager->addInstanceConfiguration(identifier, config);
+    } catch(ModuleIdentifierAlreadyAddedError&) {
+        throw AmbiguousInstantiationError(identifier.getUniqueName());
+    }
 }
 
 std::vector<std::string> ModuleManager::get_type_vector(char* type_tokens) {
@@ -339,7 +358,7 @@ std::pair<ModuleIdentifier, Module*> ModuleManager::create_unique_module(void* l
     }
 
     // Create and add module instance config
-    Configuration& instance_config = conf_manager_->addInstanceConfiguration(identifier, config);
+    Configuration& instance_config = add_instance_configuration(conf_manager_, identifier, config);
 
     // Specialize instance configuration
     auto output_dir = instance_config.get<std::string>("_global_dir");
@@ -487,7 +506,7 @@ std::vector<std::pair<ModuleIdentifier, Module*>> ModuleManager::create_detector
         LOG(DEBUG) << "Creating instantiation \"" << identifier.getUniqueName() << "\"";
 
         // Create and add module instance config
-        Configuration& instance_config = conf_manager_->addInstanceConfiguration(instance.second, config);
+        Configuration& instance_config = add_instance_configuration(conf_manager_, instance.second, config);
 
         // Add internal module config
         auto output_dir = instance_config.get<std::string>("_global_dir");
@@ -526,6 +545,8 @@ void ModuleManager::run() {
     // Check if we have an event or track limit:
     auto number_of_events = global_config.get<int>("number_of_events", -1);
     auto number_of_tracks = global_config.get<int>("number_of_tracks", -1);
+    auto eventloop_print_freq = global_config.get<int>("status_print_frequency", 100);
+
     auto run_time = global_config.get<double>("run_time", static_cast<double>(Units::convert(-1.0, "s")));
 
     // Loop over all events, running each module on each "event"
@@ -582,7 +603,7 @@ void ModuleManager::run() {
         m_tracks += static_cast<int>(m_clipboard->countObjects<Track>());
         m_pixels += static_cast<int>(m_clipboard->countObjects<Pixel>());
 
-        if(m_events % 100 == 0) {
+        if(m_events % eventloop_print_freq == 0) {
 
             auto kilo_or_mega = [](const double& input) {
                 bool mega = (input > 1e6 ? true : false);
@@ -687,6 +708,22 @@ void ModuleManager::initializeAll() {
         // Reset logging
         Log::setSection(old_section_name);
         set_module_after(old_settings);
+    }
+    // check if the new detector geometry exists/could be written:
+    Configuration& global_config = conf_manager_->getGlobalConfiguration();
+    if(global_config.has("detectors_file_updated")) {
+        std::string path = global_config.getPath("detectors_file_updated");
+        // Check if the file exists
+        if(std::filesystem::is_regular_file(path)) {
+            if(global_config.get<bool>("deny_overwrite", false)) {
+                throw RuntimeError("Overwriting of existing detectors file " + path + " denied");
+            }
+            LOG(WARNING) << "Detectors file " << path << " exists and will be overwritten at end of run.";
+        }
+        std::ofstream file(path);
+        if(!file) {
+            throw RuntimeError("Cannot create detectors file " + path);
+        }
     }
 }
 

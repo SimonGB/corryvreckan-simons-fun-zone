@@ -17,24 +17,35 @@ using namespace corryvreckan;
 
 ROOT::Math::XYPoint StraightLineTrack::distance(const Cluster* cluster) const {
 
-    // Get the StraightLineTrack X and Y at the cluster z position
-    double StraightLineTrackX = m_state.X() + m_direction.X() * cluster->global().z();
-    double StraightLineTrackY = m_state.Y() + m_direction.Y() * cluster->global().z();
+    if(get_plane(cluster->detectorID()) == nullptr) {
+        throw MissingReferenceException(typeid(*this), typeid(Plane));
+    }
+    auto trackIntercept = get_plane(cluster->detectorID())->getToLocal() * getState(cluster->detectorID());
 
-    // Calculate the 1D residuals
-    double dx = (StraightLineTrackX - cluster->global().x());
-    double dy = (StraightLineTrackY - cluster->global().y());
+    auto dist = cluster->local() - trackIntercept;
 
     // Return the distance^2
-    return ROOT::Math::XYPoint(dx, dy);
+    return ROOT::Math::XYPoint(dist.x(), dist.y());
 }
 
 ROOT::Math::XYPoint StraightLineTrack::getKinkAt(const std::string&) const {
     return ROOT::Math::XYPoint(0, 0);
 }
 
-ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string&) const {
-    return m_state;
+ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string& detectorID) const {
+    if(get_plane(detectorID) == nullptr) {
+        throw MissingReferenceException(typeid(*this), typeid(Plane));
+    }
+    auto toGlobal = get_plane(detectorID)->getToGlobal();
+    ROOT::Math::XYZVector planeU, planeV, planeN;
+    toGlobal.Rotation().GetComponents(planeU, planeV, planeN);
+    ROOT::Math::XYZPoint origin = toGlobal.Translation() * ROOT::Math::XYZPoint(0, 0, 0);
+
+    ROOT::Math::XYZVector distance = m_state - origin;
+    double pathLength = -distance.Dot(planeN) / m_direction.Dot(planeN);
+    ROOT::Math::XYZPoint position = m_state + pathLength * m_direction;
+
+    return position;
 }
 
 ROOT::Math::XYZVector StraightLineTrack::getDirection(const std::string&) const {
@@ -60,9 +71,13 @@ void StraightLineTrack::calculateChi2() {
         if(cluster == nullptr) {
             throw MissingReferenceException(typeid(*this), typeid(Cluster));
         }
+        if(get_plane(cluster->detectorID()) == nullptr) {
+            throw MissingReferenceException(typeid(*this), typeid(Plane));
+        }
 
         // Get the distance and the error
-        ROOT::Math::XYPoint dist = this->distance(cluster);
+        auto intercept = get_plane(cluster->detectorID())->getToLocal() * getState(cluster->detectorID());
+        auto dist = cluster->local() - intercept;
         double ex2 = cluster->errorX() * cluster->errorX();
         double ey2 = cluster->errorY() * cluster->errorY();
         chi2_ += ((dist.x() * dist.x() / ex2) + (dist.y() * dist.y() / ey2));
@@ -75,12 +90,12 @@ void StraightLineTrack::calculateChi2() {
 void StraightLineTrack::calculateResiduals() {
     for(const auto& c : track_clusters_) {
         auto* cluster = c.get();
-        // fixme: cluster->global.z() is only an approximation for the plane intersect. Can be fixed after !115
-        residual_global_[cluster->detectorID()] = cluster->global() - getIntercept(cluster->global().z());
-        if(get_plane(cluster->detectorID()) != nullptr) {
-            residual_local_[cluster->detectorID()] =
-                cluster->local() - get_plane(cluster->detectorID())->getToLocal() * getIntercept(cluster->global().z());
+        if(get_plane(cluster->detectorID()) == nullptr) {
+            throw MissingReferenceException(typeid(*this), typeid(Plane));
         }
+        residual_global_[cluster->detectorID()] = cluster->global() - getState(cluster->detectorID());
+        residual_local_[cluster->detectorID()] =
+            cluster->local() - get_plane(cluster->detectorID())->getToLocal() * getState(cluster->detectorID());
     }
 }
 
@@ -116,16 +131,19 @@ void StraightLineTrack::fit() {
         double x = cluster->global().x();
         double y = cluster->global().y();
         double z = cluster->global().z();
-        double ex2 = cluster->errorX() * cluster->errorX();
-        double ey2 = cluster->errorY() * cluster->errorY();
+        Eigen::Vector2d pos(x, y);
+        auto errorMatrix = cluster->errorMatrixGlobal();
+        Eigen::Matrix2d V;
+        V << errorMatrix(0, 0), errorMatrix(0, 1), errorMatrix(1, 0), errorMatrix(1, 1);
+        Eigen::Matrix<double, 2, 4> C;
+        C << 1., z, 0., 0., 0., 0., 1., z;
 
         // Fill the matrices
-        vec += Eigen::Vector4d((x / ex2), (x * z / ex2), (y / ey2), (y * z / ey2));
-        Eigen::Vector4d pos(x, x, y, y);
-        Eigen::Matrix2d err;
-        err << 1, z, z, z * z;
-        mat.topLeftCorner(2, 2) += err / ex2;
-        mat.bottomRightCorner(2, 2) += err / ey2;
+        if(fabs(V.determinant()) < std::numeric_limits<double>::epsilon()) {
+            throw TrackFitError(typeid(this), "Error matrix inversion in straight line fit failed");
+        }
+        vec += C.transpose() * V.inverse() * pos;
+        mat += C.transpose() * V.inverse() * C;
     }
 
     // Check for singularities.
