@@ -16,6 +16,7 @@ For each telescope detector except the reference plane, this method moves the de
 * `prune_tracks`: Boolean to set if tracks with a track chi^2 > `max_track_chi2ndof` should be excluded from use in the alignment. The number of discarded tracks is outputted on terminal. Default is `false`.
 * `max_associated_clusters`: Maximum number of associated clusters per track allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `1`.
 * `max_track_chi2ndof`: Maximum track chi^2 value allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `10.0`.
+* `fixed_planes`: Optional user-defined fixed planes in addition to reference plane. When `fixed_planes = detector_name`, the geometry of the selected detector will not be modified.
 
 ### Plots produced
 For each detector, the following plots are produced:

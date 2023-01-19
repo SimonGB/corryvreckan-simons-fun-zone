@@ -38,7 +38,7 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     range_abs = config_.get<double>("range_abs");
     method = config_.get<PrealignMethod>("method");
     fit_range_rel = config_.get<int>("fit_range_rel");
-    fixed_plane_ = config_.getArray<std::string>("fixed_plane", {});
+    fixed_planes_ = config_.getArray<std::string>("fixed_planes", {});
 
     LOG(DEBUG) << "Setting max_correlation_rms to : " << max_correlation_rms;
     LOG(DEBUG) << "Setting damping_factor to : " << damping_factor;
@@ -128,14 +128,7 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         LOG(ERROR) << "Detector " << m_detector->getName() << ": RMS X = " << Units::display(rmsX, {"mm", "um"})
                    << " , RMS Y = " << Units::display(rmsY, {"mm", "um"});
     }
-    string detectorID = m_detector->getName();
-    bool is_fixed = false;
-    // Do not align the user-defined plane
-    for(const auto& fixed_plane : fixed_plane_) {
-        if(detectorID == fixed_plane) {
-            is_fixed = true;
-        }
-    }
+    bool is_fixed = std::find(fixed_planes_.begin(), fixed_planes_.end(), detector->getName()) != fixed_planes_.end();
 
     // Move all but the reference and user-defined plane:
     if(!m_detector->isReference() && !is_fixed) {
