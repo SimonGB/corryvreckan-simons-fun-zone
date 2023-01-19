@@ -128,7 +128,7 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         LOG(ERROR) << "Detector " << m_detector->getName() << ": RMS X = " << Units::display(rmsX, {"mm", "um"})
                    << " , RMS Y = " << Units::display(rmsY, {"mm", "um"});
     }
-    bool is_fixed = std::find(fixed_planes_.begin(), fixed_planes_.end(), detector->getName()) != fixed_planes_.end();
+    bool is_fixed = std::find(fixed_planes_.begin(), fixed_planes_.end(), m_detector->getName()) != fixed_planes_.end();
 
     // Move all but the reference and user-defined plane:
     if(!m_detector->isReference() && !is_fixed) {
