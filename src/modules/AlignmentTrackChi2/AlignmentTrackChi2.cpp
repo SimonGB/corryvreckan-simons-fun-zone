@@ -277,16 +277,8 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
 
     // Now list the new alignment parameters
     for(auto& detector : get_regular_detectors(false)) {
-        string detectorID = detector->getName();
-        bool is_fixed = false;
-
-        // Do not align the reference plane
-        for(const auto& fixed_plane : fixed_plane_) {
-            if(detectorID == fixed_plane) {
-                LOG(INFO) << "Skipping user fixed detector " << detectorID;
-                is_fixed = true;
-            }
-        }
+        // Do not align fixed planes and the reference plane
+        bool is_fixed = std::find(fixed_plane_.begin(), fixed_plane_.end(), detector->getName()) != fixed_plane_.end();
         if(detector->isReference() || is_fixed) {
             continue;
         }
