@@ -57,6 +57,7 @@ namespace corryvreckan {
         bool m_alignOrientation;
         size_t m_maxAssocClusters;
         double m_maxTrackChi2;
+        std::vector<std::string> fixed_planes_;
 
         std::map<std::string, TGraph*> align_correction_shiftX;
         std::map<std::string, TGraph*> align_correction_shiftY;
