@@ -56,6 +56,7 @@ namespace corryvreckan {
         TH1D* hDistY_2px;
         TH1D* hDistX_3px;
         TH1D* hDistY_3px;
+        TH2D* hDist2D;
     };
 } // namespace corryvreckan
 #endif // DUTAssociation_H

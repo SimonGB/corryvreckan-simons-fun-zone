@@ -860,7 +860,7 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             associatedTracksVersusTime->Fill(track->timestamp() / 1e9); // convert ns -> s
 
             // Check distance between track and cluster in local coordinates
-            ROOT::Math::XYZPoint intercept = m_detector->getLocalIntercept(track.get());
+            auto intercept = m_detector->getLocalIntercept(track.get());
             double local_x_distance = intercept.X() - assoc_cluster->local().x();
             double local_y_distance = intercept.Y() - assoc_cluster->local().y();
             double local_x_distance_um = local_x_distance * 1000.;
