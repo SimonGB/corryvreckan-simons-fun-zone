@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2022 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 CORRYVRECKAN_ENABLE_DEFAULT(OFF)
 CORRYVRECKAN_DETECTOR_TYPE(${MODULE_NAME} "ALiBaVa")
 
