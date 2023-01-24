@@ -228,6 +228,19 @@ fmt:codespell:
         - cd ../
         - codespell --ignore-words .gitlab/ci/codespell_ignored_words.txt --quiet-level 2 --skip ".git,.gitlab,cmake,3rdparty,*.svg,*.pdf"
 
+fmt:reuse:
+    image:
+        name: fsfe/reuse:latest
+        entrypoint: [""]
+    tags:
+      - docker
+    stage: formatting
+    needs: []
+    dependencies: []
+    script:
+        - reuse lint
+
+
 
 #############################
 # Documentation Compilation #
