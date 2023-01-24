@@ -129,6 +129,14 @@ void Tracking4D::initialize() {
                                                  detector->nPixels().Y(),
                                                  0,
                                                  detector->nPixels().Y());
+        global_intersects_[detectorID] = new TH2F("global_intersect",
+                                                  "global intersect, global intercept x [mm];global intercept y [mm]",
+                                                  600,
+                                                  -30,
+                                                  30,
+                                                  600,
+                                                  -30,
+                                                  30);
 
         // Do not create plots for detectors not participating in the tracking:
         if(exclude_DUT_ && detector->isDUT()) {
@@ -620,6 +628,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto col = detector->getColumn(local);
             LOG(TRACE) << "Local col/row intersect of track: " << col << "\t" << row;
             local_intersects_[det]->Fill(col, row);
+
+            auto global = detector->getIntercept(track.get());
+            global_intersects_[det]->Fill(global.X(), global.Y());
 
             if(!kinkX.count(det)) {
                 LOG(WARNING) << "Skipping writing kinks due to missing init of histograms for  " << det;
