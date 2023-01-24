@@ -18,3 +18,8 @@ License: CC-BY-4.0
 Files: src/modules/EventLoaderALiBaVa/ALiBaVa/*
 Copyright: Alibava Systems S.L.
 License: CC-BY-4.0
+
+Files: src/modules/EventLoaderCLICpix2/CLICpix2/*
+Copyright: 2016-2023 CERN and the Peary Authors
+License: LGPL-3.0-only
+
