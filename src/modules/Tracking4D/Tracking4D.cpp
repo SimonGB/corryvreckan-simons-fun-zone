@@ -402,7 +402,8 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
 
                 auto neighbors = trees[detector].getAllElementsInTimeWindow(refTrack.timestamp(), timeCut);
 
-                LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window on "<< detectorID;
+                LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window on "
+                           << detectorID;
 
                 // Now look for the spatially closest cluster on the next plane
                 refTrack.fit();

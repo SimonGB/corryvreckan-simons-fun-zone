@@ -41,7 +41,6 @@ PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
     alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
     alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
     m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
-
 }
 
 void PixelDetector::build_axes(const Configuration& config) {
