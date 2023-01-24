@@ -12,9 +12,9 @@
 #ifndef SequentialREADER_H__
 #define SequentialREADER_H__
 
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/Event.hh"
-#include "eudaq/FileReader.hh"
+#include <eudaq/DetectorEvent.hh>
+#include <eudaq/Event.hh>
+#include <eudaq/FileReader.hh>
 
 #include <memory>
 #include <queue>

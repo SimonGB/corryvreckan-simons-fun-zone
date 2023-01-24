@@ -16,7 +16,7 @@
 
 #include "EventLoaderEUDAQ.h"
 
-#include "eudaq/PluginManager.hh"
+#include <eudaq/PluginManager.hh>
 
 using namespace corryvreckan;
 using namespace std;
