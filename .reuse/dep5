@@ -34,3 +34,13 @@ License: BSD-3-Clause
 Files: cmake/PANDOC.cmake
 Copyright: 2015 Jeet Sukumaran
 License: BSD-3-Clause
+
+Files: jobsub/Colorer.py
+Copyright: sorin
+License: CC-BY-SA-3.0
+
+Files: jobsub/_*
+Copyright: 2016-2022 CERN and the Corryvreckan authors
+License: CC0-1.0
+
+
