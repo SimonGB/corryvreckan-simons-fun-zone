@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2022 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 CORRYVRECKAN_ENABLE_DEFAULT(OFF)
 
 # Define module and return the generated name as MODULE_NAME

@@ -1,7 +1,6 @@
 /**
  * @file
- * @brief Special file automatically included in the module for the dynamic
- * loading
+ * @brief Special file automatically included in the module for the dynamic loading
  *
  * Needs the following names to be defined by the build system
  * - CORRYVRECKAN_MODULE_NAME: name of the module

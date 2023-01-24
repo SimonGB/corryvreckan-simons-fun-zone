@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # git pre-commit hook that runs an clang-format stylecheck.
 # Features:
 #  - abort commit when commit does not comply with the style guidelines
@@ -16,7 +19,7 @@ CLANG_FORMAT_VERSION=$(git cat-file blob master:"$VERSIONFILE" | grep -m 1 'CLAN
 # set path to clang-format binary
 for bin in "clang-format-$CLANG_FORMAT_VERSION" "clang-format";
 do
-    CLANG_FORMAT=$(which "$bin" 2> /dev/null)
+    CLANG_FORMAT=$(command -v "$bin")
     [ -n "$CLANG_FORMAT" ] && break
 done
 
