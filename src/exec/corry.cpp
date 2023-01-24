@@ -18,11 +18,6 @@
 
 #include "core/Corryvreckan.hpp"
 #include "core/utils/exceptions.h"
-/**
- * @file
- * @brief Executable running the framework
- */
-
 #include "core/utils/log.h"
 
 using namespace corryvreckan;
