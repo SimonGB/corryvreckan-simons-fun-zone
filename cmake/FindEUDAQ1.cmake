@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # - Try to find the EUDAQ framework
 # Once done this will define
 #  EUDAQ_FOUND - System has EUDAQ

@@ -26,3 +26,11 @@ License: LGPL-3.0-only
 Files: testing/*
 Copyright: 2017-2023 CERN and the Corryvreckan authors
 License: CC0-1.0 OR CC-BY-4.0
+
+Files: cmake/LATEX.cmake
+Copyright: 2004, 2015 Sandia Corporation
+License: BSD-3-Clause
+
+Files: cmake/PANDOC.cmake
+Copyright: 2015 Jeet Sukumaran
+License: BSD-3-Clause
