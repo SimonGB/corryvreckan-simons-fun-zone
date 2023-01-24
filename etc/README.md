@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Scripts
 
 ## addModule.sh

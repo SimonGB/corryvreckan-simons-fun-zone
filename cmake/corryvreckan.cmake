@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # For every module, build a separate library to be loaded by corryvreckan core
 MACRO(corryvreckan_enable_default val)
     # Get the name of the module

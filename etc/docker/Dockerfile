@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 FROM gitlab-registry.cern.ch/corryvreckan/corryvreckan/corryvreckan-deps:latest
 MAINTAINER Simon Spannagel <simon.spannagel@cern.ch>
 
