@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief CLICpix2 frame decorder
+ * @brief CLICpix2 frame decoder
  * Based on System Verilog CLICpix2_Readout_scoreboard
  *
  * @copyright Copyright (c) 2022 CERN and the Corryvreckan authors.
