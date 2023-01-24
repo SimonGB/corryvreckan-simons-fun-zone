@@ -29,7 +29,10 @@ using namespace corryvreckan;
 PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
 
     m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
-
+    // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
+    if(!isAuxiliary()) {
+        build_axes(config);
+    }
     // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
     TMatrixD errorMatrix(3, 3);
     TMatrixD locToGlob(3, 3), globToLoc(3, 3);
@@ -39,10 +42,6 @@ PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
     alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
     m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 
-    // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
-    if(!isAuxiliary()) {
-        build_axes(config);
-    }
 }
 
 void PixelDetector::build_axes(const Configuration& config) {
