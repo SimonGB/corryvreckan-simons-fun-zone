@@ -1,0 +1,20 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Corryvreckan
+Upstream-Contact: Simon Spannagel <simon.spannagel@cern.ch>
+Source: https://gitlab.cern.ch/corryvreckan/corryvreckan
+
+Files: .gitlab/ci/ctest-to-junit.xsl
+Copyright: 2011 Ryan Pavlik <rpavlik@iastate.edu>
+License: MIT
+
+Files: 3rdparty/GeneralBrokenLines/*
+Copyright: 2011, Claus Kleinwort
+License: LGPL-2.0-only
+
+Files: doc/*
+Copyright: 2016-2022 CERN and the Corryvreckan authors
+License: CC-BY-4.0
+
+Files: src/modules/EventLoaderALiBaVa/ALiBaVa/*
+Copyright: Alibava Systems S.L.
+License: CC-BY-4.0
