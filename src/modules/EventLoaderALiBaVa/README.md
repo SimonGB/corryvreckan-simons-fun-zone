@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 **Maintainer**: Fabian Lex (<fabianlex.fsl@gmail.com>)  
 **Module Type**: *DETECTOR*  
 **Detector Type**: *ALiBaVa*  

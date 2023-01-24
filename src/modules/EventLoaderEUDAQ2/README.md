@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # EventLoaderEUDAQ2
 **Maintainer**: Jens Kroeger (<jens.kroeger@cern.ch>), Simon Spannagel (<simon.spannagel@cern.ch>)  
 **Module Type**: *DETECTOR*  
