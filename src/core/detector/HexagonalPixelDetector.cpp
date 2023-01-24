@@ -1,4 +1,5 @@
-/** @file
+/**
+ * @file
  * @brief Implementation of hexagonal pixel detector model
  *
  * @copyright Copyright (c) 2021-2022 CERN and the Allpix Squared authors.
