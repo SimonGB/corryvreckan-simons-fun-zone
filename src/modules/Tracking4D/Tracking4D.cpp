@@ -131,12 +131,12 @@ void Tracking4D::initialize() {
                                                  detector->nPixels().Y());
         global_intersects_[detectorID] = new TH2F("global_intersect",
                                                   "global intersect, global intercept x [mm];global intercept y [mm]",
-                                                  400,
-                                                  -20,
-                                                  20,
-                                                  200,
-                                                  -10,
-                                                  10);
+                                                  600,
+                                                  -30,
+                                                  30,
+                                                  600,
+                                                  -30,
+                                                  30);
 
         // Do not create plots for detectors not participating in the tracking:
         if(exclude_DUT_ && detector->isDUT()) {
