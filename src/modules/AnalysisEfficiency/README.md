@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # AnalysisEfficiency
 **Maintainer**: Simon Spannagel (<simon.spannagel@cern.ch>), Jens Kroeger (<jens.kroeger@cern.ch>)  
 **Module Type**: *DUT*  

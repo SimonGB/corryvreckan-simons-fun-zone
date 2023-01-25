@@ -1,3 +1,9 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0
+title: "How to contribute"
+---
+
 # How to contribute
 Thanks for considering to contribute to Corryvreckan. Any type of merge request, ranging from small bugfixes, improvements to the documentation to entirely new functionality, is much appreciated. We, the maintainers, will try to our best to look carefully at every merge request.
 

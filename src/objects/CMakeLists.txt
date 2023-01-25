@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2022 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # Include the standard dependencies
 INCLUDE_DIRECTORIES(SYSTEM ${CORRYVRECKAN_DEPS_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(SYSTEM ${GBL_INCLUDE_DIRS})

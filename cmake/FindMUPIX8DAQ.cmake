@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2022-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # - Try to find the MuPix telescope DAQ
 # Once done this will define
 #  MUPIX8DAQ_FOUND - System has MuPixDAQ

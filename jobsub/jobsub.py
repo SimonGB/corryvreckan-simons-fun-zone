@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2022-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 """
 jobsub: a tool for Corryvreckan job submission
 

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # Retrieve the project version string from git describe
 FUNCTION(get_version PROJECT_VERSION)
     # Check if this is a source tarball build

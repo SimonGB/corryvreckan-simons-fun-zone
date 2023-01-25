@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include <TCanvas.h>
@@ -13,10 +14,11 @@
 #include <TH2F.h>
 #include <iostream>
 
+#include <eudaq/FileReader.hh>
+#include <eudaq/StandardEvent.hh>
+#include <eudaq/StdEventConverter.hh>
+
 #include "core/module/Module.hpp"
-#include "eudaq/FileReader.hh"
-#include "eudaq/StandardEvent.hh"
-#include "eudaq/StdEventConverter.hh"
 #include "objects/Cluster.hpp"
 #include "objects/Pixel.hpp"
 #include "objects/Track.hpp"

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # Packaging configuration
 SET(CPACK_PACKAGE_NAME "corryvreckan")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Maelstrom for Your Test Beam Data")
