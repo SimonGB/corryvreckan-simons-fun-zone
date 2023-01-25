@@ -19,6 +19,7 @@
 
 #include <iostream>
 
+#include "Object.hpp"
 #include "Pixel.hpp"
 
 namespace corryvreckan {

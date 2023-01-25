@@ -12,6 +12,11 @@
 #ifndef CORRYVRECKAN_SPIDRSIGNAL_H
 #define CORRYVRECKAN_SPIDRSIGNAL_H 1
 
+#include <string>
+#include <typeindex>
+
+#include "Object.hpp"
+
 namespace corryvreckan {
     /**
      * @ingroup Objects
