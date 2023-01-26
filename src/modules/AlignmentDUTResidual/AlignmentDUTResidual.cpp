@@ -88,7 +88,7 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
     auto tracks = clipboard->getData<Track>();
 
     TrackVector alignmenttracks;
-    std::vector<Cluster*> alignmentclusters;
+    std::map<std::string, std::vector<Cluster*>> alignmentclusters;
 
     // Make a local copy and store it
     for(auto& track : tracks) {
@@ -120,7 +120,9 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
         // Keep this track on persistent storage for alignment:
         alignmenttracks.push_back(track);
         // Append associated clusters to the list we want to keep:
-        alignmentclusters.insert(alignmentclusters.end(), associated_clusters.begin(), associated_clusters.end());
+        for(const auto& cluster : associated_clusters) {
+            alignmentclusters[m_detector->getName()].push_back(cluster);
+        }
 
         // Find the cluster that needs to have its position recalculated
         for(auto& associated_cluster : associated_clusters) {
@@ -145,12 +147,20 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             profile_dX_X->Fill(column, static_cast<double>(Units::convert(residualX, "um")), 1);
             profile_dX_Y->Fill(row, static_cast<double>(Units::convert(residualX, "um")), 1);
         }
+
+        // Since we need to refit the full track, also store the track clusters:
+        for(const auto& cluster : track->getClusters()) {
+            alignmentclusters[cluster->detectorID()].push_back(cluster);
+        }
     }
 
     // Store all tracks we want for alignment on the permanent storage:
     clipboard->putPersistentData(alignmenttracks, m_detector->getName());
-    // Copy the objects of all associated clusters on the clipboard to persistent storage:
-    clipboard->copyToPersistentData(alignmentclusters, m_detector->getName());
+
+    // Copy the objects of all track clusters on the clipboard to persistent storage:
+    for(auto& clusters : alignmentclusters) {
+        clipboard->copyToPersistentData(clusters.second, clusters.first);
+    }
 
     // Otherwise keep going
     return StatusCode::Success;
