@@ -346,6 +346,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             }
             track->setParticleMomentum(momentum_);
 
+            // Fit initial trajectory guess
+            refTrack.fit();
+
             // Loop over each subsequent plane and look for a cluster within the timing cuts
             size_t detector_nr = 2;
             // Get all detectors here to also include passive layers which might contribute to scattering
