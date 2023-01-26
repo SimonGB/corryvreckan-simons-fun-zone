@@ -19,6 +19,7 @@
 #include <TRef.h>
 
 #include "Cluster.hpp"
+#include "exceptions.h"
 
 namespace corryvreckan {
 
@@ -234,6 +235,7 @@ namespace corryvreckan {
         virtual void setVolumeScatter(double length) = 0;
 
         void registerPlane(const std::string& name, double z, double x0, Transform3D g2l);
+        void updatePlane(const std::string& name, double z, double x0, Transform3D g2l);
 
         class Plane {
         public:
