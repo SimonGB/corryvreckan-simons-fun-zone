@@ -36,6 +36,7 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
         throw InvalidValueError(config_, "window_size", "Invalid window size - value should be >= 1.");
     }
     includeCorners = config_.get<bool>("include_corners", false);
+    useTriggerTimestamp = config_.get<bool>("use_trigger_timestamp", false);
     flagAnalysisShape = config_.get<bool>("analysis_shape", false);
     flagAnalysisSNR = thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX;
 
@@ -513,7 +514,22 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         cluster->addPixel(&*seed);
         used[seed] = true;
 
-        cluster->setTimestamp(seed->timestamp());
+        if(useTriggerTimestamp) {
+            if(!clipboard->getEvent()->triggerList().empty()) {
+                double trigger_ts = clipboard->getEvent()->triggerList().begin()->second;
+                LOG(DEBUG) << "Using trigger timestamp " << Units::display(trigger_ts, "us") << " as cluster timestamp.";
+                cluster->setTimestamp(trigger_ts);
+            } else {
+                LOG(WARNING) << "No trigger available. Use pixel timestamp " << Units::display(seed->timestamp(), "us")
+                             << " as cluster timestamp.";
+                cluster->setTimestamp(seed->timestamp());
+            }
+        } else {
+            // assign pixel timestamp
+            LOG(DEBUG) << "Pixel has timestamp " << Units::display(seed->timestamp(), "us")
+                       << ", set as cluster timestamp. ";
+            cluster->setTimestamp(seed->timestamp());
+        }
 
         // Search neighbors around seed
         PixelVector neighbors;
