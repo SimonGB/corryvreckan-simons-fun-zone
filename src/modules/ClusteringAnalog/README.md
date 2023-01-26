@@ -32,6 +32,7 @@ This module also provides a cluster shape analysis. To characterize the cluster 
 * `calibration_pedestal`: Histogram name of pedestal map in calibration file. Read as ROOT::TH2F.
 * `calibration_noise`: Histogram name of noise map in calibration file. Read as ROOT::TH2F.
 * `analysis_shape`: Produce more elaborate histograms for cluster shape analysis. (Default: `false`)
+* `use_trigger_timestamp`: If true, the first trigger timestamp of the Corryvreckan event is set as the cluster timestamp. Caution when using this method for very long events containing multiple triggers. If false, the seed pixel defines the timestamp. Default value is `false`.
 
 ### Plots produced
 For each detector, the following plots are produced:
