@@ -191,11 +191,11 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
     auto track_refit = [&](auto& track) {
         LOG(TRACE) << "track has chi2 " << track->getChi2();
 
-        // Update geometry of plane with new detector geometry
-        track->registerPlane(AlignmentDUTResidual::globalDetector->getName(),
-                             AlignmentDUTResidual::globalDetector->origin().z(),
-                             AlignmentDUTResidual::globalDetector->materialBudget(),
-                             AlignmentDUTResidual::globalDetector->toLocal());
+        // Update geometry of plane with new detector geometry and refit to obtain new track state
+        track->updatePlane(AlignmentDUTResidual::globalDetector->getName(),
+                           AlignmentDUTResidual::globalDetector->origin().z(),
+                           AlignmentDUTResidual::globalDetector->materialBudget(),
+                           AlignmentDUTResidual::globalDetector->toLocal());
 
         double track_result = 0.;
 
@@ -204,17 +204,7 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 
             // Get the track intercept with the detector
             auto position = associatedCluster->local();
-            auto trackIntercept = AlignmentDUTResidual::globalDetector->getIntercept(track.get());
-            auto intercept = AlignmentDUTResidual::globalDetector->globalToLocal(trackIntercept);
-
-            /*
-            // Recalculate the global position from the local
-            auto positionLocal = associatedCluster->local();
-            auto position = AlignmentDUTResidual::globalDetector->localToGlobal(positionLocal);
-
-            // Get the track intercept with the detector
-            ROOT::Math::XYZPoint intercept = track->intercept(position.Z());
-            */
+            auto intercept = AlignmentDUTResidual::globalDetector->getLocalIntercept(track.get());
 
             // Calculate the residuals
             double residualX = intercept.X() - position.X();
