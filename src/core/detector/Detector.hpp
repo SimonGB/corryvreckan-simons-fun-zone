@@ -26,8 +26,8 @@
 #include <Math/Transform3D.h>
 #include <Math/Vector2D.h>
 #include <Math/Vector3D.h>
-#include <TMatrixD.h>
 #include <TFormula.h>
+#include <TMatrixD.h>
 
 #include "core/config/Configuration.hpp"
 #include "core/utils/ROOT.h"
