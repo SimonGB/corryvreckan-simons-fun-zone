@@ -131,7 +131,8 @@ namespace corryvreckan {
         float thresholdIterationSNR;
         // Calibration file
         std::vector<std::vector<double>> noisemap;
-
+        // Configure associated cluster time
+        bool useTriggerTimestamp;
         // Analysis functionality
         TH1F* hCutHisto;
         bool flagAnalysisSNR;   // Enable SNR estimation and histograms for analysis
