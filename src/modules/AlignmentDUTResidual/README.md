@@ -43,7 +43,7 @@ number_of_tracks = 200000
 
 [AlignmentDUTResidual]
 log_level = INFO
-# example of redefinition of residuslx 
+# example of redefinition of residual_x 
 residual_x = "(TMath::Abs(x - y) - [0])*TMath::Sign(1,(x - y))"
 parameters_residual_x = 17.4um
 ```
