@@ -11,6 +11,7 @@
 
 #include "AlignmentDUTResidual.h"
 
+#include <TMath.h>
 #include <TProfile.h>
 #include <TVirtualFitter.h>
 
@@ -20,6 +21,8 @@ using namespace corryvreckan;
 TrackVector AlignmentDUTResidual::globalTracks;
 std::shared_ptr<Detector> AlignmentDUTResidual::globalDetector;
 ThreadPool* AlignmentDUTResidual::thread_pool;
+std::shared_ptr<TFormula> AlignmentDUTResidual::formula_residualX;
+std::shared_ptr<TFormula> AlignmentDUTResidual::formula_residualY;
 
 AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector) {
@@ -42,6 +45,31 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     m_alignOrientation = config_.get<bool>("align_orientation");
     m_alignPosition_axes = config_.get<std::string>("align_position_axes");
     m_alignOrientation_axes = config_.get<std::string>("align_orientation_axes");
+
+    // check if there is a new definition of residual_x
+    if(config_.has("residual_x") == 1) {
+        m_residual_x = config_.get<std::string>("residual_x");
+        LOG(INFO) << "New definition of residual_x: " << m_residual_x.c_str();
+    } else {
+        // Set setDefault residual definition
+        config_.setDefault<std::string>("residual_x", "x - y");
+    }
+    // check if there are parameters for the new definition of residual_x
+    if(config_.has("parameters_residual_x") == 1) {
+        m_parameters_residualX = config_.getArray<double>("parameters_residual_x");
+    }
+    // check if there is a new definition of residual_y
+    if(config_.has("residual_y") == 1) {
+        m_residual_y = config_.get<std::string>("residual_y");
+        LOG(INFO) << "New Definition of residual_y: " << m_residual_y.c_str();
+    } else {
+        // Set setDefault residual definition
+        config_.setDefault<std::string>("residual_y", "x - y");
+    }
+    // check if there are parameters for the new definition of residual_x
+    if(config_.has("parameters_residual_y") == 1) {
+        m_parameters_residualY = config_.getArray<double>("parameters_residual_y");
+    }
 
     std::transform(m_alignPosition_axes.begin(), m_alignPosition_axes.end(), m_alignPosition_axes.begin(), ::tolower);
     std::transform(
@@ -86,6 +114,37 @@ void AlignmentDUTResidual::initialize() {
     title = detname + " Residual profile dX/y;row;x_{track}-x [#mum]";
     profile_dX_Y =
         new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
+
+    // Define residual_x
+    AlignmentDUTResidual::formula_residualX = std::make_shared<TFormula>("frx", m_residual_x.c_str(), false);
+    if(static_cast<size_t>(AlignmentDUTResidual::formula_residualX->GetNpar()) != m_parameters_residualX.size()) {
+        throw InvalidValueError(
+            config_,
+            "parameters_residualX",
+            "The number of function parameters does not line up with the amount of parameters in the function.");
+    } else {
+        // Apply parameters to the function
+        for(size_t n = 0; n < m_parameters_residualX.size(); ++n) {
+            AlignmentDUTResidual::formula_residualX->SetParameter(static_cast<int>(n), m_parameters_residualX.at(n));
+            LOG(DEBUG) << "residualX: Parameter [" << n
+                       << "] = " << Units::display(m_parameters_residualX.at(n), {"mm", "um"});
+        }
+    }
+    // Define residual_y
+    AlignmentDUTResidual::formula_residualY = std::make_shared<TFormula>("fry", m_residual_y.c_str(), false);
+    if(static_cast<size_t>(AlignmentDUTResidual::formula_residualY->GetNpar()) != m_parameters_residualY.size()) {
+        throw InvalidValueError(
+            config_,
+            "parameters_residualY",
+            "The number of function parameters does not line up with the amount of parameters in the function.");
+    } else {
+        // Apply parameters to the function
+        for(size_t n = 0; n < m_parameters_residualY.size(); ++n) {
+            AlignmentDUTResidual::formula_residualY->SetParameter(static_cast<int>(n), m_parameters_residualY.at(n));
+            LOG(DEBUG) << "residualY: Parameter [" << n
+                       << "] = " << Units::display(m_parameters_residualY.at(n), {"mm", "um"});
+        }
+    }
 }
 
 StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -142,8 +201,8 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             auto intercept = m_detector->globalToLocal(trackIntercept);
 
             // Calculate the local residuals
-            double residualX = intercept.X() - position.X();
-            double residualY = intercept.Y() - position.Y();
+            double residualX = formula_residualX->Eval(intercept.X(), position.X());
+            double residualY = formula_residualY->Eval(intercept.Y(), position.Y());
 
             // Fill the alignment residual profile plots
             residualsXPlot->Fill(static_cast<double>(Units::convert(residualX, "um")));
@@ -221,9 +280,9 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
             auto position = associatedCluster->local();
             auto intercept = AlignmentDUTResidual::globalDetector->getLocalIntercept(track.get());
 
-            // Calculate the residuals
-            double residualX = intercept.X() - position.X();
-            double residualY = intercept.Y() - position.Y();
+            // Calculate the local residuals
+            double residualX = formula_residualX->Eval(intercept.X(), position.X());
+            double residualY = formula_residualY->Eval(intercept.Y(), position.Y());
 
             double errorX = associatedCluster->errorX();
             double errorY = associatedCluster->errorY();

@@ -10,6 +10,7 @@
  */
 
 #include <TCanvas.h>
+#include <TFormula.h>
 #include <TGraph.h>
 #include <TH1F.h>
 #include <TH2F.h>
@@ -72,9 +73,16 @@ namespace corryvreckan {
         std::string m_alignOrientation_axes;
         size_t m_maxAssocClusters;
         double m_maxTrackChi2;
+        std::string m_residual_x;
+        std::string m_residual_y;
 
         TH1F* residualsXPlot;
         TH1F* residualsYPlot;
+
+        static std::shared_ptr<TFormula> formula_residualX;
+        static std::shared_ptr<TFormula> formula_residualY;
+        std::vector<double> m_parameters_residualX;
+        std::vector<double> m_parameters_residualY;
 
         TProfile* profile_dY_X;
         TProfile* profile_dY_Y;
