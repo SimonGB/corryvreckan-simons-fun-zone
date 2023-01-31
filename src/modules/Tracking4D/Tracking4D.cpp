@@ -346,6 +346,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             }
             track->setParticleMomentum(momentum_);
 
+            // Fit initial trajectory guess
+            refTrack.fit();
+
             // Loop over each subsequent plane and look for a cluster within the timing cuts
             size_t detector_nr = 2;
             // Get all detectors here to also include passive layers which might contribute to scattering
@@ -354,8 +357,10 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     continue;
                 }
                 auto detectorID = detector->getName();
-                LOG(TRACE) << "added material budget for " << detectorID << " at z = " << detector->displacement().z();
-                refTrack.registerPlane(
+                LOG(TRACE) << "Registering detector " << detectorID << " at z = " << detector->displacement().z();
+
+                // Add plane to track and trigger re-fit:
+                refTrack.updatePlane(
                     detectorID, detector->displacement().z(), detector->materialBudget(), detector->toLocal());
                 track->registerPlane(
                     detectorID, detector->displacement().z(), detector->materialBudget(), detector->toLocal());
@@ -405,8 +410,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window";
 
                 // Now look for the spatially closest cluster on the next plane
-                refTrack.fit();
-
                 PositionVector3D<Cartesian3D<double>> interceptPoint = detector->getLocalIntercept(&refTrack);
                 double interceptX = interceptPoint.X();
                 double interceptY = interceptPoint.Y();

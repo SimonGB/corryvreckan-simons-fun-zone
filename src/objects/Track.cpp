@@ -234,6 +234,11 @@ double Track::getMaterialBudget(const std::string& detectorID) const {
 }
 
 void Track::registerPlane(const std::string& name, double z, double x0, Transform3D g2l) {
+    if(isFitted_) {
+        throw TrackError(typeid(Track),
+                         " cannot register plane after track has been fitted. Use updatePlane to trigger track refit");
+    }
+
     Plane p(name, z, x0, g2l);
     auto pl =
         std::find_if(planes_.begin(), planes_.end(), [&p](const Plane& plane) { return plane.getName() == p.getName(); });
@@ -242,6 +247,23 @@ void Track::registerPlane(const std::string& name, double z, double x0, Transfor
     } else {
         *pl = std::move(p);
     }
+}
+
+void Track::updatePlane(const std::string& name, double z, double x0, Transform3D g2l) {
+    if(!isFitted_) {
+        throw TrackError(typeid(Track), " cannot update plane before track has been fitted.");
+    }
+
+    Plane p(name, z, x0, g2l);
+    auto pl =
+        std::find_if(planes_.begin(), planes_.end(), [&p](const Plane& plane) { return plane.getName() == p.getName(); });
+    if(pl == planes_.end()) {
+        planes_.push_back(std::move(p));
+    } else {
+        *pl = std::move(p);
+    }
+
+    this->fit();
 }
 
 const Track::Plane* Track::get_plane(const std::string& detetorID) const {
