@@ -23,6 +23,9 @@ This module uses tracks for alignment. The module moves the detector it is insta
 * `max_associated_clusters`: Maximum number of associated clusters per track allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `1`.
 * `max_track_chi2ndof`: Maximum track chi^2 value allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `10.0`.
 * `workers`: Specify the number of workers to use in total, should be strictly larger than zero. Defaults to the number of native threads available on the system minus one, if this can be determined, otherwise one thread is used.
+* `residual_x` / `residual_y`: Formula for unbiased residuals. Any 2D TFormula can be used, the variables `x` and `y` represent the `track intercepts` and the `cluster position` respectively. Default formula: `x - y`. Parameters can be used (`[0]`, `[1]`, ...), but in that case they must be defined. 
+* `parameters_residual_x` / `parameters_residual_y`: Vector factors, representing the parameters of the above correction function. Defaults to an empty vector, i.e. by default no parameters are needed.
+
 
 ### Plots produced
 For the DUT, the following plots are produced:
@@ -40,4 +43,7 @@ number_of_tracks = 200000
 
 [AlignmentDUTResidual]
 log_level = INFO
+# example of redefinition of residuslx 
+residual_x = "(TMath::Abs(x - y) - [0])*TMath::Sign(1,(x - y))"
+parameters_residual_x = 17.4um
 ```
