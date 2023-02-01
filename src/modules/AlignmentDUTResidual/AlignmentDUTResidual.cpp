@@ -36,6 +36,8 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     config_.setDefault<size_t>("max_associated_clusters", 1);
     config_.setDefault<double>("max_track_chi2ndof", 10.);
     config_.setDefault<unsigned int>("workers", std::max(std::thread::hardware_concurrency() - 1, 1u));
+    config_.setDefault<std::string>("residual_x", "x - y");
+    config_.setDefault<std::string>("residual_y", "x - y");
 
     m_workers = config.get<unsigned int>("workers");
     nIterations = config_.get<size_t>("iterations");
@@ -45,31 +47,6 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     m_alignOrientation = config_.get<bool>("align_orientation");
     m_alignPosition_axes = config_.get<std::string>("align_position_axes");
     m_alignOrientation_axes = config_.get<std::string>("align_orientation_axes");
-
-    // check if there is a new definition of residual_x
-    if(config_.has("residual_x") == 1) {
-        m_residual_x = config_.get<std::string>("residual_x");
-        LOG(INFO) << "New definition of residual_x: " << m_residual_x.c_str();
-    } else {
-        // Set setDefault residual definition
-        config_.setDefault<std::string>("residual_x", "x - y");
-    }
-    // check if there are parameters for the new definition of residual_x
-    if(config_.has("parameters_residual_x") == 1) {
-        m_parameters_residualX = config_.getArray<double>("parameters_residual_x");
-    }
-    // check if there is a new definition of residual_y
-    if(config_.has("residual_y") == 1) {
-        m_residual_y = config_.get<std::string>("residual_y");
-        LOG(INFO) << "New Definition of residual_y: " << m_residual_y.c_str();
-    } else {
-        // Set setDefault residual definition
-        config_.setDefault<std::string>("residual_y", "x - y");
-    }
-    // check if there are parameters for the new definition of residual_x
-    if(config_.has("parameters_residual_y") == 1) {
-        m_parameters_residualY = config_.getArray<double>("parameters_residual_y");
-    }
 
     std::transform(m_alignPosition_axes.begin(), m_alignPosition_axes.end(), m_alignPosition_axes.begin(), ::tolower);
     std::transform(
@@ -115,6 +92,17 @@ void AlignmentDUTResidual::initialize() {
     profile_dX_Y =
         new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
 
+    // set new definition of residual
+    std::string m_residual_x = config_.get<std::string>("residual_x");
+    std::string m_residual_y = config_.get<std::string>("residual_y");
+
+    LOG(DEBUG) << "Definition of residual_x: " << m_residual_x.c_str() << " [x = track intercepts, y = cluster position]";
+    LOG(DEBUG) << "Definition of residual_y: " << m_residual_y.c_str() << " [x = track intercepts, y = cluster position]";
+
+    // set parameters for the new definition of residual_x/y
+    std::vector<double> m_parameters_residualX = config_.getArray<double>("parameters_residual_x", {});
+    std::vector<double> m_parameters_residualY = config_.getArray<double>("parameters_residual_y", {});
+
     // Define residual_x
     AlignmentDUTResidual::formula_residualX = std::make_shared<TFormula>("frx", m_residual_x.c_str(), false);
     if(static_cast<size_t>(AlignmentDUTResidual::formula_residualX->GetNpar()) != m_parameters_residualX.size()) {
@@ -126,8 +114,7 @@ void AlignmentDUTResidual::initialize() {
         // Apply parameters to the function
         for(size_t n = 0; n < m_parameters_residualX.size(); ++n) {
             AlignmentDUTResidual::formula_residualX->SetParameter(static_cast<int>(n), m_parameters_residualX.at(n));
-            LOG(DEBUG) << "residualX: Parameter [" << n
-                       << "] = " << Units::display(m_parameters_residualX.at(n), {"mm", "um"});
+            LOG(DEBUG) << "residualX: Parameter [" << n << "] = " << m_parameters_residualX.at(n);
         }
     }
     // Define residual_y
@@ -141,8 +128,7 @@ void AlignmentDUTResidual::initialize() {
         // Apply parameters to the function
         for(size_t n = 0; n < m_parameters_residualY.size(); ++n) {
             AlignmentDUTResidual::formula_residualY->SetParameter(static_cast<int>(n), m_parameters_residualY.at(n));
-            LOG(DEBUG) << "residualY: Parameter [" << n
-                       << "] = " << Units::display(m_parameters_residualY.at(n), {"mm", "um"});
+            LOG(DEBUG) << "residualY: Parameter [" << n << "] = " << m_parameters_residualY.at(n);
         }
     }
 }
