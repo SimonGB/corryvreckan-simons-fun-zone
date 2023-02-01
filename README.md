@@ -10,7 +10,8 @@ SPDX-License-Identifier: CC-BY-4.0
 
 For more details about the project please have a look at the website at https://cern.ch/corryvreckan.
 
-[![build status](https://gitlab.cern.ch/simonspa/corryvreckan/badges/master/build.svg)](https://gitlab.cern.ch/simonspa/corryvreckan/commits/master)
+[![build status](https://gitlab.cern.ch/corryvreckan/corryvreckan/badges/master/pipeline.svg)](https://gitlab.cern.ch/corryvreckan/corryvreckan/commits/master)
+[![REUSE status](https://api.reuse.software/badge/gitlab.cern.ch/corryvreckan/corryvreckan)](https://api.reuse.software/info/gitlab.cern.ch/corryvreckan/corryvreckan)
 
 ## Dependencies
 * [ROOT](https://root.cern.ch/building-root) (required, with the GenVector component)
