@@ -47,6 +47,14 @@ AlignmentMillepede::AlignmentMillepede(Configuration& config, std::vector<std::s
     if(m_dofs.size() != 6) {
         throw InvalidValueError(config_, "dofs", "Invalid number of degrees of freedom.");
     }
+
+    // Check that we're not in a variable-alignment situation:
+    for(auto& detector : get_regular_detectors(false)) {
+        if(detector->hasVariableAlignment()) {
+            throw ModuleError("Cannot perform alignment procedure with variable alignment of detector \"" +
+                              detector->getName() + "\"");
+        }
+    }
 }
 
 //=============================================================================
@@ -581,12 +589,11 @@ void AlignmentMillepede::updateGeometry() {
     for(const auto& det : get_regular_detectors(!m_excludeDUT)) {
         auto plane = m_millePlanes[det->getName()];
 
-        det->displacement(XYZPoint(det->displacement().X() + m_dparm[plane + 0 * nPlanes],
-                                   det->displacement().Y() + m_dparm[plane + 1 * nPlanes],
-                                   det->displacement().Z() + m_dparm[plane + 2 * nPlanes]));
-        det->rotation(det->rotation() +
-                      XYZVector(m_dparm[plane + 3 * nPlanes], m_dparm[plane + 4 * nPlanes], m_dparm[plane + 5 * nPlanes]));
-        det->update();
+        det->update(XYZPoint(det->displacement().X() + m_dparm[plane + 0 * nPlanes],
+                             det->displacement().Y() + m_dparm[plane + 1 * nPlanes],
+                             det->displacement().Z() + m_dparm[plane + 2 * nPlanes]),
+                    det->rotation() +
+                        XYZVector(m_dparm[plane + 3 * nPlanes], m_dparm[plane + 4 * nPlanes], m_dparm[plane + 5 * nPlanes]));
     }
     /*
         const unsigned int nPlanes = m_nPlanes - m_maskedPlanes.size();

@@ -42,7 +42,7 @@ bool HexagonalPixelDetector::hasIntercept(const Track* track, double /*pixelTole
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
 
     // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = this->m_globalToLocal * globalIntercept;
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
 
     // Get the row and column numbers
     auto hex = getInterceptPixel(localIntercept);
@@ -64,7 +64,7 @@ bool HexagonalPixelDetector::hitMasked(const Track* track, int tolerance) const 
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
 
     // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = this->m_globalToLocal * globalIntercept;
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
 
     // Get the row and column numbers
     auto pos = getInterceptPixel(localIntercept);

@@ -407,7 +407,8 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
 
                 auto neighbors = trees[detector].getAllElementsInTimeWindow(refTrack.timestamp(), timeCut);
 
-                LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window";
+                LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window on "
+                           << detectorID;
 
                 // Now look for the spatially closest cluster on the next plane
                 PositionVector3D<Cartesian3D<double>> interceptPoint = detector->getLocalIntercept(&refTrack);
