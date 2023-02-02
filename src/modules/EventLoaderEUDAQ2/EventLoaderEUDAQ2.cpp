@@ -45,6 +45,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     veto_triggers_ = config_.get<bool>("veto_triggers");
     skip_time_ = config_.get<double>("skip_time");
     adjust_event_times_ = config_.getMatrix<std::string>("adjust_event_times", {});
+    discard_raw_events_ = config_.getArray<std::string>("discard_raw_events", {});
     buffer_depth_ = config_.get<int>("buffer_depth");
     shift_triggers_ = config_.get<int>("shift_triggers");
     inclusive_ = config_.get<bool>("inclusive");
@@ -243,6 +244,13 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
         // Retrieve first and remove from raw event buffer:
         auto event = events_raw_.front();
         events_raw_.pop();
+
+        // Check if this should be dropped according to the raw event description
+        if(std::find(discard_raw_events_.begin(), discard_raw_events_.end(), event->GetDescription()) !=
+           discard_raw_events_.end()) {
+            LOG(DEBUG) << "Discarding undecoded raw event of type " << event->GetDescription();
+            continue;
+        }
 
         // If this is a Begin-of-Run event and we should ignore it, please do so:
         if(event->IsBORE() && ignore_bore_) {
