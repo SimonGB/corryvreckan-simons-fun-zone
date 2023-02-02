@@ -342,7 +342,11 @@ Event::Position EventLoaderEUDAQ2::is_within_event(const std::shared_ptr<Clipboa
 
     // Check if this event has timestamps available:
     if((evt->GetTimeBegin() == 0 && evt->GetTimeEnd() == 0) || sync_by_trigger_) {
-        LOG(DEBUG) << evt->GetDescription() << ": Event has no timestamp, comparing trigger IDs";
+        if(sync_by_trigger_) {
+            LOG(DEBUG) << evt->GetDescription() << ": Forced synchronization by comparing trigger IDs";
+        } else {
+            LOG(DEBUG) << evt->GetDescription() << ": Event has no timestamp, comparing trigger IDs";
+        }
 
         // If there is no event defined yet, there is little we can do:
         if(!clipboard->isEventDefined()) {
