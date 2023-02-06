@@ -117,6 +117,7 @@ namespace corryvreckan {
         bool sync_by_trigger_{};
         double skip_time_{};
         Matrix<std::string> adjust_event_times_;
+        std::vector<std::string> discard_raw_events_;
         int buffer_depth_;
         int shift_triggers_;
 

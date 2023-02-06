@@ -45,6 +45,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     veto_triggers_ = config_.get<bool>("veto_triggers");
     skip_time_ = config_.get<double>("skip_time");
     adjust_event_times_ = config_.getMatrix<std::string>("adjust_event_times", {});
+    discard_raw_events_ = config_.getArray<std::string>("discard_raw_events", {});
     buffer_depth_ = config_.get<int>("buffer_depth");
     shift_triggers_ = config_.get<int>("shift_triggers");
     inclusive_ = config_.get<bool>("inclusive");
@@ -244,6 +245,13 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
         auto event = events_raw_.front();
         events_raw_.pop();
 
+        // Check if this should be dropped according to the raw event description
+        if(std::find(discard_raw_events_.begin(), discard_raw_events_.end(), event->GetDescription()) !=
+           discard_raw_events_.end()) {
+            LOG(DEBUG) << "Discarding undecoded raw event of type " << event->GetDescription();
+            continue;
+        }
+
         // If this is a Begin-of-Run event and we should ignore it, please do so:
         if(event->IsBORE() && ignore_bore_) {
             LOG(DEBUG) << "Found EUDAQ2 BORE event, ignoring it";
@@ -334,7 +342,11 @@ Event::Position EventLoaderEUDAQ2::is_within_event(const std::shared_ptr<Clipboa
 
     // Check if this event has timestamps available:
     if((evt->GetTimeBegin() == 0 && evt->GetTimeEnd() == 0) || sync_by_trigger_) {
-        LOG(DEBUG) << evt->GetDescription() << ": Event has no timestamp, comparing trigger IDs";
+        if(sync_by_trigger_) {
+            LOG(DEBUG) << evt->GetDescription() << ": Forced synchronization by comparing trigger IDs";
+        } else {
+            LOG(DEBUG) << evt->GetDescription() << ": Event has no timestamp, comparing trigger IDs";
+        }
 
         // If there is no event defined yet, there is little we can do:
         if(!clipboard->isEventDefined()) {
