@@ -79,6 +79,8 @@ StatusCode JSONWriter::run(const std::shared_ptr<Clipboard>& clipboard) {
 
                 auto objects = std::static_pointer_cast<ObjectVector>(detector_block.second);
                 for(auto& object : *objects) {
+                    // Generate TRef history:
+                    object->petrifyHistory();
                     *output_file_ << TBufferJSON::ToJSON(object.get());
                     // add delimiter for all but the last element
                     if(object == objects->back() && detector_block == *(--block.second.end()) && block == *(--data.end())) {
