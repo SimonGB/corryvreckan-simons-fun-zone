@@ -83,6 +83,9 @@ namespace corryvreckan {
 
             const Transform3D& global2local() const { return global2local_; };
 
+            void setLocal2global(Transform3D& val) { local2global_ = val; }
+            void setGlobal2local(Transform3D& val) { global2local_ = val; }
+
             // Normal to the detector surface and point on the surface
             const ROOT::Math::XYZVector& normal() const { return normal_; };
 

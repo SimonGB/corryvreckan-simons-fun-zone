@@ -54,35 +54,6 @@ namespace corryvreckan {
         explicit PolarDetector(const Configuration& config);
 
         /**
-         * @brief Set position and orientation from configuration file
-         */
-        void SetPositionAndOrientation(const Configuration& config);
-
-        /**
-         * @brief Update detector position in the world
-         * @param displacement Vector with three position coordinates
-         */
-        void displacement(XYZPoint displacement) override { m_displacement = displacement; }
-
-        /**
-         * @brief Get position in the world
-         * @return Global position in Cartesian coordinates
-         */
-        XYZPoint displacement() const override { return m_displacement; }
-
-        /**
-         * @brief Get orientation in the world
-         * @return Vector with three rotation angles
-         */
-        XYZVector rotation() const override { return m_orientation; }
-
-        /**
-         * @brief Update detector orientation in the world
-         * @param rotation Vector with three rotation angles
-         */
-        void rotation(XYZVector rotation) override { m_orientation = rotation; }
-
-        /**
          * @brief Mark a detector channel as masked
          * @param chX X coordinate of the pixel to be masked
          * @param chY Y coordinate of the pixel to be masked
@@ -213,16 +184,15 @@ namespace corryvreckan {
          * @return True if strip index is within matrix bounds, false otherwise
          */
         bool isWithinMatrix(const int col, const int row) const override {
-            return !(row < 0 || row >= nPixels().y() || col < 0 || col >= static_cast<int>(number_of_strips.at(static_cast<unsigned int>(row))));
+            return !(row < 0 || row >= nPixels().y() || col < 0 ||
+                     col >= static_cast<int>(number_of_strips.at(static_cast<unsigned int>(row))));
         }
 
         /**
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
          * @return Intrinsic spatial resolution in global X and Y
          */
-        virtual TMatrixD getSpatialResolutionMatrixGlobal() const override {
-            return m_spatial_resolution_matrix_global;
-        }
+        virtual TMatrixD getSpatialResolutionMatrixGlobal() const override { return m_spatial_resolution_matrix_global; }
 
         /**
          * @brief Return a set containing all strips neighboring the given one with a configurable maximum distance
@@ -238,9 +208,6 @@ namespace corryvreckan {
         getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
 
     private:
-        // Initialize coordinate transformations
-        void initialise() override;
-
         // Build axis, for devices which are not auxiliary
         // Different in Pixel/Strip Detector
         void build_axes(const Configuration& config) override;
