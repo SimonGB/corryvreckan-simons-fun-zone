@@ -33,28 +33,17 @@ PolarDetector::PolarDetector(const Configuration& config) : Detector(config) {
         build_axes(config);
     }
 
-    // Additional translation to have local coordinates calculated from the sensor origin
+    // Additional transformation to have local coordinates calculated from the sensor origin
+    auto origin_translate = Translation3D(0, -getCenterRadius(), 0);
+    auto origin_trf = Transform3D(origin_translate);
+    this->alignment_->setOriginTransform(origin_trf);
+    // Update the underlying alignment object to incorporate the transformation
     auto displ = alignment_->displacement();
     auto orient = alignment_->orientation();
+    this->alignment_->update(displ, orient);
 
-    // Make the local to global transform, built from a displacement and rotation
-    Translation3D displacement = Translation3D(displ.X(), displ.Y(), displ.Z());
-    Rotation3D orientation = RotationZ(orient.Z()) * RotationY(orient.Y()) * RotationX(orient.X());
-
-    auto origin_trf = Translation3D(0, -getCenterRadius(), 0);
-    // auto orientation = this->alignment_->orientation();
-    LOG(TRACE) << "== CONTROL PRINTOUTS FOR RADIAL DETECTORS 1:";
-    LOG(TRACE) << "====> Origin trf:" << origin_trf.Vect().Y();
-    LOG(TRACE) << "====> Displacement: " << displacement;
-    LOG(TRACE) << "====> orientation: " << orientation;
-
-    // auto displacement = this->alignment_->displacement();
-    auto localToGlobal = Transform3D(orientation, displacement * origin_trf);
-    auto globalToLocal = localToGlobal.Inverse();
-    this->alignment_->setLocal2global(localToGlobal);
-    this->alignment_->setGlobal2local(globalToLocal);
-    // m_localToGlobal = Transform3D(rotations, translations * origin_trf);
-    // m_globalToLocal = m_localToGlobal.Inverse();
+    // auto zero_point = XYZPoint(0,0,0);
+    // LOG(TRACE) << "====> Transforming (0,0,0): " << globalToLocal(zero_point);
 
     // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
     TMatrixD errorMatrix(3, 3);
@@ -104,6 +93,13 @@ void PolarDetector::build_axes(const Configuration& config) {
     // Get stereo angle
     stereo_angle = config.get<double>("stereo_angle", 0.0);
 
+    // Get central radius
+    center_radius = config.get<double>("center_radius", 0.0);
+    // If central radius wasn't provided, calculate as average radius
+    if(center_radius == 0) {
+        center_radius = (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2;
+    }
+
     // Calculate translation from sensor origin to its focal point
     focus_translation = {getCenterRadius() * sin(stereo_angle), getCenterRadius() * (1 - cos(stereo_angle)), 0};
 
@@ -124,6 +120,8 @@ void PolarDetector::build_axes(const Configuration& config) {
         config.get<ROOT::Math::XYVector>("spatial_resolution",
                                          {*std::max_element(angular_pitch.begin(), angular_pitch.end()) / sqrt(12),
                                           (row_radius.at(1) - row_radius.at(0)) / sqrt(12)});
+    LOG(TRACE) << "Spatial resolution (x, y) = (phi, r) = (" << m_spatial_resolution.X() << ", " << m_spatial_resolution.Y()
+               << ")";
     if(!config.has("spatial_resolution")) {
         LOG(WARNING) << "Spatial resolution for detector '" << m_detectorName << "' not set." << std::endl
                      << "Using pitch/sqrt(12) as default";
@@ -387,6 +385,9 @@ PolarDetector::getPositionPolar(const PositionVector3D<Cartesian3D<double>> loca
     // Calculate the angular component obtained from the corrected position
     auto phi = atan2(focus_pos.x(), focus_pos.y());
 
+    // LOG(TRACE) << "[getPositionPolar] Converted (x, y, z) = (" << localPosition.x() << ", " << localPosition.y() << ", "
+    // << localPosition.z() << ")"; LOG(TRACE) << "[getPositionPolar]        to  (r, phi) = (" << r << ", " << phi << ")";
+
     return {r, 0, phi};
 }
 
@@ -568,11 +569,13 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
 }
 
 XYVector PolarDetector::getSpatialResolution(double, double row) const {
+    return m_spatial_resolution;
+
     // Outer edge arc
     auto row_base = static_cast<unsigned int>(floor(row + 0.5));
-    LOG(TRACE) << "[polarDet-getSpatialResolution] called for row " << row;
-    LOG(TRACE) << "--> strip pitch kinda: " << row_radius.at(row_base + 1) * angular_pitch.at(row_base);
-    LOG(TRACE) << "--> strip length: " << (row_radius.at(row_base + 1) - row_radius.at(row_base));
+    // LOG(TRACE) << "[polarDet-getSpatialResolution] called for row " << row;
+    // LOG(TRACE) << "--> strip pitch kinda: " << row_radius.at(row_base + 1) * angular_pitch.at(row_base);
+    // LOG(TRACE) << "--> strip length: " << (row_radius.at(row_base + 1) - row_radius.at(row_base));
     double resolution_x = row_radius.at(row_base + 1) * angular_pitch.at(row_base) / sqrt(12);
 
     double resolution_y = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);

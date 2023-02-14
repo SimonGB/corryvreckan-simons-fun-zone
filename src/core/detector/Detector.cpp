@@ -95,7 +95,7 @@ std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& c
         return std::make_shared<HexagonalPixelDetector>(config);
     } else if(coordinates == "cartesian_module") {
         return std::make_shared<PixelModuleDetector>(config);
-    } else if (coordinates == "polar") {
+    } else if(coordinates == "polar") {
         return std::make_shared<PolarDetector>(config);
     } else {
         throw InvalidValueError(config, "coordinates", "Coordinates can only set to be cartesian or polar now");
@@ -249,7 +249,7 @@ void Detector::Alignment::recalculate() {
     auto rotations = rotation_fct_(orientation_);
 
     // Calculate current local-to-global transformation and its inverse:
-    local2global_ = Transform3D(rotations, translations);
+    local2global_ = Transform3D(rotations, translations) * origin_trf_;
     global2local_ = local2global_.Inverse();
 
     // Find the normal to the detector surface. Build two points, the origin and a unit step in z,

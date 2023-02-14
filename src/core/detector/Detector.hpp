@@ -83,9 +83,6 @@ namespace corryvreckan {
 
             const Transform3D& global2local() const { return global2local_; };
 
-            void setLocal2global(Transform3D& val) { local2global_ = val; }
-            void setGlobal2local(Transform3D& val) { global2local_ = val; }
-
             // Normal to the detector surface and point on the surface
             const ROOT::Math::XYZVector& normal() const { return normal_; };
 
@@ -98,6 +95,9 @@ namespace corryvreckan {
             void update(double time, bool force = false);
 
             void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
+
+            // Set the additional origin transformation for specialized detector models
+            void setOriginTransform(Transform3D& trf) { origin_trf_ = trf; }
 
             bool isVariable() const { return needs_update_; };
 
@@ -120,6 +120,8 @@ namespace corryvreckan {
             ROOT::Math::XYZVector normal_;
             ROOT::Math::Transform3D local2global_;
             ROOT::Math::Transform3D global2local_;
+            // Additional transformation for specialized detector models
+            ROOT::Math::Transform3D origin_trf_{};
 
             // The formulae
             std::array<std::shared_ptr<TFormula>, 3> formulae_pos_;

@@ -174,7 +174,7 @@ namespace corryvreckan {
          * @brief Get the radius of the strip sensor center
          * @return Radius of the strip sensor center
          */
-        double getCenterRadius() const { return (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2; }
+        double getCenterRadius() const { return center_radius; }
 
         // Function to get row and column of pixel
         std::pair<int, int> getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const override;
@@ -243,6 +243,7 @@ namespace corryvreckan {
         std::vector<double> angular_pitch{};
         std::vector<double> strip_length{};
         double stereo_angle{};
+        double center_radius{};
         PositionVector3D<Cartesian3D<double>> focus_translation;
     };
 } // namespace corryvreckan
