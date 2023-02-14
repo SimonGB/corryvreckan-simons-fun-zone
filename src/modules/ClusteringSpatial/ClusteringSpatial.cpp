@@ -188,7 +188,18 @@ StatusCode ClusteringSpatial::run(const std::shared_ptr<Clipboard>& clipboard) {
         clusterTimes->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "ns")));
         clusterUncertaintyX->Fill(static_cast<double>(Units::convert(cluster->errorX(), "um")));
         clusterUncertaintyY->Fill(static_cast<double>(Units::convert(cluster->errorY(), "um")));
+        LOG(DEBUG) << "cluster global: " << cluster->global();
         LOG(DEBUG) << "cluster local: " << cluster->local();
+        // Recalculate for polar detectors
+        auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
+        if(polar_det != nullptr) {
+            auto cluster_polar = polar_det->getPositionPolar(cluster->local());
+            LOG(DEBUG) << "cluster polar: " << cluster_polar;
+            LOG(DEBUG) << "            r: " << cluster_polar.r();
+            LOG(DEBUG) << "       [um] r: " << Units::convert(cluster_polar.r(), "um");
+            LOG(DEBUG) << "          phi: " << cluster_polar.phi();
+            LOG(DEBUG) << "     [um] phi: " << Units::convert(cluster_polar.phi(), "um");
+        }
 
         deviceClusters.push_back(cluster);
     }
@@ -267,8 +278,8 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
     cluster->setCharge(charge);
 
     // Set uncertainty on position from intrinstic detector spatial resolution:
-    cluster->setError(m_detector->getSpatialResolution(column, row));
-    cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal(column, row));
+    cluster->setError(m_detector->getSpatialResolution());
+    cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal());
 
     cluster->setDetectorID(detectorID);
     cluster->setClusterCentre(positionGlobal);
