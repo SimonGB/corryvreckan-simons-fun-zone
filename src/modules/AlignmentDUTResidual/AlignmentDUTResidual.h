@@ -77,6 +77,8 @@ namespace corryvreckan {
         double m_spatial_cut_sensoredge;
         TH1F* residualsXPlot;
         TH1F* residualsYPlot;
+        TH1F* residualsRPlot;
+        TH1F* residualsPhiPlot;
 
         static std::shared_ptr<TFormula> formula_residual_x;
         static std::shared_ptr<TFormula> formula_residual_y;

@@ -81,6 +81,10 @@ void AlignmentDUTResidual::initialize() {
     residualsXPlot = new TH1F("residualsX", title.c_str(), 1000, -500, 500);
     title = detname + " Residuals Y;y_{track}-y [#mum];events";
     residualsYPlot = new TH1F("residualsY", title.c_str(), 1000, -500, 500);
+    title = detname + " Residuals r;r_{track}-r [um];events";
+    residualsRPlot = new TH1F("residualsR", title.c_str(), 1000, -50000, 50000);
+    title = detname + " Residuals #phi;#phi_{track}-#phi [#mrad];events";
+    residualsPhiPlot = new TH1F("residualsPhi", title.c_str(), 1000, -500, 500);
     title = detname + " Residual profile dY/X;column;y_{track}-y [#mum]";
     profile_dY_X =
         new TProfile("profile_dY_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
@@ -163,7 +167,7 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             if(polar_det != nullptr) {
                 auto cluster_polar = polar_det->getPositionPolar(position);
                 auto intercept_polar = polar_det->getPositionPolar(intercept);
-                LOG(TRACE) << "Alignment recalc for for polar: ";
+                LOG(TRACE) << "Alignment recalc for for polar part 1: ";
                 LOG(TRACE) << "--> Cluster: ";
                 LOG(TRACE) << "----> Global: " << associated_cluster->global();
                 LOG(TRACE) << "----> Local: " << position;
@@ -178,14 +182,15 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
                            << "(" << intercept_polar.phi() << ", " << intercept_polar.r() << ")";
 
                 // Interpreting (X,Y) as (Phi,R)
-                residualX = intercept_polar.phi() - cluster_polar.phi();
-                residualY = intercept_polar.r() - cluster_polar.r();
+                auto residualPhi = intercept_polar.phi() - cluster_polar.phi();
+                auto residualR = intercept_polar.r() - cluster_polar.r();
                 // spatial_cuts_[detector] = polar_det->getSpatialResolution();
-                LOG(TRACE) << "Recalculate for polar:";
                 LOG(TRACE) << "--> Intercept : [" << intercept_polar.phi() << ", " << intercept_polar.r() << "]";
                 LOG(TRACE) << "--> Cluster   : [" << cluster_polar.phi() << ", " << cluster_polar.r() << "]";
-                LOG(TRACE) << "--> Residual X (=phi) : " << residualX;
-                LOG(TRACE) << "--> Residual Y:  (=r) : " << residualY;
+
+                residualsRPlot->Fill(static_cast<double>(Units::convert(residualR, "um")));
+                // Manually convert the Phi residual from rad to urad since the framework doesn't know these units
+                residualsPhiPlot->Fill(residualPhi * 1e6);
             }
 
             // Fill the alignment residual profile plots
@@ -270,6 +275,42 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 
             double errorX = associatedCluster->errorX();
             double errorY = associatedCluster->errorY();
+
+            // Recalculate for polar detectors
+            auto polar_det = std::dynamic_pointer_cast<PolarDetector>(AlignmentDUTResidual::globalDetector);
+            if(polar_det != nullptr) {
+                auto intercept_global = polar_det->getIntercept(track.get());
+                auto intercept_local = polar_det->globalToLocal(intercept_global);
+                auto cluster_polar = polar_det->getPositionPolar(position);
+                auto intercept_polar = polar_det->getPositionPolar(intercept_local);
+                LOG(TRACE) << "Alignment recalc for for polar part 2: ";
+                LOG(TRACE) << "--> Cluster: ";
+                LOG(TRACE) << "----> Global: " << associatedCluster->global();
+                LOG(TRACE) << "----> Local: " << associatedCluster->local();
+                LOG(TRACE) << "----> Polar: "
+                           << "(" << cluster_polar.phi() << ", " << cluster_polar.r() << ")";
+                // LOG(TRACE) << "----> Error: "
+                //            << "(" << associatedCluster->errorX() << ", " << associatedCluster->errorY() << ")";
+                LOG(TRACE) << "--> Intercept: ";
+                LOG(TRACE) << "----> Global: " << intercept_global;
+                LOG(TRACE) << "----> Local: " << intercept_local;
+                LOG(TRACE) << "----> Polar: "
+                           << "(" << intercept_polar.phi() << ", " << intercept_polar.r() << ")";
+
+                // Interpreting (X,Y) as (Phi,R)
+                residualX = intercept_polar.phi() - cluster_polar.phi();
+                residualY = intercept_polar.r() - cluster_polar.r();
+                // spatial_cuts_[detector] = polar_det->getSpatialResolution();
+                LOG(TRACE) << "--> Intercept : [" << intercept_polar.phi() << ", " << intercept_polar.r() << "]";
+                LOG(TRACE) << "--> Cluster   : [" << cluster_polar.phi() << ", " << cluster_polar.r() << "]";
+                LOG(TRACE) << "--> Residual X (=phi) : " << residualX;
+                LOG(TRACE) << "-->    Error X (=phi) : " << errorX;
+                LOG(TRACE) << "-->  Res/Err X (=phi) : " << residualX / errorX;
+                LOG(TRACE) << "--> Residual Y:  (=r) : " << residualY;
+                LOG(TRACE) << "-->    Error Y   (=r) : " << errorY;
+                LOG(TRACE) << "-->  Res/Err Y   (=r) : " << residualY / errorY;
+            }
+
             LOG(TRACE) << "- track has intercept (" << intercept.X() << "," << intercept.Y() << ")";
             LOG(DEBUG) << "- cluster has position (" << position.X() << "," << position.Y() << ")";
 
