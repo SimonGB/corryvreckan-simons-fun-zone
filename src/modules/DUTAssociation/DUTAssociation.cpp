@@ -211,10 +211,13 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
                 auto intercept_polar = polar_det->getPositionPolar(interceptLocal);
                 xdistance = intercept_polar.phi() - cluster_polar.phi();
                 ydistance = intercept_polar.r() - cluster_polar.r();
-                LOG(TRACE) << " Distance r: " << intercept_polar.r() << " - " << cluster_polar.r() << " = " << ydistance
-                           << "   [Spatial cut:" << spatial_cut_.y() << "]";
+                LOG(TRACE) << " Distance r: " << intercept_polar.r() << " - " << cluster_polar.r() << " = "
+                           << Units::display(ydistance, "mm") << "   [Spatial cut:" << Units::display(spatial_cut_.y(), "mm")
+                           << ", rel:" << ydistance / spatial_cut_.y() << "]";
                 LOG(TRACE) << " Distance phi: " << intercept_polar.phi() << " - " << cluster_polar.phi() << " = "
-                           << xdistance << "   [Spatial cut:" << spatial_cut_.x() << "]";
+                           << Units::display(xdistance, "urad")
+                           << "   [Spatial cut:" << Units::display(spatial_cut_.x(), "urad")
+                           << ", rel:" << xdistance / spatial_cut_.x() << "]";
             }
 
             auto norm = (xdistance * xdistance) / (spatial_cut_.x() * spatial_cut_.x()) +
