@@ -82,11 +82,11 @@ bool FilterEvents::filter_tracks(const std::shared_ptr<Clipboard>& clipboard) {
     }
 
     if(num_tracks > max_number_tracks_) {
-        hFilter_->Fill(2); // too many tracks
+        hFilter_->Fill(3); // too many tracks
         LOG(TRACE) << "Number of tracks above maximum";
         return true;
     } else if(num_tracks < min_number_tracks_) {
-        hFilter_->Fill(3); //  too few tracks
+        hFilter_->Fill(2); //  too few tracks
         LOG(TRACE) << "Number of tracks below minimum";
         return true;
     }
@@ -100,12 +100,12 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
         // Check if number of Clusters on plane is within acceptance
         auto num_clusters = clipboard->getData<Cluster>(det).size();
         if(num_clusters > max_clusters_per_reference_) {
-            hFilter_->Fill(4); //  too many clusters
+            hFilter_->Fill(5); //  too many clusters
             LOG(TRACE) << "Number of Clusters on above maximum";
             return true;
         }
         if(num_clusters < min_clusters_per_reference_) {
-            hFilter_->Fill(5); //  too few clusters
+            hFilter_->Fill(4); //  too few clusters
             LOG(TRACE) << "Number of Clusters on below minimum";
             return true;
         }
