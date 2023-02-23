@@ -314,9 +314,7 @@ Configuration Detector::getConfiguration() const {
     Configuration config(getName());
     config.set("type", m_detectorType);
 
-    if(m_detectorCoordinates != "cartesian") {
-        config.set("coordinates", m_detectorCoordinates);
-    }
+    config.set("coordinates", m_detectorCoordinates);
 
     // Store the role of the detector
     std::vector<std::string> roles;
