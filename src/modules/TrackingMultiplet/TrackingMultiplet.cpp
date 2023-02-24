@@ -49,6 +49,10 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
             default_downstream_detectors.push_back(detector->getName());
         }
     }
+
+    config_.setDefault<bool>("refit_gbl", false);
+    refit_gbl_ = config_.get<bool>("refit_gbl");
+
     config_.setDefaultArray<std::string>("upstream_detectors", default_upstream_detectors);
     config_.setDefaultArray<std::string>("downstream_detectors", default_downstream_detectors);
 
@@ -262,6 +266,27 @@ double TrackingMultiplet::calculate_average_timestamp(const Track* track) {
         sum_weighted_time += (static_cast<double>(Units::convert(cluster->timestamp(), "ns")) - time_of_flight) * weight;
     }
     return (sum_weighted_time / sum_weights);
+}
+
+TrackVector TrackingMultiplet::refit(MultipletVector multiplets) {
+    TrackVector gblTracks;
+    for(auto& m : multiplets) {
+        auto track = Track::Factory("gbl");
+        // register all planes:
+        for(auto detector : get_detectors()) {
+            if(!detector->isAuxiliary()) {
+                track->registerPlane(
+                    detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
+            }
+        }
+        // add all clusters:
+        for(auto cluster : m->getClusters()) {
+            track->addCluster(cluster);
+        }
+        track->fit();
+        gblTracks.emplace_back(track);
+    }
+    return gblTracks;
 }
 
 // Method containing the tracklet finding for the arms of the multiplets
@@ -645,8 +670,10 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
     LOG(DEBUG) << "Found " << multiplets.size() << " multiplets";
     multipletMultiplicity->Fill(static_cast<double>(multiplets.size()));
 
-    if(multiplets.size() > 0) {
+    if(multiplets.size() > 0 && !refit_gbl_) {
         clipboard->putData(multiplets);
+    } else if(multiplets.size() > 0 && refit_gbl_) {
+        clipboard->putData(refit(multiplets));
     }
 
     // Return value telling analysis to keep running

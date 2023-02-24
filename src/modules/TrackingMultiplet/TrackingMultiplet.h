@@ -68,6 +68,7 @@ namespace corryvreckan {
         double momentum_;
         size_t min_hits_upstream_;
         size_t min_hits_downstream_;
+        bool refit_gbl_{};
 
         // track model for up/downstream fit
         std::string track_model_;
@@ -101,6 +102,8 @@ namespace corryvreckan {
 
         // Function to calculate the weighted average timestamp from the clusters of a track
         double calculate_average_timestamp(const Track* track);
+	// Function to refit the multiplet tracks at the end, using GBL
+        TrackVector refit(MultipletVector multiplets);
     };
 
 } // namespace corryvreckan
