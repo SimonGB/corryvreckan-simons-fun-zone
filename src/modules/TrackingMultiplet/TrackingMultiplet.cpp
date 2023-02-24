@@ -82,6 +82,7 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
         if(detector->displacement().Z() > max_z_upstream) {
             max_z_upstream = detector->displacement().Z();
         }
+	LOG(DEBUG) << detector->getName() << " listed as upstream detector.";
     }
 
     double min_z_downstream = std::numeric_limits<double>::max();
@@ -102,6 +103,7 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
         if(detector->displacement().Z() < min_z_downstream) {
             min_z_downstream = detector->displacement().Z();
         }
+	LOG(DEBUG) << detector->getName() << " listed as downstream detector.";
     }
 
     if(max_z_upstream > min_z_downstream) {

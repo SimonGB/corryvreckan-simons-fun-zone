@@ -12,6 +12,7 @@
 #include "Multiplet.hpp"
 #include "TMath.h"
 #include "core/utils/unit.h"
+#include "core/utils/log.h"
 #include "exceptions.h"
 
 using namespace corryvreckan;
@@ -81,6 +82,10 @@ ROOT::Math::XYZPoint Multiplet::getState(const std::string& detectorID) const {
         throw TrackError(typeid(*this), " not fitted");
     }
 
+    // why do I have to have clusters on a detector
+    // to calculate the position of the track at the detector?
+    // m_{up,down}stream->getState(detectorID) will call StraighLineTrack->getState...
+    LOG(TRACE) << "upstream track type " << m_upstream->getType();
     auto* cluster = getClusterFromDetector(detectorID);
     if(cluster == nullptr) {
         throw TrackError(typeid(*this), " does not have any entry for detector " + detectorID);
