@@ -192,12 +192,25 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
     std::vector<std::shared_future<double>> result_futures;
     auto track_refit = [&](auto& track) {
         LOG(TRACE) << "track has chi2 " << track->getChi2();
-
-        // Update geometry of plane with new detector geometry and refit to obtain new track state
-        track->updatePlane(AlignmentDUTResidual::globalDetector->getName(),
-                           AlignmentDUTResidual::globalDetector->origin().z(),
-                           AlignmentDUTResidual::globalDetector->materialBudget(),
-                           AlignmentDUTResidual::globalDetector->toLocal());
+        // Update geometry of plane with new detector geometry and refit to obtain new track state, need to check if the fit
+        // has failed in previous iteration
+        if(track->isFitted()) {
+            track->updatePlane(AlignmentDUTResidual::globalDetector->getName(),
+                               AlignmentDUTResidual::globalDetector->origin().z(),
+                               AlignmentDUTResidual::globalDetector->materialBudget(),
+                               AlignmentDUTResidual::globalDetector->toLocal());
+        } else {
+            track->registerPlane(AlignmentDUTResidual::globalDetector->getName(),
+                                 AlignmentDUTResidual::globalDetector->origin().z(),
+                                 AlignmentDUTResidual::globalDetector->materialBudget(),
+                                 AlignmentDUTResidual::globalDetector->toLocal());
+            // and fit again
+            track->fit();
+        }
+        if(!track->isFitted()) {
+            LOG(WARNING) << "Refit failed - track will be discarded for this alignment step ";
+            return 0.0;
+        }
 
         double track_result = 0.;
 
