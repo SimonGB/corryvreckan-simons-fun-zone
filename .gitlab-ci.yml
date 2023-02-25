@@ -230,7 +230,7 @@ fmt:codespell:
 
 fmt:reuse:
     image:
-        name: fsfe/reuse:latest
+        name: registry.cern.ch/docker.io/fsfe/reuse:latest
         entrypoint: [""]
     tags:
       - docker
