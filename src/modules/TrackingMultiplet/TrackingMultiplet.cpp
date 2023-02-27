@@ -405,7 +405,8 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
                 trackletCandidate->registerPlane(
                     detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
             }
-            trackletCandidate->addCluster(clusterFirst.get());
+	
+	    trackletCandidate->addCluster(clusterFirst.get());
             trackletCandidate->addCluster(clusterLast.get());
             trackletCandidate->setParticleMomentum(momentum_);
 
@@ -692,6 +693,18 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
                 continue;
             }
 
+	    // make all planes known to the tracklets
+	    for(auto& detector : get_regular_detectors(true)) {
+	        if(detector->isAuxiliary()) {
+		    continue;
+		}
+		if(detector->displacement().Z() <= scatterer_position_) {
+  		    uptracklet->updatePlane(detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
+		} else {
+		    (*it)->updatePlane(detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
+		}
+	    }
+
             auto multipletCandidate = std::make_shared<Multiplet>(uptracklet, (*it));
             LOG(DEBUG) << "Got new candidate.";
 
@@ -761,6 +774,14 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         LOG(DEBUG) << "Deleting downstream tracklet";
         downstream_tracklets.erase(used_downtracklet);
 
+	// make all planes known to the multiplet
+        for(auto& detector : get_regular_detectors(true)) {
+            if(!detector->isAuxiliary()) {
+                multiplet->updatePlane(
+                    detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
+            }
+        }
+      
         multiplets.push_back(multiplet);
 
         trackChi2->Fill(multiplet->getChi2());

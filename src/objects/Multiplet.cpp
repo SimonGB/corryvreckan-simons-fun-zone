@@ -82,16 +82,27 @@ ROOT::Math::XYZPoint Multiplet::getState(const std::string& detectorID) const {
         throw TrackError(typeid(*this), " not fitted");
     }
 
-    // why do I have to have clusters on a detector
-    // to calculate the position of the track at the detector?
-    // m_{up,down}stream->getState(detectorID) will call StraighLineTrack->getState...
-    LOG(TRACE) << "upstream track type " << m_upstream->getType();
-    auto* cluster = getClusterFromDetector(detectorID);
-    if(cluster == nullptr) {
-        throw TrackError(typeid(*this), " does not have any entry for detector " + detectorID);
+    LOG(TRACE) << "Planes known to this track: ";
+    for(auto pKnown : planes_) {
+        LOG(TRACE) << " - " << pKnown.getName();
     }
-    return cluster->global().z() <= m_scattererPosition ? m_upstream->getState(detectorID)
-                                                        : m_downstream->getState(detectorID);
+
+    auto plane =
+        std::find_if(planes_.begin(), planes_.end(), [&detectorID](Plane const& p) { return p.getName() == detectorID; });
+    if(plane == planes_.end()) {
+        throw TrackError(typeid(*this), " does not have any entry for plane " + detectorID);
+    }
+    auto zpos = plane->getPosition();
+    LOG(TRACE) << "Plane z position of " << detectorID << " is " << zpos 
+	       << ", scatterer position is " << m_scattererPosition;
+
+    LOG(TRACE) << "upstream track type " << m_upstream->getType() << ", downstream track type " << m_downstream->getType();
+    if(zpos <= m_scattererPosition) {
+        return m_upstream->getState(detectorID);
+    } else {
+        return m_downstream->getState(detectorID);
+    }
+
 }
 
 ROOT::Math::XYZVector Multiplet::getDirection(const std::string& detectorID) const {
