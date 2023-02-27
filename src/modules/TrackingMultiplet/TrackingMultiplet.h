@@ -107,7 +107,7 @@ namespace corryvreckan {
 
         // Function to calculate the weighted average timestamp from the clusters of a track
         double calculate_average_timestamp(const Track* track);
-	// Function to refit the multiplet tracks at the end, using GBL
+        // Function to refit the multiplet tracks at the end, using GBL
         TrackVector refit(MultipletVector multiplets);
 
         bool duplicated_hit(const Track* a, const Track* b);

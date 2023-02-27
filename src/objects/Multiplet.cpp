@@ -11,8 +11,8 @@
 
 #include "Multiplet.hpp"
 #include "TMath.h"
-#include "core/utils/unit.h"
 #include "core/utils/log.h"
+#include "core/utils/unit.h"
 #include "exceptions.h"
 
 using namespace corryvreckan;
