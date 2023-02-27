@@ -59,7 +59,7 @@ namespace corryvreckan {
      *
      * Used by the ModuleManager to determine if it should instantiate a modules for passive detectors
      */
-    bool corryvreckan_module_exclude_pass();
+    bool corryvreckan_module_exclude_passive();
 
     /**
      * @brief Returns a list of detector types this module can run on
@@ -149,12 +149,12 @@ namespace corryvreckan {
     bool corryvreckan_module_exclude_aux() { return false; }
 #endif
 
-#if(!CORRYVRECKAN_MODULE_GLOBAL && defined(CORRYVRECKAN_EXCLUDE_PASS)) || defined(DOXYGEN)
+#if(!CORRYVRECKAN_MODULE_GLOBAL && defined(CORRYVRECKAN_EXCLUDE_PASSIVE)) || defined(DOXYGEN)
     // Return that this module should not be instantiated for pass detectors
-    bool corryvreckan_module_exclude_pass() { return true; }
+    bool corryvreckan_module_exclude_passive() { return true; }
 #else
     // Return that this module should not exclude pass detectors
-    bool corryvreckan_module_exclude_pass() { return false; }
+    bool corryvreckan_module_exclude_passive() { return false; }
 #endif
     }
 } // namespace corryvreckan

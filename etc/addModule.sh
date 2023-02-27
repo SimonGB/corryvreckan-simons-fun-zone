@@ -123,7 +123,7 @@ if [ "$type" != 1 ]; then
 
     # Add pass exclusion for detector module if selected:
     if [ "$exclude_pass" == 1  ]; then
-        command="sed $opt '/_DETECTOR_/ a CORRYVRECKAN_EXCLUDE_PASS(\${MODULE_NAME})' $MODDIR/$MODNAME/CMakeLists.txt"
+        command="sed $opt '/_DETECTOR_/ a CORRYVRECKAN_EXCLUDE_PASSIVE(\${MODULE_NAME})' $MODDIR/$MODNAME/CMakeLists.txt"
         eval $command
     fi
 
