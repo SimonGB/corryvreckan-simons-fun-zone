@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2017-2022 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 CORRYVRECKAN_ENABLE_DEFAULT(ON)
@@ -6,6 +6,7 @@ CORRYVRECKAN_ENABLE_DEFAULT(ON)
 # Define module and return the generated name as MODULE_NAME
 CORRYVRECKAN_DETECTOR_MODULE(MODULE_NAME)
 CORRYVRECKAN_EXCLUDE_AUX(${MODULE_NAME})
+CORRYVRECKAN_EXCLUDE_PASS(${MODULE_NAME})
 
 # Add source files to library
 CORRYVRECKAN_MODULE_SOURCES(${MODULE_NAME}
