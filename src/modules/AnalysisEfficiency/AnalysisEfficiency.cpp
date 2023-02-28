@@ -29,6 +29,8 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     config_.setDefault<double>("spatial_cut_sensoredge", 1.);
     config_.setDefault<double>("fake_rate_radius", -1.);
     config_.setDefault<double>("fake_rate_sensoredge", -1);
+    config_.setDefault<int>("n_charge_bins", 1000);
+    config_.setDefault<double>("charge_histo_range", 1000.0);
 
     m_timeCutFrameEdge = config_.get<double>("time_cut_frameedge");
     m_chi2ndofCut = config_.get<double>("chi2ndof_cut");
@@ -39,6 +41,8 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     spatial_cut_sensoredge = config_.get<double>("spatial_cut_sensoredge");
     m_fake_rate_radius = config_.get<double>("fake_rate_radius");
     m_fake_rate_sensoredge = config_.get<double>("fake_rate_sensoredge");
+    m_n_charge_bins = config_.get<int>("n_charge_bins");
+    m_charge_histo_range = config_.get<double>("charge_histo_range");
 }
 void AnalysisEfficiency::initialize() {
 
@@ -314,7 +318,36 @@ void AnalysisEfficiency::createFakeRatePlots() {
     }
     fake_rate_directory->cd();
 
-    hFakeRate = new TH1D("hFakeRate", "number of fake hits per event; hits; # events", 25, 0 - 0.5, 25 - 0.5);
+    std::string title = m_detector->getName() + " number of fake hits per event; hits; events";
+    hFakePixelPerEvent = new TH1D("hFakePixelPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+
+    title = m_detector->getName() + " pixel fake hits per event;x [px];y [px]; hits";
+    fakePixelPerEventMap = new TH2D("fakePixelPerEventMap",
+                                    title.c_str(),
+                                    m_detector->nPixels().X(),
+                                    -0.5,
+                                    m_detector->nPixels().X() - 0.5,
+                                    m_detector->nPixels().Y(),
+                                    -0.5,
+                                    m_detector->nPixels().Y() - 0.5);
+
+    title = m_detector->getName() + "pixel fake hits per event vs. time; time [s]; hits";
+    fakePixelPerEventVsTime = new TProfile("fakePixelPerEventVsTime", title.c_str(), 3000, 0, 3000);
+
+    title = m_detector->getName() + "pixel fake hits per event vs. time; time [s]; hits";
+    fakePixelPerEventVsTimeLong = new TProfile("efficiencyVsTimeLong", title.c_str(), 3000, 0, 30000);
+
+    title = m_detector->getName() + "charge distribution for fake pixels; charge [a.u.]; entries";
+    hFakePixelCharge = new TH1D("hFakePixelCharge", title.c_str(), m_n_charge_bins, 0.0, m_charge_histo_range);
+
+    title = m_detector->getName() + "charge distribution for fake clusters; charge [a.u.]; entries";
+    hFakeClusterCharge = new TH1D("hFakeClusterCharge", title.c_str(), m_n_charge_bins, 0.0, m_charge_histo_range);
+
+    title = m_detector->getName() + " number of fake clusters per event; clusters; events";
+    hFakeClusterPerEvent = new TH1D("hFakePixelPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+
+    title = m_detector->getName() + " cluster size of fake clusters; cluster size; events";
+    hFakeClusterSize = new TH1D("hFakeClusterSize", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
 }
 
 StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -544,7 +577,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         LOG_ONCE(STATUS) << "Estimating fake rate based on events without DUT intercepting tracks.";
 
         bool track_in_active = false;
-        int fake_hits;
+        int fake_hits, fake_clusters;
 
         // iterate the tracks from the clipboard
         for(auto& track : tracks) {
@@ -563,13 +596,25 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         if(!track_in_active) {
 
             fake_hits = 0;
-
             // iterate the dut pixels from clipboard
             for(auto& pixel : pixels) {
                 fake_hits++;
+                hFakePixelCharge->Fill(pixel->charge());
+                fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
             }
+            hFakePixelPerEvent->Fill(fake_hits);
+            fakePixelPerEventVsTime->Fill(fake_hits, event->start());
+            fakePixelPerEventVsTimeLong->Fill(fake_hits, event->start());
 
-            hFakeRate->Fill(fake_hits);
+            fake_clusters = 0;
+            // get and iterate dut clusters from clipboard
+            auto clusters = clipboard->getData<Cluster>(m_detector->getName());
+            for(auto& cluster : clusters) {
+                fake_clusters++;
+                hFakeClusterCharge->Fill(cluster->charge());
+                hFakeClusterSize->Fill(static_cast<double>(cluster->size()));
+            }
+            hFakeClusterPerEvent->Fill(fake_clusters);
         }
     }
 
@@ -609,5 +654,9 @@ void AnalysisEfficiency::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
                 hPixelEfficiencyMatrix->Fill(eff);
             }
         }
+    }
+    // normalize fake rate map, if it exists
+    if((m_fake_rate_radius > 0 || m_fake_rate_sensoredge >= 0) && hFakeClusterPerEvent->GetEntries() > 0) {
+        fakePixelPerEventMap->Scale(1. / hFakePixelPerEvent->GetEntries());
     }
 }
