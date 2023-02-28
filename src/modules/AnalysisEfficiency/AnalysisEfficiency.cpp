@@ -572,7 +572,58 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     // fake rate analysis
     if(m_fake_rate_radius > 0) {
-        LOG_ONCE(STATUS) << "Estimating fake rate based on radial cut around pixels -- TO BE IMPLEMENTED";
+        LOG_ONCE(STATUS) << "Estimating fake rate based on radial cut around pixels.";
+
+        int fake_hits = 0;
+        int fake_clusters = 0;
+
+        // get and iterate dut clusters from clipboard
+        auto clusters = clipboard->getData<Cluster>(m_detector->getName());
+        for(auto& cluster : clusters) {
+
+            bool track_too_close = false;
+            // iterate the tracks from the clipboard
+            for(auto& track : tracks) {
+
+                // discard tracks without intercept, using a tolerance defined
+                // by the radial cut which we will use later.
+                if(m_detector->hasIntercept(track.get(), -m_fake_rate_radius)) {
+                    continue;
+                }
+
+                // now check if the track is too close to the considered cluster,
+                // using the distance in units of the pitch.
+                auto interceptLocal = m_detector->getLocalIntercept(track.get());
+                double norm_xdistance = (interceptLocal.X() - cluster->local().x()) / m_detector->getPitch().X();
+                double norm_ydistance = (interceptLocal.Y() - cluster->local().y()) / m_detector->getPitch().Y();
+                double norm_rdistance = sqrt(norm_xdistance * norm_xdistance + norm_ydistance * norm_ydistance);
+                if(norm_rdistance < m_fake_rate_radius) {
+                    track_too_close = true;
+                    break;
+                }
+            }
+
+            // now study cluster and pixel properties, which seems to be a fake
+            // cluster, as there is no track nearby.
+            if(!track_too_close) {
+
+                fake_clusters++;
+                hFakeClusterCharge->Fill(cluster->charge());
+                hFakeClusterSize->Fill(static_cast<double>(cluster->size()));
+
+                for(auto& pixel : cluster->pixels()) {
+                    fake_hits++;
+                    hFakePixelCharge->Fill(pixel->charge());
+                    fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
+                }
+            }
+        }
+
+        hFakePixelPerEvent->Fill(fake_hits);
+        fakePixelPerEventVsTime->Fill(fake_hits, static_cast<double>(Units::convert(event->start(), "s")));
+        fakePixelPerEventVsTimeLong->Fill(fake_hits, static_cast<double>(Units::convert(event->start(), "s")));
+        hFakeClusterPerEvent->Fill(fake_clusters);
+
     } else if(m_fake_rate_sensoredge > 0) {
         LOG_ONCE(STATUS) << "Estimating fake rate based on events without DUT intercepting tracks.";
 
