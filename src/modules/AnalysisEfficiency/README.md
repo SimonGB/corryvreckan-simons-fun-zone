@@ -28,6 +28,11 @@ More information can be found in the ROOT `TEfficiency` class reference, section
 * `require_associated_cluster_on`: Names of detectors which are required to have an associated cluster to the telescope tracks. Detectors listed here must be marked as `role = DUT` in the detector configuration file. Only tracks satisfying this requirement are accepted for the efficiency measurement. If empty, no detector is required. Default is empty.
 * `spatial_cut_sensoredge`: Parameter to discard telescope tracks at the sensor edges in fractions of pixel pitch. Defaults to `1`.
 
+* `fake_rate_sensoredge`: Defines an area overlapping the active area of the DUT by `fake_rate_sensoredge` times the pixel pitch. If the specified value is equal to or larger than 0, events with no tracks in this area a used to define fake hits and clusters and their properties are plotted. This neglects effects due to tracking in-efficiency. Defaults to `-1`.
+* `spatial_cut_sensoredge`: If the specified value is larger than 0, it is used to define an ellipse around each cluster, where the diameter is `spatial_cut_sensoredge` time the pitch in the corresponding direction. Clusters with no track within this ellipse are considered fake, and their properties are plotted. This neglects effects due to tracking in-efficiency. Defaults to `-1`. This is preferred over `fake_rate_sensoredge`.
+* `n_charge_bins`: Number of bins for pixel and cluster charge distributions. Defaults to `1000`.
+* `charge_histo_range`: Maximum value for pixel and cluster charge distributions. Defaults to `1000`.
+
 ### Plots produced
 
 For the DUT, the following plots are produced:
@@ -45,6 +50,12 @@ For the DUT, the following plots are produced:
   * Histograms of the row and column difference of the matched and non-matched track time to the previous track
   * Histograms of the time difference of a matched (non-matched) cluster to a previous hit (not matter if noise or track)
   * Distribution of cluster-track distances
+
+* Fake rate plots (if enabled):
+  * Number of fake pixels per event as histogram, map, and as function of time.
+  * Number of fake clusters per event as histogram.
+  * Pixel and cluster charge distributions for fake pixels and clusters.
+  * Cluster size of fake clusters as histogram.
 
 * Other:
   * Value of total efficiency as `TEfficiency` including (asymmetric) error bars (total and restricted to in-pixel ROI)
