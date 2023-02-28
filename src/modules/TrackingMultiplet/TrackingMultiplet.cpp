@@ -693,8 +693,8 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
                 continue;
             }
 
-            // make all planes known to the tracklets
-            for(auto& detector : get_regular_detectors(true)) {
+            // make all planes known to the tracklets (including passive planes)
+            for(auto& detector : get_detectors()) {
                 if(detector->isAuxiliary()) {
                     continue;
                 }
@@ -777,7 +777,7 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         downstream_tracklets.erase(used_downtracklet);
 
         // make all planes known to the multiplet
-        for(auto& detector : get_regular_detectors(true)) {
+        for(auto& detector : get_detectors()) {
             if(!detector->isAuxiliary()) {
                 multiplet->updatePlane(
                     detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
