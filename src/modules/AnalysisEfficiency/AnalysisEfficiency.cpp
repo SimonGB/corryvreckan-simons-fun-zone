@@ -344,7 +344,7 @@ void AnalysisEfficiency::createFakeRatePlots() {
     hFakeClusterCharge = new TH1D("hFakeClusterCharge", title.c_str(), m_n_charge_bins, 0.0, m_charge_histo_range);
 
     title = m_detector->getName() + " number of fake clusters per event; clusters; events";
-    hFakeClusterPerEvent = new TH1D("hFakePixelPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+    hFakeClusterPerEvent = new TH1D("hFakeClusterPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
 
     title = m_detector->getName() + " cluster size of fake clusters; cluster size; events";
     hFakeClusterSize = new TH1D("hFakeClusterSize", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
