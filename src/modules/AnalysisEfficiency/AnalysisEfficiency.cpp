@@ -603,8 +603,8 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
                 fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
             }
             hFakePixelPerEvent->Fill(fake_hits);
-            fakePixelPerEventVsTime->Fill(fake_hits, event->start());
-            fakePixelPerEventVsTimeLong->Fill(fake_hits, event->start());
+            fakePixelPerEventVsTime->Fill(fake_hits, static_cast<double>(Units::convert(event->start(), "s")));
+            fakePixelPerEventVsTimeLong->Fill(fake_hits, static_cast<double>(Units::convert(event->start(), "s")));
 
             // get and iterate dut clusters from clipboard
             auto clusters = clipboard->getData<Cluster>(m_detector->getName());
