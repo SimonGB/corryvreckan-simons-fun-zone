@@ -15,7 +15,6 @@
 #include "tools/cuts.h"
 
 using namespace corryvreckan;
-using namespace std;
 
 TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::shared_ptr<Detector>> detectors)
     : Module(config, std::move(detectors)) {
@@ -318,7 +317,7 @@ template <class T> T TrackingMultiplet::remove_duplicate(T tracks) {
 
     // sort by chi2:
     LOG_ONCE(WARNING) << "Rejecting tracks with same hits";
-    std::sort(tracks.begin(), tracks.end(), [](const shared_ptr<Track> a, const shared_ptr<Track> b) {
+    std::sort(tracks.begin(), tracks.end(), [](const std::shared_ptr<Track> a, const std::shared_ptr<Track> b) {
         return (a->getChi2() / static_cast<double>(a->getNdof())) < (b->getChi2() / static_cast<double>(b->getNdof()));
     });
     // remove tracks with hit that is used twice
