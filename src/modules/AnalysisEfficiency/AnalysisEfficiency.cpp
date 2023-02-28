@@ -577,7 +577,8 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         LOG_ONCE(STATUS) << "Estimating fake rate based on events without DUT intercepting tracks.";
 
         bool track_in_active = false;
-        int fake_hits, fake_clusters;
+        int fake_hits = 0;
+        int fake_clusters = 0;
 
         // iterate the tracks from the clipboard
         for(auto& track : tracks) {
@@ -595,7 +596,6 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         // track!
         if(!track_in_active) {
 
-            fake_hits = 0;
             // iterate the dut pixels from clipboard
             for(auto& pixel : pixels) {
                 fake_hits++;
@@ -606,7 +606,6 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
             fakePixelPerEventVsTime->Fill(fake_hits, event->start());
             fakePixelPerEventVsTimeLong->Fill(fake_hits, event->start());
 
-            fake_clusters = 0;
             // get and iterate dut clusters from clipboard
             auto clusters = clipboard->getData<Cluster>(m_detector->getName());
             for(auto& cluster : clusters) {
