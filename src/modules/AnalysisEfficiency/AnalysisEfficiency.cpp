@@ -537,6 +537,42 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         }
     }
 
+    // fake rate analysis
+    if(m_fake_rate_radius > 0) {
+        LOG_ONCE(STATUS) << "Estimating fake rate based on radial cut around pixels -- TO BE IMPLEMENTED";
+    } else if(m_fake_rate_sensoredge > 0) {
+        LOG_ONCE(STATUS) << "Estimating fake rate based on events without DUT intercepting tracks.";
+
+        bool track_in_active = false;
+        int fake_hits;
+
+        // iterate the tracks from the clipboard
+        for(auto& track : tracks) {
+            // check if one of the tracks intercepts the dut
+            // A positive value of m_fake_rate_radius means that we want to
+            // check an area that is larger than the sensor matrix.
+            if(m_detector->hasIntercept(track.get(), -m_fake_rate_sensoredge)) {
+                track_in_active = true;
+                break;
+            }
+        }
+
+        // Study the dut response if there is no track pointing to the active
+        // area of the dut. There might still be particles, that we failed to
+        // track!
+        if(!track_in_active) {
+
+            fake_hits = 0;
+
+            // iterate the dut pixels from clipboard
+            for(auto& pixel : pixels) {
+                fake_hits++;
+            }
+
+            hFakeRate->Fill(fake_hits);
+        }
+    }
+
     return StatusCode::Success;
 }
 
