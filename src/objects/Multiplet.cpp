@@ -93,8 +93,8 @@ ROOT::Math::XYZPoint Multiplet::getState(const std::string& detectorID) const {
         throw TrackError(typeid(*this), " does not have any entry for plane " + detectorID);
     }
     auto zpos = plane->getPosition();
-    LOG(TRACE) << "Plane z position of " << detectorID << " is " << zpos 
-	       << ", scatterer position is " << m_scattererPosition;
+    LOG(TRACE) << "Plane z position of " << detectorID << " is " << zpos << ", scatterer position is "
+               << m_scattererPosition;
 
     LOG(TRACE) << "upstream track type " << m_upstream->getType() << ", downstream track type " << m_downstream->getType();
     if(zpos <= m_scattererPosition) {
@@ -102,7 +102,6 @@ ROOT::Math::XYZPoint Multiplet::getState(const std::string& detectorID) const {
     } else {
         return m_downstream->getState(detectorID);
     }
-
 }
 
 ROOT::Math::XYZVector Multiplet::getDirection(const std::string& detectorID) const {

@@ -245,7 +245,7 @@ void Track::registerPlane(const std::string& name, double z, double x0, Transfor
         std::find_if(planes_.begin(), planes_.end(), [&p](const Plane& plane) { return plane.getName() == p.getName(); });
     if(pl == planes_.end()) {
         planes_.push_back(std::move(p));
-	LOG(TRACE) << "Register new plane " << planes_.back().getName();
+        LOG(TRACE) << "Register new plane " << planes_.back().getName();
     } else {
         *pl = std::move(p);
         LOG(TRACE) << "Plane " << p.getName() << " was already registered for this track";
