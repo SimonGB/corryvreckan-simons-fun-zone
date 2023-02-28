@@ -27,6 +27,8 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     config_.setDefault<XYVector>("inpixel_cut_edge", {Units::get(5.0, "um"), Units::get(5.0, "um")});
     config_.setDefault<double>("masked_pixel_distance_cut", 1.);
     config_.setDefault<double>("spatial_cut_sensoredge", 1.);
+    config_.setDefault<double>("fake_rate_radius", -1.);
+    config_.setDefault<double>("fake_rate_sensoredge", -1);
 
     m_timeCutFrameEdge = config_.get<double>("time_cut_frameedge");
     m_chi2ndofCut = config_.get<double>("chi2ndof_cut");
@@ -35,6 +37,8 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     m_inpixelEdgeCut = config_.get<XYVector>("inpixel_cut_edge");
     m_maskedPixelDistanceCut = config_.get<int>("masked_pixel_distance_cut");
     spatial_cut_sensoredge = config_.get<double>("spatial_cut_sensoredge");
+    m_fake_rate_radius = config_.get<double>("fake_rate_radius");
+    m_fake_rate_sensoredge = config_.get<double>("fake_rate_sensoredge");
 }
 void AnalysisEfficiency::initialize() {
 
@@ -294,6 +298,23 @@ void AnalysisEfficiency::initialize() {
     auto nCols = static_cast<size_t>(m_detector->nPixels().X());
     std::vector<double> v_row(nRows, 0.); // create vector will zeros of length <nRows>
     prev_hit_ts.assign(nCols, v_row);     // use vector v_row to construct matrix
+
+    // check if the user wants to analyze fake rates
+    if(m_fake_rate_radius > 0 || m_fake_rate_sensoredge >= 0) {
+        LOG(STATUS) << "Configured to perform fake rate analysis.";
+        createFakeRatePlots();
+    }
+}
+
+void AnalysisEfficiency::createFakeRatePlots() {
+    TDirectory* directory = getROOTDirectory();
+    TDirectory* fake_rate_directory = directory->mkdir("fake_rate");
+    if(fake_rate_directory == nullptr) {
+        throw RuntimeError("Cannot create or access fake rate ROOT directory for module " + this->getUniqueName());
+    }
+    fake_rate_directory->cd();
+
+    hFakeRate = new TH1D("hFakeRate", "number of fake hits per event; hits; # events", 25, 0 - 0.5, 25 - 0.5);
 }
 
 StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) {
