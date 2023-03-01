@@ -398,9 +398,11 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
 
             auto trackletCandidate = Track::Factory(track_model_);
 
-            // register all planes:
-            for(auto& det : cluster_trees) {
-                auto detector = det.first.get();
+            // register all planes:  (including passive planes)
+            for(auto& detector : get_detectors()) {
+                if(detector->isAuxiliary()) {
+                    continue;
+                }
                 trackletCandidate->registerPlane(
                     detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
             }
@@ -692,20 +694,6 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
                 continue;
             }
 
-            // make all planes known to the tracklets (including passive planes)
-            for(auto& detector : get_detectors()) {
-                if(detector->isAuxiliary()) {
-                    continue;
-                }
-                if(detector->displacement().Z() <= scatterer_position_) {
-                    uptracklet->updatePlane(
-                        detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
-                } else {
-                    (*it)->updatePlane(
-                        detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
-                }
-            }
-
             auto multipletCandidate = std::make_shared<Multiplet>(uptracklet, (*it));
             LOG(DEBUG) << "Got new candidate.";
 
@@ -775,7 +763,8 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         LOG(DEBUG) << "Deleting downstream tracklet";
         downstream_tracklets.erase(used_downtracklet);
 
-        // make all planes known to the multiplet
+        // make sure all planes are known to the multiplet
+        // (still necessary, even if they are already registered to the tracklets!)
         for(auto& detector : get_detectors()) {
             if(!detector->isAuxiliary()) {
                 multiplet->updatePlane(
