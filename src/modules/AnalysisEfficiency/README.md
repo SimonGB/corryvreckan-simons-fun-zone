@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # AnalysisEfficiency
-**Maintainer**: Simon Spannagel (<simon.spannagel@cern.ch>), Jens Kroeger (<jens.kroeger@cern.ch>)  
-**Module Type**: *DUT*  
-**Detector Type**: *all*  
+**Maintainer**: Simon Spannagel (<simon.spannagel@cern.ch>), Jens Kroeger (<jens.kroeger@cern.ch>)
+**Module Type**: *DUT*
+**Detector Type**: *all*
 **Status**: Functional
 
 ### Description
@@ -27,9 +27,8 @@ More information can be found in the ROOT `TEfficiency` class reference, section
 * `masked_pixel_distance_cut`: Distance (in pixels) to exclude tracks passing close to masked pixel. Defaults to `1`.
 * `require_associated_cluster_on`: Names of detectors which are required to have an associated cluster to the telescope tracks. Detectors listed here must be marked as `role = DUT` in the detector configuration file. Only tracks satisfying this requirement are accepted for the efficiency measurement. If empty, no detector is required. Default is empty.
 * `spatial_cut_sensoredge`: Parameter to discard telescope tracks at the sensor edges in fractions of pixel pitch. Defaults to `1`.
-
 * `fake_rate_sensoredge`: Defines an area overlapping the active area of the DUT by `fake_rate_sensoredge` times the pixel pitch. If the specified value is equal to or larger than 0, events with no tracks in this area a used to define fake hits and clusters and their properties are plotted. This neglects effects due to tracking in-efficiency. Defaults to `-1`.
-* `spatial_cut_sensoredge`: If the specified value is larger than 0, it is used to define an ellipse around each cluster, where the diameter is `spatial_cut_sensoredge` time the pitch in the corresponding direction. Clusters with no track within this ellipse are considered fake, and their properties are plotted. This neglects effects due to tracking in-efficiency. Defaults to `-1`. This is preferred over `fake_rate_sensoredge`.
+* `fake_rate_radius`: If the specified value is larger than 0, it is used to define an ellipse around each cluster, where the diameter is `fake_rate_radius` times the pitch in the corresponding direction. Clusters with no track within this ellipse are considered fake, and their properties are plotted. This neglects effects due to tracking in-efficiency. Defaults to `-1`. This is preferred over `fake_rate_sensoredge`.
 * `n_charge_bins`: Number of bins for pixel and cluster charge distributions. Defaults to `1000`.
 * `charge_histo_range`: Maximum value for pixel and cluster charge distributions. Defaults to `1000`.
 
