@@ -331,16 +331,16 @@ void AnalysisEfficiency::createFakeRatePlots() {
                                     -0.5,
                                     m_detector->nPixels().Y() - 0.5);
 
-    title = m_detector->getName() + "pixel fake hits per event vs. time; time [s]; hits";
+    title = m_detector->getName() + " pixel fake hits per event vs. time; time [s]; hits";
     fakePixelPerEventVsTime = new TProfile("fakePixelPerEventVsTime", title.c_str(), 3000, 0, 3000);
 
-    title = m_detector->getName() + "pixel fake hits per event vs. time; time [s]; hits";
+    title = m_detector->getName() + " pixel fake hits per event vs. time; time [s]; hits";
     fakePixelPerEventVsTimeLong = new TProfile("efficiencyVsTimeLong", title.c_str(), 3000, 0, 30000);
 
-    title = m_detector->getName() + "charge distribution for fake pixels; charge [a.u.]; entries";
+    title = m_detector->getName() + " charge distribution for fake pixels; charge [a.u.]; entries";
     hFakePixelCharge = new TH1D("hFakePixelCharge", title.c_str(), m_n_charge_bins, 0.0, m_charge_histo_range);
 
-    title = m_detector->getName() + "charge distribution for fake clusters; charge [a.u.]; entries";
+    title = m_detector->getName() + " charge distribution for fake clusters; charge [a.u.]; entries";
     hFakeClusterCharge = new TH1D("hFakeClusterCharge", title.c_str(), m_n_charge_bins, 0.0, m_charge_histo_range);
 
     title = m_detector->getName() + " number of fake clusters per event; clusters; events";
