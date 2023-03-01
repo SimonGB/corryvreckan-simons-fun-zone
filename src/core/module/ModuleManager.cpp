@@ -32,7 +32,7 @@
 #define CORRYVRECKAN_GLOBAL_FUNCTION "corryvreckan_module_is_global"
 #define CORRYVRECKAN_DUT_FUNCTION "corryvreckan_module_is_dut"
 #define CORRYVRECKAN_AUX_FUNCTION "corryvreckan_module_exclude_aux"
-#define CORRYVRECKAN_PASS_FUNCTION "corryvreckan_module_exclude_passive"
+#define CORRYVRECKAN_PASS_FUNCTION "corryvreckan_module_include_passive"
 #define CORRYVRECKAN_TYPE_FUNCTION "corryvreckan_detector_types"
 
 using namespace corryvreckan;
@@ -241,7 +241,7 @@ void ModuleManager::load_modules() {
         bool global = reinterpret_cast<bool (*)()>(globalFunction)();      // NOLINT
         bool dut_only = reinterpret_cast<bool (*)()>(dutFunction)();       // NOLINT
         bool exclude_aux = reinterpret_cast<bool (*)()>(auxFunction)();    // NOLINT
-        bool exclude_pass = reinterpret_cast<bool (*)()>(passFunction)();  // NOLINT
+        bool include_pass = reinterpret_cast<bool (*)()>(passFunction)();  // NOLINT
         char* type_tokens = reinterpret_cast<char* (*)()>(typeFunction)(); // NOLINT
 
         std::vector<std::string> types = get_type_vector(type_tokens);
@@ -256,7 +256,7 @@ void ModuleManager::load_modules() {
             mod_list.emplace_back(create_unique_module(loaded_libraries_[lib_name], config));
         } else {
             mod_list =
-                create_detector_modules(loaded_libraries_[lib_name], config, dut_only, exclude_aux, exclude_pass, types);
+                create_detector_modules(loaded_libraries_[lib_name], config, dut_only, exclude_aux, include_pass, types);
         }
 
         // Loop through all created instantiations
@@ -403,7 +403,7 @@ std::vector<std::pair<ModuleIdentifier, Module*>> ModuleManager::create_detector
                                                                                          Configuration& config,
                                                                                          bool dut_only,
                                                                                          bool exclude_aux,
-                                                                                         bool exclude_pass,
+                                                                                         bool include_pass,
                                                                                          std::vector<std::string> types) {
     LOG(TRACE) << "Creating instantiations for module " << config.getName() << ", using generator \""
                << CORRYVRECKAN_GENERATOR_FUNCTION << "\"";
@@ -508,7 +508,7 @@ std::vector<std::pair<ModuleIdentifier, Module*>> ModuleManager::create_detector
             continue;
         }
 
-        if(exclude_pass && detector->isPassive()) {
+        if(!include_pass && detector->isPassive()) {
             LOG(TRACE) << "Skipping instantiation \"" << identifier.getUniqueName() << "\", detector is passive";
             continue;
         }

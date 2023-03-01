@@ -120,7 +120,7 @@ namespace corryvreckan {
          * @param config Configuration of the module
          * @param dut_only Boolean signaling whether should be instantiated only for DUT detectors
          * @param exclude_aux Boolean to exclude instantiations for auxliary detectors
-         * @param exclude_pass Boolean to exclude instantiations for passive detectors
+         * @param include_pass Boolean to include instantiations for passive detectors
          * @param types List of detector type restrictions imposed by the module itself
          * @return A list of all created detector modules and their identifiers
          */
@@ -128,7 +128,7 @@ namespace corryvreckan {
                                                                                   Configuration& config,
                                                                                   bool dut_only,
                                                                                   bool exclude_aux,
-                                                                                  bool exclude_pass,
+                                                                                  bool include_pass,
                                                                                   std::vector<std::string> types);
 
         using IdentifierToModuleMap = std::map<ModuleIdentifier, ModuleList::iterator>;

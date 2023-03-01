@@ -32,7 +32,7 @@ if [ "$type" == 2 ]; then
 fi
 
 # If type is detector, ask if pass should be excluded:
-exclude_pass=0
+exclude_pass=1
 if [ "$type" == 2 ]; then
     echo -e "Should passive detectors be excluded from this module?\n"
     select yn in "yes" "nope"; do
@@ -121,9 +121,9 @@ if [ "$type" != 1 ]; then
         eval $command
     fi
 
-    # Add pass exclusion for detector module if selected:
-    if [ "$exclude_pass" == 1  ]; then
-        command="sed $opt '/_DETECTOR_/ a CORRYVRECKAN_EXCLUDE_PASSIVE(\${MODULE_NAME})' $MODDIR/$MODNAME/CMakeLists.txt"
+    # Add inclusion of passive detectors for detector module if selected:
+    if [ "$exclude_pass" == 0  ]; then
+        command="sed $opt '/_DETECTOR_/ a CORRYVRECKAN_INCLUDE_PASSIVE(\${MODULE_NAME})' $MODDIR/$MODNAME/CMakeLists.txt"
         eval $command
     fi
 
