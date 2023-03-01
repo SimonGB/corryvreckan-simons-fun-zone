@@ -620,8 +620,8 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         }
 
         hFakePixelPerEvent->Fill(fake_hits);
-        fakePixelPerEventVsTime->Fill(fake_hits, static_cast<double>(Units::convert(event->start(), "s")));
-        fakePixelPerEventVsTimeLong->Fill(fake_hits, static_cast<double>(Units::convert(event->start(), "s")));
+        fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
+        fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
         hFakeClusterPerEvent->Fill(fake_clusters);
 
     } else if(m_fake_rate_sensoredge > 0) {
@@ -654,8 +654,8 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
                 fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
             }
             hFakePixelPerEvent->Fill(fake_hits);
-            fakePixelPerEventVsTime->Fill(fake_hits, static_cast<double>(Units::convert(event->start(), "s")));
-            fakePixelPerEventVsTimeLong->Fill(fake_hits, static_cast<double>(Units::convert(event->start(), "s")));
+            fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
+            fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
 
             // get and iterate dut clusters from clipboard
             auto clusters = clipboard->getData<Cluster>(m_detector->getName());
