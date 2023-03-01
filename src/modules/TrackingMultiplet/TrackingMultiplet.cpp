@@ -131,7 +131,7 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
     }
 
     // check if required detectors are included either upstream or downstream
-    for(auto detector : m_require_detectors) {
+    for(auto& detector : m_require_detectors) {
         auto includedUpstream =
             (std::find(m_upstream_detectors.begin(), m_upstream_detectors.end(), detector) != m_upstream_detectors.end());
         auto includedDownstream =

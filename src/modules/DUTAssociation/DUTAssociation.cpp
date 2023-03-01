@@ -135,7 +135,7 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
 
         // Check distance between track and cluster
         auto interceptLocal = m_detector->getLocalIntercept(track.get());
-        LOG(TRACE) << "starting loop over all clusters";
+        LOG(TRACE) << "Starting loop over all clusters";
         // Loop over all DUT clusters
         for(auto& cluster : clusters) {
 

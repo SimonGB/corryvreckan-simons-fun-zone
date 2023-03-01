@@ -28,7 +28,7 @@ using namespace corryvreckan;
 
 Detector::Detector(const Configuration& config) : m_role(DetectorRole::NONE) {
 
-    LOG(DEBUG) << "init detector with role " << corryvreckan::to_string(m_role);
+    LOG(DEBUG) << "Initializing detector with role " << corryvreckan::to_string(m_role);
 
     // Role of this detector:
     auto roles = config.getArray<DetectorRole>("role", {DetectorRole::NONE});
