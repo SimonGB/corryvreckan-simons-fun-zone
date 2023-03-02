@@ -27,8 +27,8 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     config_.setDefault<XYVector>("inpixel_cut_edge", {Units::get(5.0, "um"), Units::get(5.0, "um")});
     config_.setDefault<double>("masked_pixel_distance_cut", 1.);
     config_.setDefault<double>("spatial_cut_sensoredge", 1.);
-    config_.setDefault<double>("fake_rate_radius", -1.);
-    config_.setDefault<double>("fake_rate_sensoredge", -1);
+    config_.setDefault<FakeRateMethod>("fake_rate_method", FakeRateMethod::RADIUS);
+    config_.setDefault<double>("fake_rate_distance", 2.);
     config_.setDefault<int>("n_charge_bins", 1000);
     config_.setDefault<double>("charge_histo_range", 1000.0);
 
@@ -39,8 +39,8 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     m_inpixelEdgeCut = config_.get<XYVector>("inpixel_cut_edge");
     m_maskedPixelDistanceCut = config_.get<int>("masked_pixel_distance_cut");
     spatial_cut_sensoredge = config_.get<double>("spatial_cut_sensoredge");
-    m_fake_rate_radius = config_.get<double>("fake_rate_radius");
-    m_fake_rate_sensoredge = config_.get<double>("fake_rate_sensoredge");
+    m_fake_rate_method = config_.get<FakeRateMethod>("fake_rate_method");
+    m_fake_rate_distance = config_.get<double>("fake_rate_distance");
     m_n_charge_bins = config_.get<int>("n_charge_bins");
     m_charge_histo_range = config_.get<double>("charge_histo_range");
 }
@@ -567,8 +567,8 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
     }
 
     // fake rate analysis
-    if(m_fake_rate_radius > 0) {
-        LOG_ONCE(STATUS) << "Estimating fake rate based on radial cut around pixels.";
+    if(m_fake_rate_method == FakeRateMethod::RADIUS) {
+        LOG_ONCE(STATUS) << "Estimating fake rate based on radial cut around pixels (RADIUS method).";
 
         int fake_hits = 0;
         int fake_clusters = 0;
@@ -583,7 +583,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
 
                 // discard tracks without intercept, using a tolerance defined
                 // by the radial cut which we will use later.
-                if(m_detector->hasIntercept(track.get(), -m_fake_rate_radius)) {
+                if(m_detector->hasIntercept(track.get(), -m_fake_rate_distance)) {
                     continue;
                 }
 
@@ -593,7 +593,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
                 double norm_xdistance = (interceptLocal.X() - cluster->local().x()) / m_detector->getPitch().X();
                 double norm_ydistance = (interceptLocal.Y() - cluster->local().y()) / m_detector->getPitch().Y();
                 double norm_rdistance = sqrt(norm_xdistance * norm_xdistance + norm_ydistance * norm_ydistance);
-                if(norm_rdistance < m_fake_rate_radius) {
+                if(norm_rdistance < m_fake_rate_distance) {
                     track_too_close = true;
                     break;
                 }
@@ -619,9 +619,9 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
         fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
         hFakeClusterPerEvent->Fill(fake_clusters);
-
-    } else if(m_fake_rate_sensoredge > 0) {
-        LOG_ONCE(STATUS) << "Estimating fake rate based on events without DUT intercepting tracks.";
+    }
+    if(m_fake_rate_method == FakeRateMethod::EDGE) {
+        LOG_ONCE(STATUS) << "Estimating fake rate based on events without DUT intercepting tracks (EDGE method).";
 
         bool track_in_active = false;
         int fake_hits = 0;
@@ -632,7 +632,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
             // check if one of the tracks intercepts the dut
             // A positive value of m_fake_rate_radius means that we want to
             // check an area that is larger than the sensor matrix.
-            if(m_detector->hasIntercept(track.get(), -m_fake_rate_sensoredge)) {
+            if(m_detector->hasIntercept(track.get(), -m_fake_rate_distance)) {
                 track_in_active = true;
                 break;
             }
