@@ -698,6 +698,15 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
             LOG(DEBUG) << "Got new candidate.";
 
             multipletCandidate->setScattererPosition(scatterer_position_);
+            // make sure all planes are known to the multiplet
+            // (still necessary, even if they are already registered to the tracklets!)
+            for(auto& detector : get_detectors()) {
+                if(!detector->isAuxiliary() && multipletCandidate->get_plane(detector->getName()) == nullptr) {
+                    multipletCandidate->registerPlane(
+                        detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
+                }
+            }
+
             multipletCandidate->fit();
 
             double distanceX = multipletCandidate->getOffsetAtScatterer().X();
@@ -762,15 +771,6 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
 
         LOG(DEBUG) << "Deleting downstream tracklet";
         downstream_tracklets.erase(used_downtracklet);
-
-        // make sure all planes are known to the multiplet
-        // (still necessary, even if they are already registered to the tracklets!)
-        for(auto& detector : get_detectors()) {
-            if(!detector->isAuxiliary() && multiplet->get_plane(detector->getName()) == nullptr) {
-                multiplet->updatePlane(
-                    detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
-            }
-        }
 
         multiplets.push_back(multiplet);
 
