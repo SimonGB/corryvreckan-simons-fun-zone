@@ -766,7 +766,7 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         // make sure all planes are known to the multiplet
         // (still necessary, even if they are already registered to the tracklets!)
         for(auto& detector : get_detectors()) {
-            if(!detector->isAuxiliary()) {
+            if(!detector->isAuxiliary() && multiplet->get_plane(detector->getName()) == nullptr) {
                 multiplet->updatePlane(
                     detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
             }
