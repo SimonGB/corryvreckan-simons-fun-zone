@@ -303,11 +303,7 @@ void AnalysisEfficiency::initialize() {
     std::vector<double> v_row(nRows, 0.); // create vector will zeros of length <nRows>
     prev_hit_ts.assign(nCols, v_row);     // use vector v_row to construct matrix
 
-    // check if the user wants to analyze fake rates
-    if(m_fake_rate_radius > 0 || m_fake_rate_sensoredge >= 0) {
-        LOG(STATUS) << "Configured to perform fake rate analysis.";
-        createFakeRatePlots();
-    }
+    createFakeRatePlots();
 }
 
 void AnalysisEfficiency::createFakeRatePlots() {
@@ -706,7 +702,7 @@ void AnalysisEfficiency::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         }
     }
     // normalize fake rate map, if it exists
-    if((m_fake_rate_radius > 0 || m_fake_rate_sensoredge >= 0) && hFakeClusterPerEvent->GetEntries() > 0) {
+    if(hFakeClusterPerEvent->GetEntries() > 0) {
         fakePixelPerEventMap->Scale(1. / hFakePixelPerEvent->GetEntries());
     }
 }
