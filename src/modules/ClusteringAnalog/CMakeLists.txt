@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2017-2022 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 CORRYVRECKAN_ENABLE_DEFAULT(ON)

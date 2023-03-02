@@ -86,6 +86,11 @@ MACRO(corryvreckan_exclude_aux name)
     TARGET_COMPILE_DEFINITIONS(${name} PRIVATE CORRYVRECKAN_EXCLUDE_AUX=1)
 ENDMACRO()
 
+# Select whether to include passive detectors or not
+MACRO(corryvreckan_include_passive name)
+    TARGET_COMPILE_DEFINITIONS(${name} PRIVATE CORRYVRECKAN_INCLUDE_PASSIVE=0)
+ENDMACRO()
+
 # Append list of possible detector types as compile definition
 MACRO(corryvreckan_detector_type name)
     SET(extra_macro_args ${ARGN})
