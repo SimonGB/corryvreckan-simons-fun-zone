@@ -17,6 +17,7 @@
 
 #include "core/module/Module.hpp"
 
+#include <TDirectory.h>
 #include "TEfficiency.h"
 #include "TH2D.h"
 #include "TNamed.h"
@@ -84,7 +85,25 @@ namespace corryvreckan {
         TH2D* hPosDiffPrevTrack_noAssocCluster;
         TH2D* hDistanceCluster_track;
         TH2D* htimeRes_cluster_size;
-        double m_chi2ndofCut, m_timeCutFrameEdge, m_inpixelBinSize, spatial_cut_sensoredge;
+
+        // fake rate plots
+        TH1D* hFakePixelPerEvent;
+        TH2D* fakePixelPerEventMap;
+        TProfile* fakePixelPerEventVsTime;
+        TProfile* fakePixelPerEventVsTimeLong;
+        TH1D* hFakePixelCharge;
+        TH1D* hFakeClusterPerEvent;
+        TH1D* hFakeClusterCharge;
+        TH1D* hFakeClusterSize;
+
+        enum class FakeRateMethod {
+            RADIUS,
+            EDGE,
+        } m_fake_rate_method;
+
+        double m_chi2ndofCut, m_timeCutFrameEdge, m_inpixelBinSize, spatial_cut_sensoredge, m_fake_rate_distance,
+            m_charge_histo_range;
+        int m_n_charge_bins;
         XYVector m_inpixelEdgeCut;
         int m_maskedPixelDistanceCut = 1;
         int total_tracks = 0;
@@ -97,6 +116,8 @@ namespace corryvreckan {
         std::vector<std::string> require_associated_cluster_on_;
 
         Matrix<double> prev_hit_ts; // matrix containing previous hit timestamp for every pixel
+
+        void createFakeRatePlots();
     };
 
 } // namespace corryvreckan
