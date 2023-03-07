@@ -154,8 +154,7 @@ void AlignmentTrackChi2::MinimiseTrackChi2(Int_t&, Double_t*, Double_t& result, 
         if(!track->isFitted()) {
             LOG(WARNING) << "Refit failed - track will be discarded for this alignment step ";
             return 0.0;
-        }
-        else {
+        } else {
             // add the new chi2
             return track->getChi2();
         }
