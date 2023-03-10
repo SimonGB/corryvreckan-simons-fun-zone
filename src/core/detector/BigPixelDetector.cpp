@@ -20,8 +20,6 @@ BigPixelDetector::BigPixelDetector(const Configuration& config) : PixelDetector(
         config_bigpixel(config);
         build_axes(config);
     }
-
-    m_coordinates = "cartesian_big";
 }
 
 void BigPixelDetector::config_bigpixel(const Configuration& config) {
@@ -177,4 +175,12 @@ PositionVector3D<Cartesian3D<double>> BigPixelDetector::getLocalPosition(double 
 ROOT::Math::XYVector BigPixelDetector::getSize() const {
     return XYVector(m_pitch.X() * (m_nPixels.X() + static_cast<double>(big_pixel_x.size())),
                     m_pitch.Y() * (m_nPixels.Y() + static_cast<double>(big_pixel_y.size())));
+}
+
+Configuration BigPixelDetector::getConfiguration() const {
+    auto config = PixelDetector::getConfiguration();
+
+    config.setMatrix("big_pixel", m_big_pixel);
+
+    return config;
 }

@@ -44,7 +44,14 @@ namespace corryvreckan {
 
         ROOT::Math::XYVector getSize() const override;
 
+        /**
+         * @brief Retrieve configuration object from detector, containing all (potentially updated) parameters
+         * @return Configuration object for this detector
+         */
+        Configuration getConfiguration() const override;
+
     private:
+        std::vector<std::vector<int>> m_big_pixel;
         std::vector<unsigned int> big_pixel_x{};
         std::vector<unsigned int> big_pixel_y{};
         std::vector<unsigned int> transformed_big_pixel_x{};

@@ -18,6 +18,7 @@
 #include "Math/RotationZ.h"
 #include "Math/RotationZYX.h"
 
+#include "BigPixelDetector.hpp"
 #include "Detector.hpp"
 #include "HexagonalPixelDetector.hpp"
 #include "core/utils/log.h"
@@ -345,12 +346,6 @@ Configuration Detector::getConfiguration() const {
 
     // different for PixelDetector and StripDetector
     this->configure_pos_and_orientation(config);
-
-    config.set("coordinates", m_coordinates);
-
-    if(m_coordinates == "cartesian_big") {
-        config.setMatrix("big_pixel", m_big_pixel);
-    }
 
     // material budget
     if(m_materialBudget > std::numeric_limits<double>::epsilon()) {

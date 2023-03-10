@@ -200,7 +200,7 @@ namespace corryvreckan {
          * @brief Retrieve configuration object from detector, containing all (potentially updated) parameters
          * @return Configuration object for this detector
          */
-        Configuration getConfiguration() const;
+        virtual Configuration getConfiguration() const;
 
         /**
          * @brief Get the total size of the active matrix, i.e. pitch * number of pixels in both dimensions
@@ -491,10 +491,6 @@ namespace corryvreckan {
 
         // Path of calibration file
         std::optional<std::filesystem::path> m_calibrationfile;
-
-        std::string m_coordinates;
-
-        std::vector<std::vector<int>> m_big_pixel;
 
         // List of masked channels
         std::map<int, bool> m_masked;
