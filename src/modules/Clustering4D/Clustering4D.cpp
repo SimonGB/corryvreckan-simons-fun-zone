@@ -333,9 +333,9 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
     cluster->setRow(row);
     cluster->setCharge(charge);
 
-    // Set uncertainty on position from intrinstic detector spatial resolution:
+    // Set uncertainty on position from intrinsic detector spatial resolution:
     cluster->setError(m_detector->getSpatialResolution(column, row));
-    cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal());
+    cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal(column, row));
 
     cluster->setTimestamp(timestamp);
     cluster->setDetectorID(detectorID);

@@ -157,7 +157,9 @@ namespace corryvreckan {
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
          * @return Intrinsic spatial resolution in global X and Y
          */
-        TMatrixD getSpatialResolutionMatrixGlobal() const override { return m_spatial_resolution_matrix_global; }
+        TMatrixD getSpatialResolutionMatrixGlobal(double, double) const override {
+            return m_spatial_resolution_matrix_global;
+        }
 
         /*
          * @brief Get number of pixels in x and y
