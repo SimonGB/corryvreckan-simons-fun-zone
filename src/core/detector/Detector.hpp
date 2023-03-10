@@ -233,6 +233,8 @@ namespace corryvreckan {
 
         /**
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @param column Column (x-) index of the pixel to calculate the spatial resolution from
+         * @param row Row (y-) index of the pixel to calculate the spatial resolution from
          * @return Intrinsic spatial resolution in global X and Y
          */
         virtual TMatrixD getSpatialResolutionMatrixGlobal(double, double) const = 0;
