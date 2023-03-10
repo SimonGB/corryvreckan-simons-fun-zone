@@ -15,12 +15,6 @@ using namespace corryvreckan;
 
 BigPixelDetector::BigPixelDetector(const Configuration& config) : PixelDetector(config) {
 
-    // Set detector position and direction from configuration file
-    SetPostionAndOrientation(config);
-
-    // initialize transform
-    this->initialise();
-
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         config_bigpixel(config);
