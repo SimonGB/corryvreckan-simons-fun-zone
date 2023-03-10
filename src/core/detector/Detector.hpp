@@ -237,7 +237,7 @@ namespace corryvreckan {
          * @param row Row (y-) index of the pixel to calculate the spatial resolution from
          * @return Intrinsic spatial resolution in global X and Y
          */
-        virtual TMatrixD getSpatialResolutionMatrixGlobal(double, double) const = 0;
+        virtual TMatrixD getSpatialResolutionMatrixGlobal(double column = 0, double row = 0) const = 0;
 
         /**
          * @brief Get number of pixels in x and y
