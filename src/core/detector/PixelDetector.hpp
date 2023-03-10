@@ -147,14 +147,19 @@ namespace corryvreckan {
         /**
          * @brief Get intrinsic spatial resolution of the detector
          * @return Intrinsic spatial resolution in X and Y
+         *
+         * @note For a detector with variable pixel sizes this declaration could be changed to take column and row pixel
+         * indices to calculate the resolution for a specific pixel
          */
-        XYVector getSpatialResolution() const override { return m_spatial_resolution; }
+        XYVector getSpatialResolution(double, double) const override { return m_spatial_resolution; }
 
         /**
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
          * @return Intrinsic spatial resolution in global X and Y
          */
-        TMatrixD getSpatialResolutionMatrixGlobal() const override { return m_spatial_resolution_matrix_global; }
+        TMatrixD getSpatialResolutionMatrixGlobal(double, double) const override {
+            return m_spatial_resolution_matrix_global;
+        }
 
         /*
          * @brief Get number of pixels in x and y
