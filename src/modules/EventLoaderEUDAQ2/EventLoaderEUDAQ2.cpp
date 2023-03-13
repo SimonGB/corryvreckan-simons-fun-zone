@@ -570,7 +570,7 @@ bool EventLoaderEUDAQ2::filter_detectors(std::shared_ptr<eudaq::StandardEvent> e
             LOG(DEBUG) << "Found matching plane in event for detector " << detector_->getName();
             return true;
         } else {
-            LOG(DEBUG) << "plane " << plane_name << "does not match " << detector_name;
+            LOG(DEBUG) << "plane " << plane_name << " does not match " << detector_name;
         }
     }
 
