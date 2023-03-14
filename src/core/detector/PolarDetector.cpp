@@ -568,8 +568,8 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
     return false;
 }
 
-XYVector PolarDetector::getSpatialResolution(double, double row) const {
-    return m_spatial_resolution;
+XYVector PolarDetector::getSpatialResolution(double column, double row) const {
+    //return m_spatial_resolution;
 
     // Outer edge arc
     auto row_base = static_cast<unsigned int>(floor(row + 0.5));
@@ -582,6 +582,23 @@ XYVector PolarDetector::getSpatialResolution(double, double row) const {
     LOG(TRACE) << "--> Resolution: (" << resolution_x << ", " << resolution_y << ")";
     return {resolution_x, resolution_y};
 }
+
+TMatrixD PolarDetector::getSpatialResolutionMatrixGlobal(double column, double row) const {
+    //
+    XYVector localResolution = getSpatialResolution(column, row);
+
+    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
+    TMatrixD errorMatrix(3, 3);
+    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
+    errorMatrix(0, 0) = localResolution.x() * localResolution.x();
+    errorMatrix(1, 1) = localResolution.y() * localResolution.y();
+    alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
+    alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
+
+    return locToGlob * errorMatrix * globToLoc;
+}
+
+
 
 // Function to get row and column of pixel
 std::pair<int, int> PolarDetector::getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const {

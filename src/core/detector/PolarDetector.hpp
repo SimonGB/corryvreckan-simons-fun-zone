@@ -192,7 +192,7 @@ namespace corryvreckan {
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
          * @return Intrinsic spatial resolution in global X and Y
          */
-        virtual TMatrixD getSpatialResolutionMatrixGlobal() const override { return m_spatial_resolution_matrix_global; }
+        virtual TMatrixD getSpatialResolutionMatrixGlobal(double column, double row) const override;// { return m_spatial_resolution_matrix_global; }
 
         /**
          * @brief Return a set containing all strips neighboring the given one with a configurable maximum distance
