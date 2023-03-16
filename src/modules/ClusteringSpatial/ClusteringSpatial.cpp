@@ -226,7 +226,11 @@ StatusCode ClusteringSpatial::run(const std::shared_ptr<Clipboard>& clipboard) {
 void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
 
     LOG(DEBUG) << "== Making cluster centre";
-    if (!radialWeighting){
+
+    // Check detector is actually polar
+    auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
+
+    if (!radialWeighting || polar_det == nullptr){
         // Empty variables to calculate cluster position
         double column(0), row(0), charge(0);
         double column_sum(0), column_sum_chargeweighted(0);
@@ -296,10 +300,6 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
         cluster->setClusterCentreLocal(positionLocal);
     } else {
         // Calculate cluster centre in polar coordinates, taking into account the spatial resolution
-
-        // Check detector is actually polar
-        auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
-        assert(("Detectors need to be polar for radially weighted clustering", polar_det != nullptr));
 
         // Calculate the cluster centre first in radial coordinates, then transform
         double charge(0), rSumWeighted(0), phiSumWeighted(0), rNorm(0), phiNorm(0);
