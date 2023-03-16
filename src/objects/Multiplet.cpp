@@ -27,6 +27,17 @@ Multiplet::Multiplet(std::shared_ptr<Track> upstream, std::shared_ptr<Track> dow
     for(auto& cluster : m_downstream->getClusters()) {
         this->addCluster(cluster);
     }
+    // if it's listed as plane for upstream or downstream, it should be a plane for the multiplet too
+    planes_ = std::move(m_upstream->getPlanes());
+    for(auto& upp : m_downstream->getPlanes()) {
+        auto pl = std::find_if(
+            planes_.begin(), planes_.end(), [&upp](const Plane& plane) { return plane.getName() == upp.getName(); });
+        if(pl == planes_.end()) {
+            planes_.push_back(std::move(upp));
+        } else {
+            *pl = std::move(upp);
+        }
+    }
 }
 
 ROOT::Math::XYPoint Multiplet::getKinkAt(const std::string&) const {

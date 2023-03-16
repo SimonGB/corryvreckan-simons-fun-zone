@@ -269,6 +269,10 @@ void Track::updatePlane(const std::string& name, double z, double x0, Transform3
     this->fit();
 }
 
+std::vector<Track::Plane> Track::getPlanes() {
+    return planes_;
+}
+
 const Track::Plane* Track::get_plane(const std::string& detetorID) const {
     auto plane =
         std::find_if(planes_.begin(), planes_.end(), [&detetorID](Plane const& p) { return p.getName() == detetorID; });
