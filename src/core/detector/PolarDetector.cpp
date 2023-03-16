@@ -430,6 +430,9 @@ PositionVector3D<Cartesian3D<double>> PolarDetector::getLocalPosition(double col
     return PositionVector3D<Cartesian3D<double>>(pos.x(), pos.y(), 0.0);
 }
 
+
+
+
 // Function to get in-pixel position
 ROOT::Math::XYVector PolarDetector::inPixel(const double column, const double row) const {
     // Transform received position to polar coordinates and get the coordinates of the strip center
@@ -570,17 +573,63 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
 
 XYVector PolarDetector::getSpatialResolution(double column, double row) const {
     //return m_spatial_resolution;
+    /*
+    // Get base row + column
+    
 
-    // Outer edge arc
-    auto row_base = static_cast<unsigned int>(floor(row + 0.5));
+    // Calculate approximate dimensions in R and Phi directions
+    double dR   = row_radius.at(row_base + 1) - row_radius.at(row_base);
+    double dPhi = (row_radius.at(row_base) + row_radius.at(row_base + 1)) / 2 * angular_pitch.at(row_base);
+
+    // Approximate size of pixel in x and y by stereo angle rotation
+    double dX = sin(stereo_angle) * dPhi + cos(stereo_angle) * dR;
+    double dY = sin(stereo_angle) * dR + cos(stereo_angle) * dPhi;
+
+
+
+
     // LOG(TRACE) << "[polarDet-getSpatialResolution] called for row " << row;
     // LOG(TRACE) << "--> strip pitch kinda: " << row_radius.at(row_base + 1) * angular_pitch.at(row_base);
     // LOG(TRACE) << "--> strip length: " << (row_radius.at(row_base + 1) - row_radius.at(row_base));
-    double resolution_x = row_radius.at(row_base + 1) * angular_pitch.at(row_base) / sqrt(12);
+    // double resolution_x = (row_radius.at(row_base + 1) * angular_pitch.at(row_base)  / sqrt(12);
 
-    double resolution_y = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);
-    LOG(TRACE) << "--> Resolution: (" << resolution_x << ", " << resolution_y << ")";
-    return {resolution_x, resolution_y};
+    // double resolution_y = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);
+    LOG(TRACE) << "--> Resolution: (" << dX / sqrt(12) << ", " << dY / sqrt(12) << ")";
+    //m_spatial_resolution = {dX / sqrt(12), dY / sqrt(12)};
+    */
+    // Get base row / column
+    auto row_base = static_cast<unsigned int>(floor(row + 0.5));
+    auto column_base = static_cast<unsigned int>(floor(column + 0.5));
+
+    // Calculate the resolution in R and Phi:
+    double dR = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);
+    double dPhi = angular_pitch.at(row_base) / sqrt(12);
+
+    // Calculate reconstructed position in R and Phi
+    auto positionLocalPolar = getPositionPolar(getLocalPosition(column, row));
+    double R = positionLocalPolar.r();
+    double Phi = positionLocalPolar.phi();
+
+    // Use gaussian error propagation to get the resolution in X,Y
+    double F = std::sqrt(focus_translation.mag2()); // Length of focus point
+    auto alpha = std::acos(F / (2 * getCenterRadius()));
+
+    // Define a few helper variables to make the calculation easier to write down
+    double K = alpha + Phi + stereo_angle;
+    double L = F / R * sin(K);
+    double M = alpha + K + asin(L);
+
+    // Calculate derivatives
+    double dXdR = L * cos(M) / std::sqrt(1 - L * L) - sin(M);
+    double dXdPhi = -1 * (F*cos(K) / std::sqrt(1 - L * L) + R) * cos(M);
+    double dYdR = -1 * L * sin(M) / std::sqrt(1 - L * L) - cos(M);
+    double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R ) * sin(M);
+
+    // Gaussian error propagation
+    double dX = std::sqrt(dXdR * dXdR * dR * dR + dXdPhi * dXdPhi * dPhi * dPhi);
+    double dY = std::sqrt(dYdR * dYdR * dR * dR + dYdPhi * dYdPhi * dPhi * dPhi);
+
+    return {dX, dY};
 }
 
 TMatrixD PolarDetector::getSpatialResolutionMatrixGlobal(double column, double row) const {
