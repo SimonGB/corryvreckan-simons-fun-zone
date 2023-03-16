@@ -55,6 +55,9 @@ namespace corryvreckan {
         double error() const;
         double errorX() const { return m_error.X(); }
         double errorY() const { return m_error.Y(); }
+
+        bool isRadial() const { return m_is_radial; }
+
         TMatrixD errorMatrixGlobal() const { return m_error_matrix_global; }
 
         bool isSplit() const { return m_split; }
@@ -95,6 +98,7 @@ namespace corryvreckan {
         void setErrorY(double error) { m_error.SetY(error); }
         void setError(ROOT::Math::XYVector error) { m_error = std::move(error); }
         void setErrorMatrixGlobal(TMatrixD errorMatrix) { m_error_matrix_global = std::move(errorMatrix); }
+        void setRadial() { m_is_radial = true; }
 
         /**
          * @brief Print an ASCII representation of Cluster to the given stream
@@ -116,6 +120,7 @@ namespace corryvreckan {
         size_t m_columnWidth{0};
         size_t m_rowWidth{0};
         bool m_split{false};
+        bool m_is_radial{false};
 
         ROOT::Math::XYZPoint m_local;
         ROOT::Math::XYZPoint m_global;
