@@ -21,10 +21,12 @@ ClusteringSpatial::ClusteringSpatial(Configuration& config, std::shared_ptr<Dete
     config_.setDefault<bool>("use_trigger_timestamp", false);
     config_.setDefault<bool>("charge_weighting", true);
     config_.setDefault<bool>("reject_by_roi", false);
+    config_.setDefault<bool>("radial_weighting", false);
 
     useTriggerTimestamp = config_.get<bool>("use_trigger_timestamp");
     chargeWeighting = config_.get<bool>("charge_weighting");
     rejectByROI = config_.get<bool>("reject_by_roi");
+    radialWeighting = config_.get<bool>("radial_weighting");
 }
 
 void ClusteringSpatial::initialize() {
@@ -217,71 +219,149 @@ StatusCode ClusteringSpatial::run(const std::shared_ptr<Clipboard>& clipboard) {
 /*
  Function to calculate the centre of gravity of a cluster.
  Sets the local and global cluster positions as well.
+ If the config option "radial_weighting" is set to true,
+ the cluster centre is calculated in the R-Phi plane first
+ before conversion into cartesian coordinates.
 */
 void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
 
     LOG(DEBUG) << "== Making cluster centre";
-    // Empty variables to calculate cluster position
-    double column(0), row(0), charge(0);
-    double column_sum(0), column_sum_chargeweighted(0);
-    double row_sum(0), row_sum_chargeweighted(0);
-    bool found_charge_zero = false;
+    if (!radialWeighting){
+        // Empty variables to calculate cluster position
+        double column(0), row(0), charge(0);
+        double column_sum(0), column_sum_chargeweighted(0);
+        double row_sum(0), row_sum_chargeweighted(0);
+        bool found_charge_zero = false;
 
-    // Get the pixels on this cluster
-    auto pixels = cluster->pixels();
-    string detectorID = pixels.front()->detectorID();
-    LOG(DEBUG) << "- cluster has " << pixels.size() << " pixels";
+        // Get the pixels on this cluster
+        auto pixels = cluster->pixels();
+        string detectorID = pixels.front()->detectorID();
+        LOG(DEBUG) << "- cluster has " << pixels.size() << " pixels";
 
-    // Loop over all pixels
-    for(auto& pixel : pixels) {
-        // If charge == 0 (use epsilon to avoid errors in floating-point arithmetic):
-        if(pixel->charge() < std::numeric_limits<double>::epsilon()) {
-            // apply arithmetic mean if a pixel has zero charge
-            found_charge_zero = true;
+        // Loop over all pixels
+        for(auto& pixel : pixels) {
+            // If charge == 0 (use epsilon to avoid errors in floating-point arithmetic):
+            if(pixel->charge() < std::numeric_limits<double>::epsilon()) {
+                // apply arithmetic mean if a pixel has zero charge
+                found_charge_zero = true;
+            }
+            charge += pixel->charge();
+
+            // We need both column_sum and column_sum_chargeweighted
+            // as we don't know a priori if there will be a pixel with
+            // charge==0 such that we have to fall back to the arithmetic mean.
+            column_sum += pixel->column();
+            row_sum += pixel->row();
+            column_sum_chargeweighted += (pixel->column() * pixel->charge());
+            row_sum_chargeweighted += (pixel->row() * pixel->charge());
+
+            LOG(DEBUG) << "- pixel col, row: " << pixel->column() << "," << pixel->row();
         }
-        charge += pixel->charge();
 
-        // We need both column_sum and column_sum_chargeweighted
-        // as we don't know a priori if there will be a pixel with
-        // charge==0 such that we have to fall back to the arithmetic mean.
-        column_sum += pixel->column();
-        row_sum += pixel->row();
-        column_sum_chargeweighted += (pixel->column() * pixel->charge());
-        row_sum_chargeweighted += (pixel->row() * pixel->charge());
+        if(chargeWeighting && !found_charge_zero) {
+            // Charge-weighted centre-of-gravity for cluster centre:
+            // (here it's safe to divide by the charge as it cannot be zero due to !found_charge_zero)
+            column = column_sum_chargeweighted / charge;
+            row = row_sum_chargeweighted / charge;
+        } else {
+            // Arithmetic cluster centre:
+            column = column_sum / static_cast<double>(cluster->size());
+            row = row_sum / static_cast<double>(cluster->size());
+        }
 
-        LOG(DEBUG) << "- pixel col, row: " << pixel->column() << "," << pixel->row();
-    }
+        LOG(DEBUG) << "- cluster col, row: " << column << "," << row << " at time "
+                << Units::display(cluster->timestamp(), "us");
 
-    if(chargeWeighting && !found_charge_zero) {
-        // Charge-weighted centre-of-gravity for cluster centre:
-        // (here it's safe to divide by the charge as it cannot be zero due to !found_charge_zero)
-        column = column_sum_chargeweighted / charge;
-        row = row_sum_chargeweighted / charge;
+        // Create object with local cluster position
+        auto positionLocal = m_detector->getLocalPosition(column, row);
+
+        // Calculate global cluster position
+        auto positionGlobal = m_detector->localToGlobal(positionLocal);
+
+        // Set the cluster parameters
+        cluster->setRow(row);
+        cluster->setColumn(column);
+        cluster->setCharge(charge);
+
+        // Set uncertainty on position from intrinstic detector spatial resolution:
+        cluster->setError(m_detector->getSpatialResolution());
+        cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal());
+
+        LOG(TRACE) << "Detector spatial resolution (x, y) = (phi, r) = (" << m_detector->getSpatialResolution().X() << ", "
+                << m_detector->getSpatialResolution().Y() << ")";
+        LOG(TRACE) << "Cluster error (x, y) = (phi, r) = (" << cluster->errorX() << ", " << cluster->errorY() << ")";
+
+        cluster->setDetectorID(detectorID);
+        cluster->setClusterCentre(positionGlobal);
+        cluster->setClusterCentreLocal(positionLocal);
     } else {
-        // Arithmetic cluster centre:
-        column = column_sum / static_cast<double>(cluster->size());
-        row = row_sum / static_cast<double>(cluster->size());
+        // Calculate cluster centre in polar coordinates, taking into account the spatial resolution
+
+        // Check detector is actually polar
+        auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
+        assert(("Detectors need to be polar for radially weighted clustering", polar_det != nullptr));
+
+        // Calculate the cluster centre first in radial coordinates, then transform
+        double charge(0), rSumWeighted(0), phiSumWeighted(0), rNorm(0), phiNorm(0);
+
+        // Get the pixels on this cluster
+        auto pixels = cluster->pixels();
+        string detectorID = pixels.front()->detectorID();
+        LOG(DEBUG) << "- cluster has " << pixels.size() << " pixels";
+
+        // Loop over all pixels to find the weighted average pixel position in r, phi
+        for(auto& pixel : pixels) {
+            // Get the obvious info from the pixel
+            charge += pixel->charge();
+            int column = pixel->column();
+            int row = pixel->row();
+            LOG(DEBUG) << "- pixel col, row: " << column << "," << row;
+
+            // Get local polar position
+            auto polarPosition = polar_det->getPositionPolar(polar_det->getLocalPosition(column, row));
+            double pixelR = polarPosition.r();
+            double pixelPhi = polarPosition.phi();
+
+            // Get pixel pitch in R and Phi
+            double pixelPitchR = polar_det->getRowRadius().at(row + 1) - polar_det->getRowRadius().at(row);
+            double pixelPitchPhi = polar_det->getAngularPitch().at(row);
+            LOG(DEBUG) << "- pixel r, phi: " << pixelR << "," << pixelPhi;
+            LOG(DEBUG) << "- pixel r pitch, phi pitch: " << pixelPitchR << "," << pixelPitchPhi;
+
+            // Assuming spatial resolution to be 1 / sqrt(12) for now
+            rSumWeighted += 12.0 * pixelR / pixelPitchR / pixelPitchR;
+            rNorm += 12.0 / pixelPitchR / pixelPitchR;
+
+            phiSumWeighted += 12.0 * pixelPhi / pixelPitchPhi / pixelPitchPhi;
+            phiNorm += 12.0 / pixelPitchPhi / pixelPitchPhi;
+        }
+
+        // Calculate weighted averages
+        double rWeightedAverage = rSumWeighted / rNorm;
+        double phiWeightedAverage = phiSumWeighted / phiNorm;
+        LOG(DEBUG) << "- cluster centre r, phi: " << rWeightedAverage << "," << phiWeightedAverage;
+
+        // Calculate weighted square errors of the cluster position in polar coordinates
+        double rWeightedSquareError = sqrt(pixels.size()) / rNorm;
+        double phiWeightedSquareError = sqrt(pixels.size()) / phiNorm;
+        LOG(DEBUG) << "- cluster centre r, phi pitch: " << rWeightedSquareError << "," << phiWeightedSquareError;
+
+        // Create object with local cluster position
+        auto positionLocal = polar_det->getPositionCartesian({rWeightedAverage, 0, phiWeightedAverage});
+
+        // Calculate global cluster position
+        auto positionGlobal = polar_det->localToGlobal(positionLocal);
+
+        // Set cluster values we already know
+        cluster->setRow(polar_det->getRow(positionLocal));
+        cluster->setColumn(polar_det->getColumn(positionLocal));
+        cluster->setCharge(charge);
+        cluster->setDetectorID(detectorID);
+        cluster->setClusterCentre(positionGlobal);
+        cluster->setClusterCentreLocal(positionLocal);
+
+        // Get error transformation from the detector
+        cluster->setError(polar_det->transformResolution(rWeightedAverage, phiWeightedAverage, rWeightedSquareError, phiWeightedSquareError));
+        cluster->setErrorMatrixGlobal(polar_det->transformResolutionMatrixGlobal(rWeightedAverage, phiWeightedAverage, rWeightedSquareError, phiWeightedSquareError));
     }
-
-    LOG(DEBUG) << "- cluster col, row: " << column << "," << row << " at time "
-               << Units::display(cluster->timestamp(), "us");
-
-    // Create object with local cluster position
-    auto positionLocal = m_detector->getLocalPosition(column, row);
-
-    // Calculate global cluster position
-    auto positionGlobal = m_detector->localToGlobal(positionLocal);
-
-    // Set the cluster parameters
-    cluster->setRow(row);
-    cluster->setColumn(column);
-    cluster->setCharge(charge);
-
-    // Set uncertainty on position from intrinstic detector spatial resolution:
-    cluster->setError(m_detector->getSpatialResolution());
-    cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal());
-
-    cluster->setDetectorID(detectorID);
-    cluster->setClusterCentre(positionGlobal);
-    cluster->setClusterCentreLocal(positionLocal);
 }

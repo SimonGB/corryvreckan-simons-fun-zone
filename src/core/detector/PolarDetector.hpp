@@ -134,6 +134,9 @@ namespace corryvreckan {
          */
         XYVector getSpatialResolution(double column, double row) const override;
 
+        XYVector transformResolution(double R, double phi, double varianceR, double variancePhi);
+        TMatrixD transformResolutionMatrixGlobal(double R, double phi, double varianceR, double variancePhi);
+
         /*
          * @brief Get number of pixels in x and y
          * @return Number of two dimensional pixels
@@ -206,6 +209,8 @@ namespace corryvreckan {
          */
         std::set<std::pair<int, int>>
         getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
+        std::vector<double> getRowRadius() {return row_radius;};
+        std::vector<double> getAngularPitch() {return angular_pitch;};
 
     private:
         // Build axis, for devices which are not auxiliary

@@ -571,6 +571,55 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
     return false;
 }
 
+XYVector PolarDetector::transformResolution(double R, double phi, double varianceR, double variancePhi) {
+
+    LOG(TRACE) << "Transforming resolution (R, phi), (dR, dPhi): (" <<  R << " , "  << phi << ")     ("   << varianceR << " , "  <<  variancePhi << ")";
+
+    // Calculate the resolution in R and Phi:
+    double dR = sqrt(varianceR);
+    double dPhi = sqrt(variancePhi);
+
+    // Use gaussian error propagation to get the resolution in X,Y
+    double F = std::sqrt(focus_translation.mag2()); // Length of focus point
+    auto alpha = std::acos(F / (2 * getCenterRadius()));
+
+    // Define a few helper variables to make the calculation easier to write down
+    double K = alpha + phi + stereo_angle;
+    double L = F / R * sin(K);
+    double M = alpha + K + asin(L);
+
+    // Calculate derivatives
+    double dXdR = L * cos(M) / std::sqrt(1 - L * L) - sin(M);
+    double dXdPhi = -1 * (F*cos(K) / std::sqrt(1 - L * L) + R) * cos(M);
+    double dYdR = -1 * L * sin(M) / std::sqrt(1 - L * L) - cos(M);
+    double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R ) * sin(M);
+
+    // Gaussian error propagation
+    double dX = std::sqrt(dXdR * dXdR * dR * dR + dXdPhi * dXdPhi * dPhi * dPhi);
+    double dY = std::sqrt(dYdR * dYdR * dR * dR + dYdPhi * dYdPhi * dPhi * dPhi);
+
+    LOG(TRACE) << "Transformed resolution (dX, dY)" <<  dX << " , "<< dY;
+
+    return {dX, dY};
+};
+
+TMatrixD PolarDetector::transformResolutionMatrixGlobal(double R, double phi, double varianceR, double variancePhi) {
+    //
+    auto localResolutionXY = transformResolution(R, phi, varianceR, variancePhi);
+
+    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
+    TMatrixD errorMatrix(3, 3);
+    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
+    errorMatrix(0, 0) = localResolutionXY.x() * localResolutionXY.x();
+    errorMatrix(1, 1) = localResolutionXY.y() * localResolutionXY.y();
+    alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
+    alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
+    //LOG(TRACE) << "Transformed Error Matrix" << locToGlob * errorMatrix * globToLoc;
+    return locToGlob * errorMatrix * globToLoc;
+}
+
+
+
 XYVector PolarDetector::getSpatialResolution(double column, double row) const {
     //return m_spatial_resolution;
     /*
