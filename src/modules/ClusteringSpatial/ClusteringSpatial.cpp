@@ -329,11 +329,11 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
             LOG(DEBUG) << "- pixel r pitch, phi pitch: " << pixelPitchR << "," << pixelPitchPhi;
 
             // Assuming spatial resolution to be pitch / sqrt(12) for now
-            weightR = 12.0  / pixelPitchR / pixelPitchR
+            double weightR = 12.0  / pixelPitchR / pixelPitchR;
             rSumWeighted += weightR * pixelR;
             rNorm += weightR;
 
-            weightPhi = 12.0 / pixelPitchPhi / pixelPitchPhi;
+            double weightPhi = 12.0 / pixelPitchPhi / pixelPitchPhi;
             phiSumWeighted += weightPhi * pixelPhi;
             phiNorm += weightPhi;
         }
