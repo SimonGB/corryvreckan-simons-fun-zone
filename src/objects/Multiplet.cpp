@@ -28,14 +28,16 @@ Multiplet::Multiplet(std::shared_ptr<Track> upstream, std::shared_ptr<Track> dow
         this->addCluster(cluster);
     }
     // if it's listed as plane for upstream or downstream, it should be a plane for the multiplet too
-    planes_ = std::move(m_upstream->getPlanes());
-    for(auto& upp : m_downstream->getPlanes()) {
+    for(auto& upp : m_upstream->getPlanes()) {
+        planes_.push_back(std::move(upp));
+    }
+    for(auto& dop : m_downstream->getPlanes()) {
         auto pl = std::find_if(
-            planes_.begin(), planes_.end(), [&upp](const Plane& plane) { return plane.getName() == upp.getName(); });
+            planes_.begin(), planes_.end(), [&dop](const Plane& plane) { return plane.getName() == dop.getName(); });
         if(pl == planes_.end()) {
-            planes_.push_back(std::move(upp));
+            planes_.push_back(std::move(dop));
         } else {
-            *pl = std::move(upp);
+            *pl = std::move(dop);
         }
     }
 }
