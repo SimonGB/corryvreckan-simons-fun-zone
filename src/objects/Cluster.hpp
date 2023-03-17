@@ -56,7 +56,12 @@ namespace corryvreckan {
         double errorX() const { return m_error.X(); }
         double errorY() const { return m_error.Y(); }
 
+        // Retrieve radial cluster parameters
         bool isRadial() const { return m_is_radial; }
+        double r() const { return m_local_polar.R(); }
+        double phi() const { return m_local_polar.Phi(); }
+        double errorR() const { return m_error_polar.R(); }
+        double errorPhi() const { return m_error_polar.Phi(); }
 
         TMatrixD errorMatrixGlobal() const { return m_error_matrix_global; }
 
@@ -98,7 +103,17 @@ namespace corryvreckan {
         void setErrorY(double error) { m_error.SetY(error); }
         void setError(ROOT::Math::XYVector error) { m_error = std::move(error); }
         void setErrorMatrixGlobal(TMatrixD errorMatrix) { m_error_matrix_global = std::move(errorMatrix); }
+
+        // Set radial cluster parameters
         void setRadial() { m_is_radial = true; }
+        void setClusterCentreRadial(double r, double phi) {
+            m_local_polar.SetR(r);
+            m_local_polar.SetPhi(phi);
+        }
+        void setErrorRadial(double dR, double dPhi) {
+            m_error_polar.SetR(dR);
+            m_error_polar.SetPhi(dPhi);
+        }
 
         /**
          * @brief Print an ASCII representation of Cluster to the given stream
@@ -120,7 +135,11 @@ namespace corryvreckan {
         size_t m_columnWidth{0};
         size_t m_rowWidth{0};
         bool m_split{false};
+
+        // Variables for radial clusters
         bool m_is_radial{false};
+        ROOT::Math::PositionVector3D<ROOT::Math::Polar3D<double>> m_local_polar;
+        ROOT::Math::PositionVector3D<ROOT::Math::Polar3D<double>> m_error_polar;
 
         ROOT::Math::XYZPoint m_local;
         ROOT::Math::XYZPoint m_global;
@@ -129,7 +148,7 @@ namespace corryvreckan {
         std::map<int, bool> m_columnHits;
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(Cluster, 15)
+        ClassDefOverride(Cluster, 16)
     };
 
     // Vector type declaration
