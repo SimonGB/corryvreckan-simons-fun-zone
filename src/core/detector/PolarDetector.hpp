@@ -137,10 +137,28 @@ namespace corryvreckan {
          */
         XYVector getSpatialResolution(double column, double row) const override;
 
-        XYVector transformResolution(double R, double phi, double varianceR, double variancePhi);
+        /**
+         * @brief Transform the detector resolution in the R/Phi plane to cartesian coordinates using gaussian error
+         * propagation
+         * @param R R position of the hit
+         * @param phi Phi position of the hit
+         * @param varianceR Variance (resolution^2) of the hit in R
+         * @param variancePhi Variance (resolution^2) of the hit in phi
+         * @return Spatial resolution in X and Y
+         */
+        XYVector transformResolution(double R, double phi, double varianceR, double variancePhi) const;
+
+        /**
+         * @brief Return the detector resolution in X,Y as a resolution matrix
+         * @param R R position of the hit
+         * @param phi Phi position of the hit
+         * @param varianceR Variance (resolution^2) of the hit in R
+         * @param variancePhi Variance (resolution^2) of the hit in phi
+         * @return Resolution Matrix (Global)
+         */
         TMatrixD transformResolutionMatrixGlobal(double R, double phi, double varianceR, double variancePhi);
 
-        /*
+        /**
          * @brief Get number of pixels in x and y
          * @return Number of two dimensional pixels
          */

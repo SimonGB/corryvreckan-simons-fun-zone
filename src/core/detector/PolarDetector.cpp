@@ -514,7 +514,7 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
     return false;
 }
 
-XYVector PolarDetector::transformResolution(double R, double phi, double varianceR, double variancePhi) {
+XYVector PolarDetector::transformResolution(double R, double phi, double varianceR, double variancePhi) const {
 
     LOG(TRACE) << "Transforming resolution (R, phi), (varR, varPhi): (" << R << " , " << phi << ")     (" << varianceR
                << " , " << variancePhi << ")";
@@ -559,38 +559,24 @@ TMatrixD PolarDetector::transformResolutionMatrixGlobal(double R, double phi, do
 }
 
 XYVector PolarDetector::getSpatialResolution(double column, double row) const {
-    // Get base row / column
+    // Get base row
     auto row_base = static_cast<unsigned int>(floor(row + 0.5));
-
-    // Calculate the resolution in R and Phi:
-    double dR = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);
-    double dPhi = angular_pitch.at(row_base) / sqrt(12);
 
     // Calculate reconstructed position in R and Phi
     auto positionLocalPolar = getPositionPolar(getLocalPosition(column, row));
     double R = positionLocalPolar.r();
     double Phi = positionLocalPolar.phi();
 
-    // Use gaussian error propagation to get the resolution in X,Y
-    double F = std::sqrt(focus_translation.mag2()); // Length of focus point
-    auto alpha = std::acos(F / (2 * getCenterRadius()));
+    // Variances
+    double rPitch = row_radius.at(row_base + 1) - row_radius.at(row_base);
+    double phiPitch = angular_pitch.at(row_base);
 
-    // Define a few helper variables to make the calculation easier to write down
-    double K = alpha + Phi + stereo_angle;
-    double L = F / R * sin(K);
-    double M = alpha + K + asin(L);
+    // Assume resolution to be pitch / sqrt(12) for now
+    double varianceR = rPitch * rPitch / 12;
+    double variancePhi = phiPitch * phiPitch / 12;
 
-    // Calculate derivatives
-    double dXdR = L * cos(M) / std::sqrt(1 - L * L) - sin(M);
-    double dXdPhi = -1 * (F * cos(K) / std::sqrt(1 - L * L) + R) * cos(M);
-    double dYdR = -1 * L * sin(M) / std::sqrt(1 - L * L) - cos(M);
-    double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R) * sin(M);
-
-    // Gaussian error propagation
-    double dX = std::sqrt(dXdR * dXdR * dR * dR + dXdPhi * dXdPhi * dPhi * dPhi);
-    double dY = std::sqrt(dYdR * dYdR * dR * dR + dYdPhi * dYdPhi * dPhi * dPhi);
-
-    return {dX, dY};
+    // Return transformed resolution in X / Y
+    return transformResolution(R, Phi, varianceR, variancePhi);
 }
 
 TMatrixD PolarDetector::getSpatialResolutionMatrixGlobal(double column, double row) const {
