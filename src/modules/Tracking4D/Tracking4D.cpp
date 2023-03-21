@@ -329,6 +329,12 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 continue;
             }
 
+            // If first and last cluster are in the same plane, skip this pair
+            if(reference_first->displacement().z() == reference_last->displacement().z()) {
+                LOG(DEBUG) << "Reference clusters in the same detector plane, skipping.";
+                continue;
+            }
+
             // The track finding is based on a straight line. Therefore a refTrack to extrapolate to the next plane is used
             StraightLineTrack refTrack;
             refTrack.addCluster(clusterFirst.get());
