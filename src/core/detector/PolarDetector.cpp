@@ -573,11 +573,7 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
 
 XYVector PolarDetector::transformResolution(double R, double phi, double varianceR, double variancePhi) {
 
-    LOG(TRACE) << "Transforming resolution (R, phi), (dR, dPhi): (" <<  R << " , "  << phi << ")     ("   << varianceR << " , "  <<  variancePhi << ")";
-
-    // Calculate the resolution in R and Phi:
-    double dR = sqrt(varianceR);
-    double dPhi = sqrt(variancePhi);
+    LOG(TRACE) << "Transforming resolution (R, phi), (varR, varPhi): (" <<  R << " , "  << phi << ")     ("   << varianceR << " , "  <<  variancePhi << ")";
 
     // Use gaussian error propagation to get the resolution in X,Y
     double F = std::sqrt(focus_translation.mag2()); // Length of focus point
@@ -595,8 +591,8 @@ XYVector PolarDetector::transformResolution(double R, double phi, double varianc
     double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R ) * sin(M);
 
     // Gaussian error propagation
-    double dX = std::sqrt(dXdR * dXdR * dR * dR + dXdPhi * dXdPhi * dPhi * dPhi);
-    double dY = std::sqrt(dYdR * dYdR * dR * dR + dYdPhi * dYdPhi * dPhi * dPhi);
+    double dX = std::sqrt(dXdR * dXdR * varianceR + dXdPhi * dXdPhi * variancePhi);
+    double dY = std::sqrt(dYdR * dYdR * varianceR + dYdPhi * dYdPhi * variancePhi);
 
     LOG(TRACE) << "Transformed resolution (dX, dY)" <<  dX << " , "<< dY;
 
@@ -604,7 +600,7 @@ XYVector PolarDetector::transformResolution(double R, double phi, double varianc
 };
 
 TMatrixD PolarDetector::transformResolutionMatrixGlobal(double R, double phi, double varianceR, double variancePhi) {
-    //
+    // Get resolution in X / Y
     auto localResolutionXY = transformResolution(R, phi, varianceR, variancePhi);
 
     // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
