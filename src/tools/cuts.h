@@ -35,9 +35,7 @@ namespace corryvreckan {
         }
         return d->getTimeResolution();
     }
-    template <>
-    inline XYVector
-    get_resolution<XYVector>(const std::string& n, const std::shared_ptr<Detector>& d) {
+    template <> inline XYVector get_resolution<XYVector>(const std::string& n, const std::shared_ptr<Detector>& d) {
         if(n.find("spatial") == std::string::npos) {
             throw ConfigurationError();
         }
