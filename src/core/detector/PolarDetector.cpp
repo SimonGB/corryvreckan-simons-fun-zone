@@ -644,7 +644,6 @@ XYVector PolarDetector::getSpatialResolution(double column, double row) const {
     */
     // Get base row / column
     auto row_base = static_cast<unsigned int>(floor(row + 0.5));
-    auto column_base = static_cast<unsigned int>(floor(column + 0.5));
 
     // Calculate the resolution in R and Phi:
     double dR = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);
