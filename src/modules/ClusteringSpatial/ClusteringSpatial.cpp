@@ -369,11 +369,5 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
         // Get error transformation from the detector
         cluster->setError(polar_det->transformResolution(rWeightedAverage, phiWeightedAverage, rWeightedSquareError, phiWeightedSquareError));
         cluster->setErrorMatrixGlobal(polar_det->transformResolutionMatrixGlobal(rWeightedAverage, phiWeightedAverage, rWeightedSquareError, phiWeightedSquareError));
-    
-        // Set radial cluster parameters
-        cluster->setRadial();
-        cluster->setClusterCentreRadial(rWeightedAverage, phiWeightedAverage);
-        cluster->setErrorRadial(dR, dPhi);
-
     }
 }
