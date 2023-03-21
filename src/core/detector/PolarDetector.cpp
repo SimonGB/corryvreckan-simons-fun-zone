@@ -25,9 +25,6 @@ using namespace corryvreckan;
 PolarDetector::PolarDetector(const Configuration& config) : Detector(config) {
     m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
 
-    // Set detector position and direction from configuration file
-    // SetPositionAndOrientation(config);
-
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         build_axes(config);
@@ -37,13 +34,11 @@ PolarDetector::PolarDetector(const Configuration& config) : Detector(config) {
     auto origin_translate = Translation3D(0, -getCenterRadius(), 0);
     auto origin_trf = Transform3D(origin_translate);
     this->alignment_->setOriginTransform(origin_trf);
+
     // Update the underlying alignment object to incorporate the transformation
     auto displ = alignment_->displacement();
     auto orient = alignment_->orientation();
     this->alignment_->update(displ, orient);
-
-    // auto zero_point = XYZPoint(0,0,0);
-    // LOG(TRACE) << "====> Transforming (0,0,0): " << globalToLocal(zero_point);
 
     // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
     TMatrixD errorMatrix(3, 3);
@@ -95,6 +90,7 @@ void PolarDetector::build_axes(const Configuration& config) {
 
     // Get central radius
     center_radius = config.get<double>("center_radius", 0.0);
+
     // If central radius wasn't provided, calculate as average radius
     if(center_radius == 0) {
         center_radius = (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2;
@@ -137,20 +133,6 @@ void PolarDetector::build_axes(const Configuration& config) {
         process_mask_file();
     }
 }
-
-// void PolarDetector::SetPositionAndOrientation(const Configuration& config) {
-//     // Detector position and orientation
-//     m_displacement = config.get<ROOT::Math::XYZPoint>("position", ROOT::Math::XYZPoint());
-//     m_orientation = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
-//     m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
-
-//     if(m_orientation_mode != "xyz" && m_orientation_mode != "zyx" && m_orientation_mode != "zxz") {
-//         throw InvalidValueError(config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
-//     }
-
-//     LOG(TRACE) << "  Position:    " << Units::display(m_displacement, {"mm", "um"});
-//     LOG(TRACE) << "  Orientation: " << Units::display(m_orientation, {"deg"}) << " (" << m_orientation_mode << ")";
-// }
 
 void PolarDetector::process_mask_file() {
     // Open the file with masked pixels
@@ -208,45 +190,6 @@ bool PolarDetector::masked(int chX, int chY) const {
         return true;
     return false;
 }
-
-// // Function to initialise transforms
-// void PolarDetector::SetPositionAndOrientation(const Configuration& config) {
-
-//     // Make the local to global transform, built from a displacement and rotation
-//     Translation3D translations = Translation3D(m_displacement.X(), m_displacement.Y(), m_displacement.Z());
-
-//     Rotation3D rotations;
-//     if(m_orientation_mode == "xyz") {
-//         LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
-//         // First angle given in the configuration file is around x, second around y, last around z:
-//         rotations = RotationZ(m_orientation.Z()) * RotationY(m_orientation.Y()) * RotationX(m_orientation.X());
-//     } else if(m_orientation_mode == "zyx") {
-//         LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
-//         // First angle given in the configuration file is around z, second around y, last around x:
-//         rotations = RotationZYX(m_orientation.x(), m_orientation.y(), m_orientation.z());
-//     } else if(m_orientation_mode == "zxz") {
-//         LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
-//         // First angle given in the configuration file is around z, second around x, last around z:
-//         rotations = EulerAngles(m_orientation.x(), m_orientation.y(), m_orientation.z());
-//     } else {
-//         throw InvalidSettingError(this, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
-//     }
-
-//     // Additional translation to have local coordinates calculated from the sensor origin
-//     auto origin_trf = Translation3D(0, -getCenterRadius(), 0);
-//     m_localToGlobal = Transform3D(rotations, translations * origin_trf);
-//     m_globalToLocal = m_localToGlobal.Inverse();
-
-//     // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
-//     // transform these points to the global coordinate frame and then make a vector pointing between them
-//     m_origin = PositionVector3D<Cartesian3D<double>>(0., getCenterRadius(), 0.);
-//     m_origin = m_localToGlobal * m_origin;
-//     PositionVector3D<Cartesian3D<double>> localZ(0., getCenterRadius(), 1.);
-//     localZ = m_localToGlobal * localZ;
-//     m_normal = PositionVector3D<Cartesian3D<double>>(
-//         localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
-
-// }
 
 // Only if detector is not auxiliary
 void PolarDetector::configure_detector(Configuration& config) const {
@@ -430,9 +373,6 @@ PositionVector3D<Cartesian3D<double>> PolarDetector::getLocalPosition(double col
     return PositionVector3D<Cartesian3D<double>>(pos.x(), pos.y(), 0.0);
 }
 
-
-
-
 // Function to get in-pixel position
 ROOT::Math::XYVector PolarDetector::inPixel(const double column, const double row) const {
     // Transform received position to polar coordinates and get the coordinates of the strip center
@@ -573,7 +513,8 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
 
 XYVector PolarDetector::transformResolution(double R, double phi, double varianceR, double variancePhi) {
 
-    LOG(TRACE) << "Transforming resolution (R, phi), (varR, varPhi): (" <<  R << " , "  << phi << ")     ("   << varianceR << " , "  <<  variancePhi << ")";
+    LOG(TRACE) << "Transforming resolution (R, phi), (varR, varPhi): (" << R << " , " << phi << ")     (" << varianceR
+               << " , " << variancePhi << ")";
 
     // Use gaussian error propagation to get the resolution in X,Y
     double F = std::sqrt(focus_translation.mag2()); // Length of focus point
@@ -586,15 +527,15 @@ XYVector PolarDetector::transformResolution(double R, double phi, double varianc
 
     // Calculate derivatives
     double dXdR = L * cos(M) / std::sqrt(1 - L * L) - sin(M);
-    double dXdPhi = -1 * (F*cos(K) / std::sqrt(1 - L * L) + R) * cos(M);
+    double dXdPhi = -1 * (F * cos(K) / std::sqrt(1 - L * L) + R) * cos(M);
     double dYdR = -1 * L * sin(M) / std::sqrt(1 - L * L) - cos(M);
-    double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R ) * sin(M);
+    double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R) * sin(M);
 
     // Gaussian error propagation
     double dX = std::sqrt(dXdR * dXdR * varianceR + dXdPhi * dXdPhi * variancePhi);
     double dY = std::sqrt(dYdR * dYdR * varianceR + dYdPhi * dYdPhi * variancePhi);
 
-    LOG(TRACE) << "Transformed resolution (dX, dY)" <<  dX << " , "<< dY;
+    LOG(TRACE) << "Transformed resolution (dX, dY)" << dX << " , " << dY;
 
     return {dX, dY};
 };
@@ -610,38 +551,11 @@ TMatrixD PolarDetector::transformResolutionMatrixGlobal(double R, double phi, do
     errorMatrix(1, 1) = localResolutionXY.y() * localResolutionXY.y();
     alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
     alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
-    //LOG(TRACE) << "Transformed Error Matrix" << locToGlob * errorMatrix * globToLoc;
+    // LOG(TRACE) << "Transformed Error Matrix" << locToGlob * errorMatrix * globToLoc;
     return locToGlob * errorMatrix * globToLoc;
 }
 
-
-
 XYVector PolarDetector::getSpatialResolution(double column, double row) const {
-    //return m_spatial_resolution;
-    /*
-    // Get base row + column
-    
-
-    // Calculate approximate dimensions in R and Phi directions
-    double dR   = row_radius.at(row_base + 1) - row_radius.at(row_base);
-    double dPhi = (row_radius.at(row_base) + row_radius.at(row_base + 1)) / 2 * angular_pitch.at(row_base);
-
-    // Approximate size of pixel in x and y by stereo angle rotation
-    double dX = sin(stereo_angle) * dPhi + cos(stereo_angle) * dR;
-    double dY = sin(stereo_angle) * dR + cos(stereo_angle) * dPhi;
-
-
-
-
-    // LOG(TRACE) << "[polarDet-getSpatialResolution] called for row " << row;
-    // LOG(TRACE) << "--> strip pitch kinda: " << row_radius.at(row_base + 1) * angular_pitch.at(row_base);
-    // LOG(TRACE) << "--> strip length: " << (row_radius.at(row_base + 1) - row_radius.at(row_base));
-    // double resolution_x = (row_radius.at(row_base + 1) * angular_pitch.at(row_base)  / sqrt(12);
-
-    // double resolution_y = (row_radius.at(row_base + 1) - row_radius.at(row_base)) / sqrt(12);
-    LOG(TRACE) << "--> Resolution: (" << dX / sqrt(12) << ", " << dY / sqrt(12) << ")";
-    //m_spatial_resolution = {dX / sqrt(12), dY / sqrt(12)};
-    */
     // Get base row / column
     auto row_base = static_cast<unsigned int>(floor(row + 0.5));
 
@@ -665,9 +579,9 @@ XYVector PolarDetector::getSpatialResolution(double column, double row) const {
 
     // Calculate derivatives
     double dXdR = L * cos(M) / std::sqrt(1 - L * L) - sin(M);
-    double dXdPhi = -1 * (F*cos(K) / std::sqrt(1 - L * L) + R) * cos(M);
+    double dXdPhi = -1 * (F * cos(K) / std::sqrt(1 - L * L) + R) * cos(M);
     double dYdR = -1 * L * sin(M) / std::sqrt(1 - L * L) - cos(M);
-    double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R ) * sin(M);
+    double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R) * sin(M);
 
     // Gaussian error propagation
     double dX = std::sqrt(dXdR * dXdR * dR * dR + dXdPhi * dXdPhi * dPhi * dPhi);
@@ -690,8 +604,6 @@ TMatrixD PolarDetector::getSpatialResolutionMatrixGlobal(double column, double r
 
     return locToGlob * errorMatrix * globToLoc;
 }
-
-
 
 // Function to get row and column of pixel
 std::pair<int, int> PolarDetector::getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const {

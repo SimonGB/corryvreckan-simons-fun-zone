@@ -195,7 +195,9 @@ namespace corryvreckan {
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
          * @return Intrinsic spatial resolution in global X and Y
          */
-        virtual TMatrixD getSpatialResolutionMatrixGlobal(double column, double row) const override;// { return m_spatial_resolution_matrix_global; }
+        virtual TMatrixD
+        getSpatialResolutionMatrixGlobal(double column,
+                                         double row) const override; // { return m_spatial_resolution_matrix_global; }
 
         /**
          * @brief Return a set containing all strips neighboring the given one with a configurable maximum distance
@@ -209,8 +211,8 @@ namespace corryvreckan {
          */
         std::set<std::pair<int, int>>
         getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
-        std::vector<double> getRowRadius() {return row_radius;};
-        std::vector<double> getAngularPitch() {return angular_pitch;};
+        std::vector<double> getRowRadius() { return row_radius; };
+        std::vector<double> getAngularPitch() { return angular_pitch; };
 
     private:
         // Build axis, for devices which are not auxiliary
@@ -237,6 +239,7 @@ namespace corryvreckan {
         XYVector m_spatial_resolution{};
         TMatrixD m_spatial_resolution_matrix_global{3, 3};
         std::vector<std::vector<int>> m_roi{};
+
         // Displacement and rotation in x,y,z
         ROOT::Math::XYZPoint m_displacement;
         ROOT::Math::XYZVector m_orientation;
