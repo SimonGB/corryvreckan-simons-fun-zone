@@ -328,12 +328,14 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
             LOG(DEBUG) << "- pixel r, phi: " << pixelR << "," << pixelPhi;
             LOG(DEBUG) << "- pixel r pitch, phi pitch: " << pixelPitchR << "," << pixelPitchPhi;
 
-            // Assuming spatial resolution to be 1 / sqrt(12) for now
-            rSumWeighted += 12.0 * pixelR / pixelPitchR / pixelPitchR;
-            rNorm += 12.0 / pixelPitchR / pixelPitchR;
+            // Assuming spatial resolution to be pitch / sqrt(12) for now
+            double weightR = 12.0  / pixelPitchR / pixelPitchR;
+            rSumWeighted += weightR * pixelR;
+            rNorm += weightR;
 
-            phiSumWeighted += 12.0 * pixelPhi / pixelPitchPhi / pixelPitchPhi;
-            phiNorm += 12.0 / pixelPitchPhi / pixelPitchPhi;
+            double weightPhi = 12.0 / pixelPitchPhi / pixelPitchPhi;
+            phiSumWeighted += weightPhi * pixelPhi;
+            phiNorm += weightPhi;
         }
 
         // Calculate weighted averages
@@ -342,9 +344,13 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
         LOG(DEBUG) << "- cluster centre r, phi: " << rWeightedAverage << "," << phiWeightedAverage;
 
         // Calculate weighted square errors of the cluster position in polar coordinates
-        double rWeightedSquareError = sqrt(pixels.size()) / rNorm;
-        double phiWeightedSquareError = sqrt(pixels.size()) / phiNorm;
-        LOG(DEBUG) << "- cluster centre r, phi pitch: " << rWeightedSquareError << "," << phiWeightedSquareError;
+        double rWeightedSquareError = pixels.size() / rNorm;
+        double phiWeightedSquareError = pixels.size() / phiNorm;
+        // Calculate resolutions
+        double dR = sqrt(rWeightedSquareError);
+        double dPhi = sqrt(phiWeightedSquareError);
+
+        LOG(DEBUG) << "- cluster centre r, phi res: " << dR << "," << dPhi;
 
         // Create object with local cluster position
         auto positionLocal = polar_det->getPositionCartesian({rWeightedAverage, 0, phiWeightedAverage});
@@ -363,5 +369,11 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
         // Get error transformation from the detector
         cluster->setError(polar_det->transformResolution(rWeightedAverage, phiWeightedAverage, rWeightedSquareError, phiWeightedSquareError));
         cluster->setErrorMatrixGlobal(polar_det->transformResolutionMatrixGlobal(rWeightedAverage, phiWeightedAverage, rWeightedSquareError, phiWeightedSquareError));
+    
+        // Set radial cluster parameters
+        cluster->setRadial();
+        cluster->setClusterCentreRadial(rWeightedAverage, phiWeightedAverage);
+        cluster->setErrorRadial(dR, dPhi);
+
     }
 }
