@@ -313,8 +313,8 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
         for(auto& pixel : pixels) {
             // Get the obvious info from the pixel
             charge += pixel->charge();
-            int column = pixel->column();
-            int row = pixel->row();
+            unsigned int column = static_cast<unsigned int>(pixel->column());
+            unsigned int row = static_cast<unsigned int>(pixel->row());
             LOG(DEBUG) << "- pixel col, row: " << column << "," << row;
 
             // Get local polar position
@@ -344,8 +344,8 @@ void ClusteringSpatial::calculateClusterCentre(Cluster* cluster) {
         LOG(DEBUG) << "- cluster centre r, phi: " << rWeightedAverage << "," << phiWeightedAverage;
 
         // Calculate weighted square errors of the cluster position in polar coordinates
-        double rWeightedSquareError = pixels.size() / rNorm;
-        double phiWeightedSquareError = pixels.size() / phiNorm;
+        double rWeightedSquareError = static_cast<double>(pixels.size()) / rNorm;
+        double phiWeightedSquareError = static_cast<double>(pixels.size()) / phiNorm;
         // Calculate resolutions
         double dR = sqrt(rWeightedSquareError);
         double dPhi = sqrt(phiWeightedSquareError);
