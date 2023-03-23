@@ -217,6 +217,7 @@ Configuration BigPixelDetector::getConfiguration() const {
     auto config = PixelDetector::getConfiguration();
 
     config.setMatrix("big_pixel", m_big_pixel);
+    config.set<XYVector>("big_pixel_spatial_resolution", m_big_pixel_spatial_resolution);
 
     return config;
 }
