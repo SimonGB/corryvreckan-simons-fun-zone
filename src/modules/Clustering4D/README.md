@@ -35,6 +35,7 @@ For each detector the following plots are produced:
 * 2D cluster positions in global coordinates
 * Cluster times
 * Cluster multiplicity
+* Cluster uncertainty
 * Time difference between seed pixel and other pixels in a cluster for different cluster sizes and vs. the pixel charge
 
 ### Usage
