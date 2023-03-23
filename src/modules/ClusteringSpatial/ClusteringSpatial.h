@@ -48,8 +48,8 @@ namespace corryvreckan {
         TH2F* clusterPositionGlobal;
         TH2F* clusterPositionLocal;
         TH1F* clusterTimes;
-        TH1F* clusterErrorX;
-        TH1F* clusterErrorY;
+        TH1F* clusterUncertaintyX;
+        TH1F* clusterUncertaintyY;
 
         bool useTriggerTimestamp;
         bool chargeWeighting;
