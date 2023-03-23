@@ -42,6 +42,22 @@ namespace corryvreckan {
         // Function to get local position from column (x) and row (y) coordinates
         PositionVector3D<Cartesian3D<double>> getLocalPosition(double column, double row) const override;
 
+        /**
+         * @brief Get intrinsic spatial resolution of the detector
+         * @return Intrinsic spatial resolution in X and Y
+         *
+         * @note For a detector with variable pixel sizes this declaration could be changed to take column and row pixel
+         * indices to calculate the resolution for a specific pixel
+         */
+        XYVector getSpatialResolution(double, double) const override;
+
+        /**
+         * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @return Intrinsic spatial resolution in global X and Y
+         */
+        TMatrixD getSpatialResolutionMatrixGlobal(double, double) const override;
+
+
         ROOT::Math::XYVector getSize() const override;
 
         /**

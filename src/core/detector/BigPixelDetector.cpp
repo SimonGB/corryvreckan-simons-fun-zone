@@ -177,6 +177,40 @@ ROOT::Math::XYVector BigPixelDetector::getSize() const {
                     m_pitch.Y() * (m_nPixels.Y() + static_cast<double>(big_pixel_y.size())));
 }
 
+XYVector BigPixelDetector::getSpatialResolution(double column = 0, double row = 0) const {
+    bool is_big_x_pixel = 0;
+    bool is_big_y_pixel = 0;
+
+    for(unsigned int i = 0; i < big_pixel_x.size(); i++) {
+        if(fabs(column - big_pixel_x[i]) < 0.5) {
+            is_big_x_pixel = true;
+            break;
+        }
+    }
+
+    for(unsigned int i = 0; i < big_pixel_y.size(); i++) {
+        if(fabs(row - big_pixel_y[i]) < 0.5) {
+            is_big_y_pixel = true;
+            break;
+        }
+    }
+
+    double resolution_x = is_big_x_pixel ? 2*m_spatial_resolution.x() : m_spatial_resolution.x();
+    double resolution_y = is_big_y_pixel ? 2*m_spatial_resolution.y() : m_spatial_resolution.y();
+    return XYVector(resolution_x, resolution_y);
+}
+
+TMatrixD BigPixelDetector::getSpatialResolutionMatrixGlobal(double column = 0, double row = 0) const {
+    TMatrixD errorMatrix(3, 3);
+    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
+    auto spatial_resolution = getSpatialResolution(column, row);
+    errorMatrix(0, 0) = spatial_resolution.x() * spatial_resolution.x();
+    errorMatrix(1, 1) = spatial_resolution.y() * spatial_resolution.y();
+    alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
+    alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
+    return (locToGlob * errorMatrix * globToLoc);
+}
+
 Configuration BigPixelDetector::getConfiguration() const {
     auto config = PixelDetector::getConfiguration();
 
