@@ -58,7 +58,7 @@ namespace corryvreckan {
         TMatrixD getSpatialResolutionMatrixGlobal(double, double) const override;
 
 
-        ROOT::Math::XYVector getSize() const override;
+        XYVector getSize() const override;
 
         /**
          * @brief Retrieve configuration object from detector, containing all (potentially updated) parameters

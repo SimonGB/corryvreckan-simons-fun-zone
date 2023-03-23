@@ -172,7 +172,7 @@ PositionVector3D<Cartesian3D<double>> BigPixelDetector::getLocalPosition(double 
         0.);
 }
 
-ROOT::Math::XYVector BigPixelDetector::getSize() const {
+XYVector BigPixelDetector::getSize() const {
     return XYVector(m_pitch.X() * (m_nPixels.X() + static_cast<double>(big_pixel_x.size())),
                     m_pitch.Y() * (m_nPixels.Y() + static_cast<double>(big_pixel_y.size())));
 }
