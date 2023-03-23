@@ -28,6 +28,7 @@ For each detector the following plots are produced:
 * 2D cluster positions in global and local coordinates
 * Cluster times
 * Cluster multiplicity
+* Cluster uncertainty
 
 ### Usage
 ```toml
