@@ -85,10 +85,10 @@ void Clustering4D::initialize() {
     clusterTimes = new TH1F("clusterTimes", title.c_str(), 3e6, 0, 3e9);
     title = m_detector->getName() + " Cluster multiplicity;clusters;events";
     clusterMultiplicity = new TH1F("clusterMultiplicity", title.c_str(), 50, -0.5, 49.5);
-    title = m_detector->getName() + " Cluster Error x;cluster error x [um];events";
-    clusterErrorX = new TH1F("clusterErrorX", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().X(), "um")));
-    title = m_detector->getName() + " Cluster Error y;cluster error y [um];events";
-    clusterErrorY = new TH1F("clusterErrorY", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um")));
+    title = m_detector->getName() + " Cluster Uncertainty x;cluster uncertainty x [um];events";
+    clusterUncertaintyX = new TH1F("clusterUncertaintyX", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().X(), "um")));
+    title = m_detector->getName() + " Cluster Uncertainty y;cluster uncertainty y [um];events";
+    clusterUncertaintyY = new TH1F("clusterUncertaintyY", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um")));
     title =
         m_detector->getName() + " pixel - seed pixel timestamp (all pixels w/o seed);ts_{pixel} - ts_ {seed} [ns];events";
     pxTimeMinusSeedTime = new TH1F("pxTimeMinusSeedTime", title.c_str(), 1000, -99.5 * 1.5625, 900.5 * 1.5625);
@@ -211,8 +211,8 @@ StatusCode Clustering4D::run(const std::shared_ptr<Clipboard>& clipboard) {
         clusterPositionGlobal->Fill(cluster->global().x(), cluster->global().y());
         clusterPositionLocal->Fill(cluster->column(), cluster->row());
         clusterTimes->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "ns")));
-        clusterErrorX->Fill(static_cast<double>(Units::convert(cluster->errorX(), "um")));
-        clusterErrorY->Fill(static_cast<double>(Units::convert(cluster->errorY(), "um")));
+        clusterUncertaintyX->Fill(static_cast<double>(Units::convert(cluster->errorX(), "um")));
+        clusterUncertaintyY->Fill(static_cast<double>(Units::convert(cluster->errorY(), "um")));
 
         // to check that cluster timestamp = earliest pixel timestamp
         if(cluster->size() > 1) {
