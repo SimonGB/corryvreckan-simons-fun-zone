@@ -72,6 +72,7 @@ namespace corryvreckan {
         std::vector<unsigned int> big_pixel_y{};
         std::vector<unsigned int> transformed_big_pixel_x{};
         std::vector<unsigned int> transformed_big_pixel_y{};
+        XYVector m_big_pixel_spatial_resolution{};
     };
 
 } // namespace corryvreckan
