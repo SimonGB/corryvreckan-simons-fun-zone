@@ -64,9 +64,9 @@ void ClusteringSpatial::initialize() {
     title = m_detector->getName() + " Cluster multiplicity;clusters;events";
     clusterMultiplicity = new TH1F("clusterMultiplicity", title.c_str(), 50, -0.5, 49.5);
     title = m_detector->getName() + " Cluster Error x;cluster error x [um];events";
-    clusterErrorX = new TH1F("clusterErrorX", title.c_str(), 100, 0, m_detector->getPitch().X());
+    clusterErrorX = new TH1F("clusterErrorX", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().X(), "um")));
     title = m_detector->getName() + " Cluster Error y;cluster error y [um];events";
-    clusterErrorY = new TH1F("clusterErrorY", title.c_str(), 100, 0, m_detector->getPitch().Y());
+    clusterErrorY = new TH1F("clusterErrorY", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um")));
 }
 
 StatusCode ClusteringSpatial::run(const std::shared_ptr<Clipboard>& clipboard) {
