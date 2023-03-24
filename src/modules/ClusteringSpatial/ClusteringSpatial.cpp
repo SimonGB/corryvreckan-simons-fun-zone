@@ -64,9 +64,11 @@ void ClusteringSpatial::initialize() {
     title = m_detector->getName() + " Cluster multiplicity;clusters;events";
     clusterMultiplicity = new TH1F("clusterMultiplicity", title.c_str(), 50, -0.5, 49.5);
     title = m_detector->getName() + " Cluster Uncertainty x;cluster uncertainty x [um];events";
-    clusterUncertaintyX = new TH1F("clusterUncertaintyX", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().X(), "um")));
+    clusterUncertaintyX = new TH1F(
+        "clusterUncertaintyX", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().X(), "um")));
     title = m_detector->getName() + " Cluster Uncertainty y;cluster uncertainty y [um];events";
-    clusterUncertaintyY = new TH1F("clusterUncertaintyY", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um")));
+    clusterUncertaintyY = new TH1F(
+        "clusterUncertaintyY", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um")));
 }
 
 StatusCode ClusteringSpatial::run(const std::shared_ptr<Clipboard>& clipboard) {
