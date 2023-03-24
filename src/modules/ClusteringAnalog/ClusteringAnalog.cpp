@@ -638,6 +638,7 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
 
         // Set uncertainty on position from intrinsic detector spatial resolution:
         cluster->setError(m_detector->getSpatialResolution());
+        cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal());
 
         // Create object with local cluster position
         auto positionLocal = m_detector->getLocalPosition(cluster->column(), cluster->row());
