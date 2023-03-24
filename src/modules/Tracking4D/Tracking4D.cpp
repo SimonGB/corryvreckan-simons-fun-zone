@@ -396,6 +396,11 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     continue;
                 }
 
+                if(detector->displacement().z() == reference_first->displacement().z() || detector->displacement().z() == reference_last->displacement().z()) {
+                    LOG(DEBUG) << "Detector in same z plane as reference, skipping.";
+                    continue;
+                }
+
                 // Determine whether a track can still be assembled given the number of current hits and the number of
                 // detectors to come. Reduces computing time.
                 detector_nr++;
@@ -585,7 +590,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
     };
     // Save the tracks on the clipboard
     if(tracks.size() > 0) {
-
         // if requested ensure unique usage of clusters
         if(unique_cluster_usage_ && tracks.size() > 1) {
             // sort by chi2:
@@ -678,11 +682,12 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             residualsZ_global[detectorID]->Fill(globalRes.Z());
         }
 
-        for(auto& detector : get_regular_detectors(true)) {
+        /**for(auto& detector : get_regular_detectors(true)) {
             auto det = detector->getName();
-
+            LOG(TRACE) << "Working on detector" << det;
             auto local = detector->getLocalIntercept(track.get());
             auto row = detector->getRow(local);
+            LOG(TRACE) << "Trying to getColumn" << local;
             auto col = detector->getColumn(local);
             LOG(TRACE) << "Local col/row intersect of track: " << col << "\t" << row;
             local_intersects_[det]->Fill(col, row);
@@ -698,7 +703,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             XYPoint kink = track->getKinkAt(det);
             kinkX.at(det)->Fill(kink.x());
             kinkY.at(det)->Fill(kink.y());
-        }
+        }*/
     }
     tracksPerEvent->Fill(static_cast<double>(tracks.size()));
 
