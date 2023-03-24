@@ -57,7 +57,6 @@ namespace corryvreckan {
          */
         TMatrixD getSpatialResolutionMatrixGlobal(double, double) const override;
 
-
         XYVector getSize() const override;
 
         /**

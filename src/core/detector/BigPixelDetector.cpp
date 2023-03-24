@@ -28,7 +28,8 @@ void BigPixelDetector::config_bigpixel(const Configuration& config) {
     big_pixel_x.assign(m_big_pixel.at(0).begin(), m_big_pixel.at(0).end());
     big_pixel_y.assign(m_big_pixel.at(1).begin(), m_big_pixel.at(1).end());
 
-    m_big_pixel_spatial_resolution = config.get<ROOT::Math::XYVector>("big_pixel_spatial_resolution", 2.*m_spatial_resolution);
+    m_big_pixel_spatial_resolution =
+        config.get<ROOT::Math::XYVector>("big_pixel_spatial_resolution", 2. * m_spatial_resolution);
 
     LOG(INFO) << "Numbers of Big Pixels in X : " << big_pixel_x.size();
     LOG(INFO) << "Numbers of Big Pixels in Y : " << big_pixel_y.size();
