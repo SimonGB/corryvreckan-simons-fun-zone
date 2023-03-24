@@ -20,6 +20,12 @@ using namespace corryvreckan;
 AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector) {
     m_detector = detector;
+    
+    if(config_.has("inpixel_bin_size") and (config_.has("inpixel_bin_size_x") or config_.has("inpixel_bin_size_y"))) {
+        throw InvalidCombinationError(
+        config_, {"inpixel_bin_size", "inpixel_bin_size_x", "inpixel_bin_size_y"}, 
+        "Cannot specify symmetric and asymmetric pixel size at the same time");
+    }
 
     config_.setDefault<double>("time_cut_frameedge", Units::get<double>(20, "ns"));
     config_.setDefault<double>("chi2ndof_cut", 3.);
@@ -36,7 +42,7 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     m_timeCutFrameEdge = config_.get<double>("time_cut_frameedge");
     m_chi2ndofCut = config_.get<double>("chi2ndof_cut");
     m_inpixelBinSizeX = config_.get<double>("inpixel_bin_size_x");
-    m_inpixelBinSizeX = config_.get<double>("inpixel_bin_size_y");
+    m_inpixelBinSizeY = config_.get<double>("inpixel_bin_size_y");
     require_associated_cluster_on_ = config_.getArray<std::string>("require_associated_cluster_on", {});
     m_inpixelEdgeCut = config_.get<XYVector>("inpixel_cut_edge");
     m_maskedPixelDistanceCut = config_.get<int>("masked_pixel_distance_cut");
@@ -45,6 +51,11 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     m_fake_rate_distance = config_.get<double>("fake_rate_distance");
     m_n_charge_bins = config_.get<int>("n_charge_bins");
     m_charge_histo_range = config_.get<double>("charge_histo_range");
+    
+    if (config_.has("inpixel_bin_size")){
+        m_inpixelBinSizeX = config_.get<double>("inpixel_bin_size");
+        m_inpixelBinSizeY = config_.get<double>("inpixel_bin_size");   
+    }
 }
 void AnalysisEfficiency::initialize() {
 
