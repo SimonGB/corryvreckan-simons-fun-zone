@@ -15,6 +15,7 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TProfile2D.h>
 #include <iostream>
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
@@ -53,6 +54,11 @@ namespace corryvreckan {
         TH2F* clusterPositionLocal;
         TH1F* clusterTimes;
         TH1F* clusterMultiplicity;
+
+        TH1F* clusterUncertaintyX;
+        TH1F* clusterUncertaintyY;
+        TProfile2D* clusterUncertaintyXvsXY;
+        TProfile2D* clusterUncertaintyYvsXY;
         TH1F* pxTimeMinusSeedTime;
         TH2F* pxTimeMinusSeedTime_vs_pxCharge;
         TH2F* pxTimeMinusSeedTime_vs_pxCharge_2px;
