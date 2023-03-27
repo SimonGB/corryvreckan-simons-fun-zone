@@ -21,7 +21,7 @@ More information can be found in the ROOT `TEfficiency` class reference, section
 
 ### Parameters
 * `time_cut_frameedge`: Parameter to discard telescope tracks at the frame edges (start and end of the current event window). Defaults to `20ns`.
-* `chi2ndof_cut`: Acceptance criterion for telescope tracks, defaults to a value of `3`.`inpixel_bin_size_x`
+* `chi2ndof_cut`: Acceptance criterion for telescope tracks, defaults to a value of `3`.
 * `inpixel_bin_size`: Parameter to set the bin size of the in-pixel 2D efficiency histogram. This should be given in units of distance and the same value is used in both axes. Can not be used in conjunction with `inpixel_bin_size_x` or `inpixel_bin_size_y`. Defaults to `1.0um`.
 * `inpixel_bin_size_x`: Parameter to set the bin size in x-direction of the in-pixel 2D efficiency histogram. This should be given in units of distance. Can not be used in conjunction with `inpixel_bin_size`. Defaults to `1.0um`.
 * `inpixel_bin_size_y`: Parameter to set the bin size in y-direction of the in-pixel 2D efficiency histogram. This should be given in units of distance. Can not be used in conjunction with `inpixel_bin_size`. Defaults to `1.0um`.
