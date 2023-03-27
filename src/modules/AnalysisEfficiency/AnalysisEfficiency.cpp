@@ -20,11 +20,11 @@ using namespace corryvreckan;
 AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector) {
     m_detector = detector;
-    
+
     if(config_.has("inpixel_bin_size") and (config_.has("inpixel_bin_size_x") or config_.has("inpixel_bin_size_y"))) {
-        throw InvalidCombinationError(
-        config_, {"inpixel_bin_size", "inpixel_bin_size_x", "inpixel_bin_size_y"}, 
-        "Cannot specify symmetric and asymmetric pixel size at the same time");
+        throw InvalidCombinationError(config_,
+                                      {"inpixel_bin_size", "inpixel_bin_size_x", "inpixel_bin_size_y"},
+                                      "Cannot specify symmetric and asymmetric pixel size at the same time");
     }
 
     config_.setDefault<double>("time_cut_frameedge", Units::get<double>(20, "ns"));
@@ -51,10 +51,10 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     m_fake_rate_distance = config_.get<double>("fake_rate_distance");
     m_n_charge_bins = config_.get<int>("n_charge_bins");
     m_charge_histo_range = config_.get<double>("charge_histo_range");
-    
-    if (config_.has("inpixel_bin_size")){
+
+    if(config_.has("inpixel_bin_size")) {
         m_inpixelBinSizeX = config_.get<double>("inpixel_bin_size");
-        m_inpixelBinSizeY = config_.get<double>("inpixel_bin_size");   
+        m_inpixelBinSizeY = config_.get<double>("inpixel_bin_size");
     }
 }
 void AnalysisEfficiency::initialize() {

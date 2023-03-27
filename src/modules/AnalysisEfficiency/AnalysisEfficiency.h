@@ -101,7 +101,7 @@ namespace corryvreckan {
             EDGE,
         } m_fake_rate_method;
 
-        double m_chi2ndofCut, m_timeCutFrameEdge, m_inpixelBinSizeX, m_inpixelBinSizeY, spatial_cut_sensoredge, 
+        double m_chi2ndofCut, m_timeCutFrameEdge, m_inpixelBinSizeX, m_inpixelBinSizeY, spatial_cut_sensoredge,
             m_fake_rate_distance, m_charge_histo_range;
         int m_n_charge_bins;
         XYVector m_inpixelEdgeCut;
