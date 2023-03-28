@@ -342,8 +342,8 @@ def main(argv=None):
                 #submission_settings.append((args, misc.createSteeringFile(log, args, steering_string, suffix), parameters))
                 steering_filename = misc.createSteeringFile(log, args, steering_string, suffix)
                 results.append(submitJobs(log, pool, args, steering_filename, parameters))
-            except:
-                log.warning(f"Could not create submission file {steering_string} with suffix {suffix}")
+            except Exception as e:
+                log.error(f"Could not create submission file with suffix {suffix} due to {e}")
 
         # Return to old directory:
         if args.subdir:
