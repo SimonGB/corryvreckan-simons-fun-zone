@@ -294,6 +294,7 @@ namespace corryvreckan {
         void loadHistory() override;
         void petrifyHistory() override;
 
+        std::vector<Plane> getPlanes();
         const Plane* get_plane(const std::string& detetorID) const;
         std::vector<PointerWrapper<Cluster>> track_clusters_;
         std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;

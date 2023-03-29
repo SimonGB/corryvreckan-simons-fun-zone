@@ -49,6 +49,20 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
             default_downstream_detectors.push_back(detector->getName());
         }
     }
+
+    config_.setDefault<bool>("refit_gbl", false);
+    refit_gbl_ = config_.get<bool>("refit_gbl");
+
+    require_detectors_ = config_.getArray<std::string>("require_detectors", {});
+    exclude_from_seed_ = config_.getArray<std::string>("exclude_from_seed", {});
+    timestamp_from_ = config_.get<std::string>("timestamp_from", {});
+    if(!timestamp_from_.empty() &&
+       std::find(require_detectors_.begin(), require_detectors_.end(), timestamp_from_) == require_detectors_.end()) {
+        LOG(WARNING) << "Adding detector " << timestamp_from_
+                     << " to list of required detectors as it provides the timestamp";
+        require_detectors_.push_back(timestamp_from_);
+    }
+
     config_.setDefaultArray<std::string>("upstream_detectors", default_upstream_detectors);
     config_.setDefaultArray<std::string>("downstream_detectors", default_downstream_detectors);
 
@@ -61,6 +75,9 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
     }
     for(auto detectorID : downstream_detectors_str) {
         m_downstream_detectors.push_back(get_detector(detectorID));
+    }
+    for(auto detectorID : require_detectors_) {
+        m_require_detectors.push_back(get_detector(detectorID));
     }
 
     if(m_upstream_detectors.size() < 2) {
@@ -82,6 +99,7 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
         if(detector->displacement().Z() > max_z_upstream) {
             max_z_upstream = detector->displacement().Z();
         }
+        LOG(DEBUG) << detector->getName() << " listed as upstream detector.";
     }
 
     double min_z_downstream = std::numeric_limits<double>::max();
@@ -102,12 +120,31 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
         if(detector->displacement().Z() < min_z_downstream) {
             min_z_downstream = detector->displacement().Z();
         }
+        LOG(DEBUG) << detector->getName() << " listed as downstream detector.";
     }
 
     if(max_z_upstream > min_z_downstream) {
         throw InvalidCombinationError(config_,
                                       {"upstream_detectors", "downstream_detectors"},
                                       "Last upstream detector is located behind first downstream detector.");
+    }
+
+    // check if required detectors are included either upstream or downstream
+    for(auto& detector : m_require_detectors) {
+        auto includedUpstream =
+            (std::find(m_upstream_detectors.begin(), m_upstream_detectors.end(), detector) != m_upstream_detectors.end());
+        auto includedDownstream =
+            (std::find(m_upstream_detectors.begin(), m_upstream_detectors.end(), detector) != m_upstream_detectors.end());
+        if(includedUpstream) {
+            LOG(DEBUG) << detector->getName() << " is required and listed as upstream.";
+        } else if(includedDownstream) {
+            LOG(DEBUG) << detector->getName() << " is required and listed as downstream.";
+        } else {
+            throw InvalidCombinationError(config_,
+                                          {"upstream_detectors", "downstream_detectors", "require_detectors"},
+                                          "Detector " + detector->getName() +
+                                              " is listed as required but not found either upstream nor downstream.");
+        }
     }
 
     config_.setDefault<size_t>("min_hits_upstream", m_upstream_detectors.size());
@@ -151,6 +188,9 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
         config_.setDefault("momentum", 5000);
     }
     momentum_ = config_.get<double>("momentum");
+
+    config_.setDefault<bool>("unique_cluster_usage", false);
+    unique_cluster_usage_ = config_.get<bool>("unique_cluster_usage");
 }
 
 void TrackingMultiplet::initialize() {
@@ -262,6 +302,73 @@ double TrackingMultiplet::calculate_average_timestamp(const Track* track) {
     return (sum_weighted_time / sum_weights);
 }
 
+bool TrackingMultiplet::duplicated_hit(const Track* a, const Track* b) {
+    for(auto d : get_regular_detectors(false)) { // get_regular_detectors(bool include_duts)
+        if(a->getClusterFromDetector(d->getName()) == b->getClusterFromDetector(d->getName()) &&
+           !(b->getClusterFromDetector(d->getName()) == nullptr)) {
+            LOG(DEBUG) << "Duplicated hit on " << d->getName() << ": rejecting track";
+            return true;
+        }
+    }
+    return false;
+}
+
+template <class T> T TrackingMultiplet::remove_duplicate(T tracks) {
+
+    // sort by chi2:
+    LOG_ONCE(WARNING) << "Rejecting tracks with same hits";
+    std::sort(tracks.begin(), tracks.end(), [](const std::shared_ptr<Track> a, const std::shared_ptr<Track> b) {
+        return (a->getChi2() / static_cast<double>(a->getNdof())) < (b->getChi2() / static_cast<double>(b->getNdof()));
+    });
+    // remove tracks with hit that is used twice
+    auto track1 = tracks.begin();
+    while(track1 != tracks.end()) {
+        auto track2 = track1 + 1;
+        while(track2 != tracks.end()) {
+            // if hit is used twice delete the track
+            if(duplicated_hit(track2->get(), track1->get())) {
+                track2 = tracks.erase(track2);
+                LOG(DEBUG) << "Rejecting tracks because of duplicate hits";
+            } else {
+                track2++;
+            }
+        }
+        track1++;
+    }
+
+    return tracks;
+}
+
+TrackVector TrackingMultiplet::refit(MultipletVector multiplets) {
+    TrackVector gblTracks;
+    for(auto& m : multiplets) {
+        auto track = Track::Factory("gbl");
+        // register all planes:
+        for(auto detector : get_detectors()) {
+            if(!detector->isAuxiliary()) {
+                track->registerPlane(
+                    detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
+            }
+        }
+        // add all clusters:
+        for(auto cluster : m->getClusters()) {
+            track->addCluster(cluster);
+        }
+        track->setParticleMomentum(momentum_);
+        track->fit();
+        track->setTimestamp(m->timestamp());
+
+        LOG(TRACE) << "before refit: track type " << m->getType() << ", chi2ndf " << m->getChi2ndof() << ", NClusters "
+                   << m->getNClusters() << ", direction at z=10 " << m->getDirection(10.0);
+        LOG(TRACE) << "after refit: track type " << track->getType() << ", chi2ndf " << track->getChi2ndof()
+                   << ", NClusters " << track->getNClusters() << ", direction at z=10 " << track->getDirection(10.0);
+        LOG(TRACE) << "track particle momentum set to " << momentum_;
+
+        gblTracks.emplace_back(track);
+    }
+    return gblTracks;
+}
+
 // Method containing the tracklet finding for the arms of the multiplets
 TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
                                                         std::map<std::shared_ptr<Detector>, KDTree<Cluster>>& cluster_trees,
@@ -291,12 +398,15 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
 
             auto trackletCandidate = Track::Factory(track_model_);
 
-            // register all planes:
-            for(auto& det : cluster_trees) {
-                auto detector = det.first.get();
+            // register all planes:  (including passive planes)
+            for(auto& detector : get_detectors()) {
+                if(detector->isAuxiliary()) {
+                    continue;
+                }
                 trackletCandidate->registerPlane(
-                    detector->getName(), detector->displacement().x(), detector->materialBudget(), detector->toLocal());
+                    detector->getName(), detector->displacement().z(), detector->materialBudget(), detector->toLocal());
             }
+
             trackletCandidate->addCluster(clusterFirst.get());
             trackletCandidate->addCluster(clusterLast.get());
             trackletCandidate->setParticleMomentum(momentum_);
@@ -365,7 +475,7 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
                                   (distanceY * distanceY) / (spatial_cuts_[detector].y() * spatial_cuts_[detector].y());
 
                     if(norm > 1) {
-                        LOG(DEBUG) << "Cluster outside the cuts. Normalized distance: " << norm;
+                        LOG(TRACE) << "Cluster outside the cuts. Normalized distance: " << norm;
                         continue;
                     }
 
@@ -494,10 +604,13 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         upstream_trees.emplace(std::piecewise_construct, std::make_tuple(upstream_detector), std::make_tuple());
         upstream_trees[upstream_detector].buildTrees(clusters);
 
-        if(reference_up_first == nullptr) {
-            reference_up_first = upstream_detector;
+        if(std::find(exclude_from_seed_.begin(), exclude_from_seed_.end(), upstream_detector_ID) ==
+           exclude_from_seed_.end()) {
+            if(reference_up_first == nullptr) {
+                reference_up_first = upstream_detector;
+            }
+            reference_up_last = upstream_detector;
         }
-        reference_up_last = upstream_detector;
     }
 
     // Store downstream data in KDTrees and define reference detectors
@@ -516,10 +629,13 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         downstream_trees.emplace(std::piecewise_construct, std::make_tuple(downstream_detector), std::make_tuple());
         downstream_trees[downstream_detector].buildTrees(clusters);
 
-        if(reference_down_first == nullptr) {
-            reference_down_first = downstream_detector;
+        if(std::find(exclude_from_seed_.begin(), exclude_from_seed_.end(), downstream_detector_ID) ==
+           exclude_from_seed_.end()) {
+            if(reference_down_first == nullptr) {
+                reference_down_first = downstream_detector;
+            }
+            reference_down_last = downstream_detector;
         }
-        reference_down_last = downstream_detector;
     }
 
     // Up- & downstream tracklet finding
@@ -616,8 +732,33 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         }
 
         LOG(DEBUG) << "Multiplet found";
-        multiplet->setTimestamp(
-            (multiplet->getUpstreamTracklet()->timestamp() + multiplet->getDownstreamTracklet()->timestamp()) / 2.);
+
+        // check if track has required detector(s):
+        auto foundRequiredDetector = [this](Track* t) {
+            for(auto& requireDet : require_detectors_) {
+                if(!requireDet.empty() && !t->hasDetector(requireDet)) {
+                    LOG(DEBUG) << "No cluster from required detector " << requireDet << " on the track.";
+                    return false;
+                }
+            }
+            return true;
+        };
+        if(!foundRequiredDetector(multiplet.get())) {
+            continue;
+        }
+
+        if(timestamp_from_.empty()) {
+            double average_timestamp =
+                (multiplet->getUpstreamTracklet()->timestamp() + multiplet->getDownstreamTracklet()->timestamp()) / 2.;
+            multiplet->setTimestamp(average_timestamp);
+            LOG(DEBUG) << "Using average timestamp of " << Units::display(average_timestamp, "us") << " as track timestamp.";
+        } else {
+            auto* cluster = multiplet->getClusterFromDetector(timestamp_from_);
+            double det_timestamp = cluster->timestamp();
+            LOG(DEBUG) << "Using timestamp of detector " << timestamp_from_
+                       << " as track timestamp: " << Units::display(det_timestamp, "us");
+            multiplet->setTimestamp(det_timestamp);
+        }
 
         LOG(DEBUG) << "Deleting downstream tracklet";
         downstream_tracklets.erase(used_downtracklet);
@@ -643,8 +784,19 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
     LOG(DEBUG) << "Found " << multiplets.size() << " multiplets";
     multipletMultiplicity->Fill(static_cast<double>(multiplets.size()));
 
-    if(multiplets.size() > 0) {
+    if(multiplets.size() > 0 && !refit_gbl_) {
+        // if requested ensure unique usage of clusters
+        if(unique_cluster_usage_ && multiplets.size() > 1) {
+            multiplets = remove_duplicate(multiplets);
+        }
         clipboard->putData(multiplets);
+    } else if(multiplets.size() > 0 && refit_gbl_) {
+        auto gbltracks = refit(multiplets);
+        // refit can change chi2, so if unique cluster usage requested, decide what to keep after refitting
+        if(unique_cluster_usage_ && gbltracks.size() > 1) {
+            gbltracks = remove_duplicate(gbltracks);
+        }
+        clipboard->putData(gbltracks);
     }
 
     // Return value telling analysis to keep running

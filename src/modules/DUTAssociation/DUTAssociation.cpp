@@ -129,10 +129,13 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
             hNoAssocCls->Fill(0);
             LOG(DEBUG) << "No DUT clusters on the clipboard";
             continue;
+        } else {
+            LOG(TRACE) << "DUT clusters found on clipboard";
         }
 
         // Check distance between track and cluster
         auto interceptLocal = m_detector->getLocalIntercept(track.get());
+        LOG(TRACE) << "Starting loop over all clusters";
         // Loop over all DUT clusters
         for(auto& cluster : clusters) {
 
@@ -143,6 +146,7 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
             // distance of track to nearest pixel: initialise to maximal possible value
             auto xdistance_nearest = std::numeric_limits<double>::max();
             auto ydistance_nearest = std::numeric_limits<double>::max();
+            LOG(TRACE) << "Cluster distance to track intercept " << xdistance_centre << "," << ydistance_centre;
 
             for(auto& pixel : cluster->pixels()) {
                 // convert pixel address to local coordinates:

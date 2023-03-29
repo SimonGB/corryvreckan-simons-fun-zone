@@ -11,6 +11,7 @@
 
 #include "Multiplet.hpp"
 #include "TMath.h"
+#include "core/utils/log.h"
 #include "core/utils/unit.h"
 #include "exceptions.h"
 
@@ -25,6 +26,19 @@ Multiplet::Multiplet(std::shared_ptr<Track> upstream, std::shared_ptr<Track> dow
     }
     for(auto& cluster : m_downstream->getClusters()) {
         this->addCluster(cluster);
+    }
+    // if it's listed as plane for upstream or downstream, it should be a plane for the multiplet too
+    for(auto& upp : m_upstream->getPlanes()) {
+        planes_.push_back(std::move(upp));
+    }
+    for(auto& dop : m_downstream->getPlanes()) {
+        auto pl = std::find_if(
+            planes_.begin(), planes_.end(), [&dop](const Plane& plane) { return plane.getName() == dop.getName(); });
+        if(pl == planes_.end()) {
+            planes_.push_back(std::move(dop));
+        } else {
+            *pl = std::move(dop);
+        }
     }
 }
 
@@ -81,12 +95,26 @@ ROOT::Math::XYZPoint Multiplet::getState(const std::string& detectorID) const {
         throw TrackError(typeid(*this), " not fitted");
     }
 
-    auto* cluster = getClusterFromDetector(detectorID);
-    if(cluster == nullptr) {
-        throw TrackError(typeid(*this), " does not have any entry for detector " + detectorID);
+    LOG(TRACE) << "Planes known to this track: ";
+    for(auto pKnown : planes_) {
+        LOG(TRACE) << " - " << pKnown.getName();
     }
-    return cluster->global().z() <= m_scattererPosition ? m_upstream->getState(detectorID)
-                                                        : m_downstream->getState(detectorID);
+
+    auto plane =
+        std::find_if(planes_.begin(), planes_.end(), [&detectorID](Plane const& p) { return p.getName() == detectorID; });
+    if(plane == planes_.end()) {
+        throw TrackError(typeid(*this), " does not have any entry for plane " + detectorID);
+    }
+    auto zpos = plane->getPosition();
+    LOG(TRACE) << "Plane z position of " << detectorID << " is " << zpos << ", scatterer position is "
+               << m_scattererPosition;
+
+    LOG(TRACE) << "upstream track type " << m_upstream->getType() << ", downstream track type " << m_downstream->getType();
+    if(zpos <= m_scattererPosition) {
+        return m_upstream->getState(detectorID);
+    } else {
+        return m_downstream->getState(detectorID);
+    }
 }
 
 ROOT::Math::XYZVector Multiplet::getDirection(const std::string& detectorID) const {

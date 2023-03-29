@@ -61,6 +61,7 @@ namespace corryvreckan {
 
         std::vector<std::shared_ptr<Detector>> m_upstream_detectors;
         std::vector<std::shared_ptr<Detector>> m_downstream_detectors;
+        std::vector<std::shared_ptr<Detector>> m_require_detectors;
 
         double scatterer_position_;
         double scatterer_matching_cut_;
@@ -68,9 +69,14 @@ namespace corryvreckan {
         double momentum_;
         size_t min_hits_upstream_;
         size_t min_hits_downstream_;
+        bool refit_gbl_{};
+        bool unique_cluster_usage_{};
 
         // track model for up/downstream fit
         std::string track_model_;
+        std::string timestamp_from_;
+        std::vector<std::string> require_detectors_;
+        std::vector<std::string> exclude_from_seed_;
 
         // Member histograms
         std::map<streams, TH1F*> trackletMultiplicity;
@@ -101,6 +107,11 @@ namespace corryvreckan {
 
         // Function to calculate the weighted average timestamp from the clusters of a track
         double calculate_average_timestamp(const Track* track);
+        // Function to refit the multiplet tracks at the end, using GBL
+        TrackVector refit(MultipletVector multiplets);
+
+        bool duplicated_hit(const Track* a, const Track* b);
+        template <class T> T remove_duplicate(T tracks);
     };
 
 } // namespace corryvreckan
