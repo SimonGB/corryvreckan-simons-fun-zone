@@ -415,7 +415,7 @@ XYZPoint GblTrack::get_position_outside_telescope(double z) const {
     // inner neighbour of plane - simply adjust the iterators
     first_plane++;
     last_plane--;
-    auto innerPlane = (upstream ? last_plane->getName() : last_plane->getName());
+    auto innerPlane = (upstream ? first_plane->getName() : last_plane->getName());
     // connect the states to get the direction
     XYZVector direction =
         (upstream ? getState(outerPlane) - getState(innerPlane) : getState(innerPlane) - getState(outerPlane));
