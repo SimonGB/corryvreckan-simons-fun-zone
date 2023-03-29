@@ -870,7 +870,7 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             double local_x_absdistance = fabs(local_x_distance);
             double local_y_absdistance = fabs(local_y_distance);
             double time_distance = track->timestamp() - assoc_cluster->timestamp();
-            double local_pos_diff = sqrt(local_x_distance * local_x_absdistance + local_y_absdistance * local_y_absdistance);
+            double local_pos_diff = sqrt(local_x_absdistance * local_x_absdistance + local_y_absdistance * local_y_absdistance);
             double local_pos_diff_um = local_pos_diff * 1000.;
 
             resX_vs_col->Fill(assoc_cluster->column(), local_x_distance_um);
