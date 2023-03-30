@@ -85,19 +85,6 @@ void AnalysisEfficiency::initialize() {
                                                    pitch_y / 2.);
     hPixelEfficiencyMap_trackPos->SetDirectory(this->getROOTDirectory());
 
-    title = m_detector->getName() +
-            " Pixel efficiency map (in-pixel ROI);in-pixel x_{track} [#mum];in-pixel y_{track} #mum;#epsilon";
-    hPixelEfficiencyMap_inPixelROI_trackPos_TProfile = new TProfile2D("pixelEfficiencyMap_inPixelROI_trackPos_TProfile",
-                                                                      title.c_str(),
-                                                                      nbins_x,
-                                                                      -pitch_x / 2.,
-                                                                      pitch_x / 2.,
-                                                                      nbins_y,
-                                                                      -pitch_y / 2.,
-                                                                      pitch_y / 2.,
-                                                                      0,
-                                                                      1);
-
     title = m_detector->getName() + " Chip efficiency map;x [px];y [px];#epsilon";
     hChipEfficiencyMap_trackPos_TProfile = new TProfile2D("chipEfficiencyMap_trackPos_TProfile",
                                                           title.c_str(),
@@ -206,9 +193,7 @@ void AnalysisEfficiency::initialize() {
                                       1.5 * m_detector->getPitch().y());
     eTotalEfficiency = new TEfficiency("eTotalEfficiency", "totalEfficiency;;#epsilon", 1, 0, 1);
     eTotalEfficiency->SetDirectory(this->getROOTDirectory());
-    eTotalEfficiency_inPixelROI = new TEfficiency(
-        "eTotalEfficiency_inPixelROI", "eTotalEfficiency_inPixelROI;;#epsilon (within in-pixel ROI)", 1, 0, 1);
-    eTotalEfficiency_inPixelROI->SetDirectory(this->getROOTDirectory());
+
     efficiencyColumns = new TEfficiency("efficiencyColumns",
                                         "Efficiency vs. column number; column; #epsilon",
                                         m_detector->nPixels().X(),
@@ -226,12 +211,62 @@ void AnalysisEfficiency::initialize() {
     efficiencyVsTimeLong =
         new TEfficiency("efficiencyVsTimeLong", "Efficiency vs. time; time [s]; #epsilon", 3000, 0, 30000);
     efficiencyVsTimeLong->SetDirectory(this->getROOTDirectory());
+
+    // initialize matrix with hit timestamps to all 0:
+    auto nRows = static_cast<size_t>(m_detector->nPixels().Y());
+    auto nCols = static_cast<size_t>(m_detector->nPixels().X());
+    std::vector<double> v_row(nRows, 0.); // create vector will zeros of length <nRows>
+    prev_hit_ts.assign(nCols, v_row);     // use vector v_row to construct matrix
+
+    createInPixelRoiPlots();
+    createFakeRatePlots();
+    createTrackTimePlots();
+}
+
+void AnalysisEfficiency::createInPixelRoiPlots() {
+    TDirectory* directory = getROOTDirectory();
+    TDirectory* in_pixel_roi = directory->mkdir("inpixelROI");
+    if(in_pixel_roi == nullptr) {
+        throw RuntimeError("Cannot create or access fake rate ROOT directory for module " + this->getUniqueName());
+    }
+    in_pixel_roi->cd();
+    auto pitch_x = static_cast<double>(Units::convert(m_detector->getPitch().X(), "um"));
+    auto pitch_y = static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um"));
+
+    auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / m_inpixelBinSize));
+    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / m_inpixelBinSize));
+
+    std::string title = m_detector->getName() +
+                        " Pixel efficiency map (in-pixel ROI);in-pixel x_{track} [#mum];in-pixel y_{track} #mum;#epsilon";
+    hPixelEfficiencyMap_inPixelROI_trackPos_TProfile = new TProfile2D("pixelEfficiencyMap_inPixelROI_trackPos_TProfile",
+                                                                      title.c_str(),
+                                                                      nbins_x,
+                                                                      -pitch_x / 2.,
+                                                                      pitch_x / 2.,
+                                                                      nbins_y,
+                                                                      -pitch_y / 2.,
+                                                                      pitch_y / 2.,
+                                                                      0,
+                                                                      1);
+    eTotalEfficiency_inPixelROI = new TEfficiency(
+        "eTotalEfficiency_inPixelROI", "eTotalEfficiency_inPixelROI;;#epsilon (within in-pixel ROI)", 1, 0, 1);
+    eTotalEfficiency_inPixelROI->SetDirectory(this->getROOTDirectory()->GetDirectory("inpixelROI"));
+}
+
+void AnalysisEfficiency::createTrackTimePlots() {
+    TDirectory* directory = getROOTDirectory();
+    TDirectory* correlationsToPrevTrack = directory->mkdir("correlationsToPrevTrack");
+    if(correlationsToPrevTrack == nullptr) {
+        throw RuntimeError("Cannot create or access fake rate ROOT directory for module " + this->getUniqueName());
+    }
+    correlationsToPrevTrack->cd();
+
     hTrackTimeToPrevHit_matched =
         new TH1D("trackTimeToPrevHit_matched", "trackTimeToPrevHit_matched;time to prev hit [us];# events", 1e6, 0, 1e6);
     hTrackTimeToPrevHit_notmatched = new TH1D(
         "trackTimeToPrevHit_notmatched", "trackTimeToPrevHit_notmatched;time to prev hit [us];# events", 1e6, 0, 1e6);
 
-    title = m_detector->getName() + "time difference to previous track (if this has assoc cluster)";
+    std::string title = m_detector->getName() + "time difference to previous track (if this has assoc cluster)";
     hTimeDiffPrevTrack_assocCluster = new TH1D("timeDiffPrevTrack_assocCluster", title.c_str(), 11000, -1000, 10000);
     hTimeDiffPrevTrack_assocCluster->GetXaxis()->SetTitle("time diff [#mus]");
     hTimeDiffPrevTrack_assocCluster->GetYaxis()->SetTitle("events");
@@ -297,13 +332,6 @@ void AnalysisEfficiency::initialize() {
                  6,
                  -.5,
                  5.5);
-    // initialize matrix with hit timestamps to all 0:
-    auto nRows = static_cast<size_t>(m_detector->nPixels().Y());
-    auto nCols = static_cast<size_t>(m_detector->nPixels().X());
-    std::vector<double> v_row(nRows, 0.); // create vector will zeros of length <nRows>
-    prev_hit_ts.assign(nCols, v_row);     // use vector v_row to construct matrix
-
-    createFakeRatePlots();
 }
 
 void AnalysisEfficiency::createFakeRatePlots() {
