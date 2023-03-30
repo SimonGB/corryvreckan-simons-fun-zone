@@ -54,15 +54,11 @@ namespace corryvreckan {
         TProfile2D* hChipEfficiencyMap_trackPos_TProfile;
         TProfile2D* hPixelEfficiencyMatrix_TProfile;
         TProfile2D* hGlobalEfficiencyMap_trackPos_TProfile;
-        TProfile2D* hChipEfficiencyMap_clustPos_TProfile;
-        TProfile2D* hGlobalEfficiencyMap_clustPos_TProfile;
 
         // TEfficiency version
         TEfficiency* hPixelEfficiencyMap_trackPos;
         TEfficiency* hChipEfficiencyMap_trackPos;
         TEfficiency* hGlobalEfficiencyMap_trackPos;
-        TEfficiency* hChipEfficiencyMap_clustPos;
-        TEfficiency* hGlobalEfficiencyMap_clustPos;
 
         TEfficiency* eTotalEfficiency;
         TEfficiency* eTotalEfficiency_inPixelROI;
