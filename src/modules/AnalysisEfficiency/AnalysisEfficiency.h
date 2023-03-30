@@ -118,6 +118,8 @@ namespace corryvreckan {
         Matrix<double> prev_hit_ts; // matrix containing previous hit timestamp for every pixel
 
         void createFakeRatePlots();
+        void createInPixelRoiPlots();
+        void createTrackTimePlots();
     };
 
 } // namespace corryvreckan
