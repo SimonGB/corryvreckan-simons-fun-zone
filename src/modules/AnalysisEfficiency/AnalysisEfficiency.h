@@ -103,8 +103,7 @@ namespace corryvreckan {
 
         double m_chi2ndofCut, m_timeCutFrameEdge, spatial_cut_sensoredge, m_fake_rate_distance, m_charge_histo_range;
         int m_n_charge_bins;
-        XYVector m_inpixelEdgeCut;
-        ROOT::Math::XYPoint m_inpixelBinSize;
+        ROOT::Math::XYPoint m_inpixelEdgeCut, m_inpixelBinSize;
         int m_maskedPixelDistanceCut = 1;
         int total_tracks = 0;
         int matched_tracks = 0;

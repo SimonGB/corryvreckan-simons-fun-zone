@@ -24,7 +24,7 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     config_.setDefault<double>("time_cut_frameedge", Units::get<double>(20, "ns"));
     config_.setDefault<double>("chi2ndof_cut", 3.);
     config_.setDefault<ROOT::Math::XYPoint>("inpixel_bin_size", {Units::get(1.0, "um"), Units::get(1.0, "um")});
-    config_.setDefault<XYVector>("inpixel_cut_edge", {Units::get(5.0, "um"), Units::get(5.0, "um")});
+    config_.setDefault<ROOT::Math::XYPoint>("inpixel_cut_edge", {Units::get(5.0, "um"), Units::get(5.0, "um")});
     config_.setDefault<double>("masked_pixel_distance_cut", 1.);
     config_.setDefault<double>("spatial_cut_sensoredge", 1.);
     config_.setDefault<FakeRateMethod>("fake_rate_method", FakeRateMethod::RADIUS);
@@ -35,7 +35,6 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     m_timeCutFrameEdge = config_.get<double>("time_cut_frameedge");
     m_chi2ndofCut = config_.get<double>("chi2ndof_cut");
     require_associated_cluster_on_ = config_.getArray<std::string>("require_associated_cluster_on", {});
-    m_inpixelEdgeCut = config_.get<XYVector>("inpixel_cut_edge");
     m_maskedPixelDistanceCut = config_.get<int>("masked_pixel_distance_cut");
     spatial_cut_sensoredge = config_.get<double>("spatial_cut_sensoredge");
     m_fake_rate_method = config_.get<FakeRateMethod>("fake_rate_method");
@@ -48,6 +47,13 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     } else {
         auto binsize = config_.get<double>("inpixel_bin_size");
         m_inpixelBinSize = ROOT::Math::XYPoint(binsize, binsize);
+    }
+
+    if(config_.getArray<double>("inpixel_cut_edge").size() == 2) {
+        m_inpixelEdgeCut = config_.get<ROOT::Math::XYPoint>("inpixel_cut_edge");
+    } else {
+        auto edgecut = config_.get<double>("inpixel_cut_edge");
+        m_inpixelEdgeCut = ROOT::Math::XYPoint(edgecut, edgecut);
     }
 }
 void AnalysisEfficiency::initialize() {
