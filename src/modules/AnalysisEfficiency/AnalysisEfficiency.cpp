@@ -21,16 +21,9 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     : Module(config, detector) {
     m_detector = detector;
 
-    if(config_.has("inpixel_bin_size") and (config_.has("inpixel_bin_size_x") or config_.has("inpixel_bin_size_y"))) {
-        throw InvalidCombinationError(config_,
-                                      {"inpixel_bin_size", "inpixel_bin_size_x", "inpixel_bin_size_y"},
-                                      "Cannot specify symmetric and asymmetric pixel size at the same time");
-    }
-
     config_.setDefault<double>("time_cut_frameedge", Units::get<double>(20, "ns"));
     config_.setDefault<double>("chi2ndof_cut", 3.);
-    config_.setDefault<double>("inpixel_bin_size_x", Units::get<double>(1.0, "um"));
-    config_.setDefault<double>("inpixel_bin_size_y", Units::get<double>(1.0, "um"));
+    config_.setDefault<ROOT::Math::XYPoint>("inpixel_bin_size", {Units::get(1.0, "um"), Units::get(1.0, "um")});
     config_.setDefault<XYVector>("inpixel_cut_edge", {Units::get(5.0, "um"), Units::get(5.0, "um")});
     config_.setDefault<double>("masked_pixel_distance_cut", 1.);
     config_.setDefault<double>("spatial_cut_sensoredge", 1.);
@@ -41,8 +34,6 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
 
     m_timeCutFrameEdge = config_.get<double>("time_cut_frameedge");
     m_chi2ndofCut = config_.get<double>("chi2ndof_cut");
-    m_inpixelBinSizeX = config_.get<double>("inpixel_bin_size_x");
-    m_inpixelBinSizeY = config_.get<double>("inpixel_bin_size_y");
     require_associated_cluster_on_ = config_.getArray<std::string>("require_associated_cluster_on", {});
     m_inpixelEdgeCut = config_.get<XYVector>("inpixel_cut_edge");
     m_maskedPixelDistanceCut = config_.get<int>("masked_pixel_distance_cut");
@@ -52,9 +43,11 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     m_n_charge_bins = config_.get<int>("n_charge_bins");
     m_charge_histo_range = config_.get<double>("charge_histo_range");
 
-    if(config_.has("inpixel_bin_size")) {
-        m_inpixelBinSizeX = config_.get<double>("inpixel_bin_size");
-        m_inpixelBinSizeY = config_.get<double>("inpixel_bin_size");
+    if(config_.getArray<double>("inpixel_bin_size").size() == 2) {
+        m_inpixelBinSize = config_.get<ROOT::Math::XYPoint>("inpixel_bin_size");
+    } else {
+        auto binsize = config_.get<double>("inpixel_bin_size");
+        m_inpixelBinSize = ROOT::Math::XYPoint(binsize, binsize);
     }
 }
 void AnalysisEfficiency::initialize() {
@@ -71,8 +64,8 @@ void AnalysisEfficiency::initialize() {
     auto pitch_x = static_cast<double>(Units::convert(m_detector->getPitch().X(), "um"));
     auto pitch_y = static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um"));
 
-    auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / m_inpixelBinSizeX));
-    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / m_inpixelBinSizeY));
+    auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / m_inpixelBinSize.x()));
+    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / m_inpixelBinSize.y()));
     if(nbins_x > 1e4 || nbins_y > 1e4) {
         throw InvalidValueError(config_, "inpixel_bin_size", "Too many bins for in-pixel histograms.");
     }
