@@ -22,10 +22,8 @@ More information can be found in the ROOT `TEfficiency` class reference, section
 ### Parameters
 * `time_cut_frameedge`: Parameter to discard telescope tracks at the frame edges (start and end of the current event window). Defaults to `20ns`.
 * `chi2ndof_cut`: Acceptance criterion for telescope tracks, defaults to a value of `3`.
-* `inpixel_bin_size`: Parameter to set the bin size of the in-pixel 2D efficiency histogram. This should be given in units of distance and the same value is used in both axes. Can not be used in conjunction with `inpixel_bin_size_x` or `inpixel_bin_size_y`. Defaults to `1.0um`.
-* `inpixel_bin_size_x`: Parameter to set the bin size in x-direction of the in-pixel 2D efficiency histogram. This should be given in units of distance. Can not be used in conjunction with `inpixel_bin_size`. Defaults to `1.0um`.
-* `inpixel_bin_size_y`: Parameter to set the bin size in y-direction of the in-pixel 2D efficiency histogram. This should be given in units of distance. Can not be used in conjunction with `inpixel_bin_size`. Defaults to `1.0um`.
-* `inpixel_cut_edge`: Parameter to exclude tracks going within a cut-distance to the pixel edge. Effectively defines an in-pixel ROI. Defaults to `5um`.
+* `inpixel_bin_size`: Parameter to set the bin size of the in-pixel 2D efficiency histogram. This should be given in units of distance. Different bin sizes can be set for the x and y axis. Defaults to `1.0um`, `1.0um`.
+* `inpixel_cut_edge`: Parameter to exclude tracks going within a cut-distance to the pixel edge. Effectively defines an in-pixel ROI. Different cuts can be set for the x and y axis. Defaults to `5um`, `5um`.
 * `masked_pixel_distance_cut`: Distance (in pixels) to exclude tracks passing close to masked pixel. Defaults to `1`.
 * `require_associated_cluster_on`: Names of detectors which are required to have an associated cluster to the telescope tracks. Detectors listed here must be marked as `role = DUT` in the detector configuration file. Only tracks satisfying this requirement are accepted for the efficiency measurement. If empty, no detector is required. Default is empty.
 * `spatial_cut_sensoredge`: Parameter to discard telescope tracks at the sensor edges in fractions of pixel pitch. Defaults to `1`.
