@@ -90,7 +90,7 @@ std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& c
         return std::make_shared<PixelDetector>(config);
     } else if(coordinates == "hexagonal") {
         return std::make_shared<HexagonalPixelDetector>(config);
-    } else if(coordinates == "cartesian_big") {
+    } else if(coordinates == "cartesian_module") {
         return std::make_shared<PixelModuleDetector>(config);
     } else {
         throw InvalidValueError(config, "coordinates", "Coordinates can only set to be cartesian now");
