@@ -29,6 +29,7 @@ ADD_LIBRARY(CorryvreckanCore SHARED
     detector/Detector.cpp
     detector/PixelDetector.cpp
     detector/HexagonalPixelDetector.cpp
+    detector/PixelModuleDetector.cpp
     detector/exceptions.cpp
     clipboard/Clipboard.cpp
     config/ConfigManager.cpp

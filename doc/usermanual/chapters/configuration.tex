@@ -252,7 +252,7 @@ vector_of_doubles = 23.0, 45.6, 78.9
 \label{sec:detector_config}
 The detector configuration file consists of a set of sections that describe the detectors in the setup.
 Each section starts with a header describing the name used to identify the detector; all names are required to be unique.
-Every detector should contain all of the following parameters:
+Every detector can contain the following parameters:
 \begin{itemize}
 \item The \parameter{role} parameter is an array of strings indicating the function(s) of the respective detector. This can be \parameter{dut}, \parameter{reference} (\parameter{ref}), \parameter{auxiliary} (\parameter{aux}), \parameter{passive}, or \parameter{none}, where the latter is the default. With the default role, the respective detector participates in tracking but is neither used as reference plane for alignment and correlations, nor treated as DUT. In a reference role, the detector is used as anchor for relative alignments and its position and orientation is used for comparison when producing correlation and residual plots. As DUT, the detector is by default excluded from tracking, and all DUT-type modules are executed for this detector. As an auxiliary device, the detector may provide additional information but does not partake in the reconstruction. This is useful to e.g. include trigger logic units (TLUs) providing only timing information.With a passive role, detectors in the geometry do not get their own instances of detector modules and are not no data is loaded for them. They can, however, be used in tracking as scattering material.
 \begin{warning}
@@ -283,7 +283,7 @@ which describes a rotation of \SI{45}{\degree} around the $Z$ axis, followed by 
 All supported rotations are extrinsic active rotations, i.e. the vector itself is rotated, not the coordinate system. All angles in configuration files should be specified in the order they will be applied.
 \end{warning}
 
-\item The \parameter{coordinates} parameter represents the local coordinate of detectors, the coordinates can be \textbf{cartesian}, \textbf{polar}, etc. The default \parameter{coordinates} is \textbf{cartesian}.
+\item The \parameter{coordinates} parameter represents the local coordinate of detectors, the coordinates can be \textbf{cartesian}, \textbf{cartesian\_module} or \textbf{hexagonal}. More information on detector geometries can be found in Section~\ref{sec:detector_geometries}. The default \parameter{coordinates} is \textbf{cartesian}.
 
 \item The \parameter{number_of_pixels} parameter represents a two-dimensional vector with the number of pixels in the active matrix in the column and row directions respectively.
 \item The \parameter{pixel_pitch} is a two-dimensional vector defining the size of a single pixel in the column and row directions respectively.
@@ -332,6 +332,29 @@ time_resolution = 3ns
 role = "reference"
 type = "Timepix3"
 \end{minted}
+
+\subsection{Detector Geometries}
+\label{sec:detector_geometries}
+
+Detectors with different gemetries are supported in the \corry framework and can be selected via the detector parameter \parameter{coordinates}. Currently, the supported geometries comprise the following:
+\begin{itemize}
+\item A regular matrix of rectangular pixels is defined via \parameter{coordinates = cartesian}. This is the default option.
+\item A matrix of rectangular pixels containing columns and/or rows with double sized pixels, resembling a silicon pixel detector module with several readout chips, can be defined via \parameter{cartesian_module}. The following parameters can additionally be set to configure such a detector:
+  \begin{itemize}
+  \item The matrix \parameter{big_pixels} lists the columns and rows with double sized pixels. The following example describes a sensor with 52 x 80 pixels and larger pixels in the left, right and upper edges:
+    \begin{minted}[frame=single,framesep=3pt,breaklines=true,tabsize=2,linenos]{ini}
+      coordinates = cartesian_module
+      big_pixels = [[0,51],[79]]
+    \end{minted}
+  \item The resolution of clusters centered inside a large pixel can be defined via the vector \parameter{big_pixel_spatial_resolution}. This defaults to $2 * spatial_resolution$.
+  \end{itemize}
+\item Hexagonal pixel matrices are defined via \parameter{coordinates = hexagonal}. The following things have to be considered:
+  \begin{itemize}
+  \item In the current status, only symmetric hexagons are supported, with the pixel pitch in x- and y-direction forced to be equal.
+  \item No difference is made between hexagons with a flat side or a corner pointing upwards. This can be compensated for via a rotation of the detector.
+  \end{itemize}
+\end{itemize}
+
 
 \subsection{Masking Pixels Offline}
 \label{sec:masking}
