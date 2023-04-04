@@ -31,8 +31,8 @@ void PixelModuleDetector::config_bigpixel(const Configuration& config) {
     m_big_pixel_spatial_resolution =
         config.get<ROOT::Math::XYVector>("big_pixel_spatial_resolution", 2. * m_spatial_resolution);
 
-    LOG(INFO) << "Numbers of Big Pixels in X : " << big_pixel_x.size();
-    LOG(INFO) << "Numbers of Big Pixels in Y : " << big_pixel_y.size();
+    LOG(INFO) << "Numbers of Big Rows (X) : " << big_pixel_x.size();
+    LOG(INFO) << "Numbers of Big Columns (Y) : " << big_pixel_y.size();
 
     // sort big_pixel
     sort(big_pixel_x.begin(), big_pixel_x.end());
@@ -47,8 +47,8 @@ void PixelModuleDetector::config_bigpixel(const Configuration& config) {
         transformed_big_pixel_y.push_back(big_pixel_y[i] + i);
         transformed_big_pixel_y.push_back(big_pixel_y[i] + i + 1);
     }
-    LOG(DEBUG) << "Numbers of transformed Big Pixels in X : " << transformed_big_pixel_x.size();
-    LOG(DEBUG) << "Numbers of transformed Big Pixels in Y : " << transformed_big_pixel_y.size();
+    LOG(DEBUG) << "Numbers of transformed Big Rows (X) : " << transformed_big_pixel_x.size();
+    LOG(DEBUG) << "Numbers of transformed Big Columns (Y) : " << transformed_big_pixel_y.size();
 
     for(auto i = transformed_big_pixel_x.begin(); i != transformed_big_pixel_x.end(); ++i) {
         LOG(DEBUG) << "Transform big pixel vector in X : " << *i;
