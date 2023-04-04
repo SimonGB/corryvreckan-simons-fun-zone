@@ -181,6 +181,7 @@ def main(argv=None):
     parser.add_argument("-j", "--cores", metavar='N', type=int, default=1, help="Number of cores used for the local job submission")
     parser.add_argument("--zfill", metavar='N', type=int, help="Fill run number with zeros up to the defined number of digits")
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060.", nargs='*')
+    parser.add_argument("--short-names", action="store_true", default=False, help="Save config and log files with the run number as their abbreviated name")
     args = parser.parse_args(argv)
 
     # Try to import the colorer module
@@ -337,18 +338,25 @@ def main(argv=None):
         
         # ----------------------------------------------------------------
         # Job submission based on selected method - local/condor
+        run_iteration = 0
         for suffix, steering_string in zip(suffixes, steering_strings):
             try:
                 #submission_settings.append((args, misc.createSteeringFile(log, args, steering_string, suffix), parameters))
-                steering_filename = misc.createSteeringFile(log, args, steering_string, suffix)
+                if args.short_names:
+                    suffix = f"{runnr}_{run_iteration}" 
+                    steering_filename = misc.createSteeringFile(log, args, steering_string, suffix)
+                else: 
+                    steering_filename = misc.createSteeringFile(log, args, steering_string, suffix)
                 results.append(submitJobs(log, pool, args, steering_filename, parameters))
             except Exception as e:
                 log.error(f"Could not create submission file with suffix {suffix} due to {e}")
+            run_iteration +=1
+            
 
         # Return to old directory:
         if args.subdir:
             os.chdir(base_path)
-
+    
     misc.poolChecker(results)
 
     signal.signal(signal.SIGINT, prevINTHandler)
