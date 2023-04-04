@@ -16,23 +16,23 @@
 
 namespace corryvreckan {
 
-    class BigPixelDetector : public PixelDetector {
+    class PixelModuleDetector : public PixelDetector {
     public:
         /**
          * Delete default constructor
          */
-        BigPixelDetector() = delete;
+        PixelModuleDetector() = delete;
 
         /**
          * Default destructor
          */
-        ~BigPixelDetector() = default;
+        ~PixelModuleDetector() = default;
 
         /**
          * @brief Constructs a detector in the geometry
          * @param config Configuration object describing the detector
          */
-        BigPixelDetector(const Configuration& config);
+        PixelModuleDetector(const Configuration& config);
 
         void config_bigpixel(const Configuration& config);
 

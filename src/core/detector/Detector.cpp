@@ -18,7 +18,7 @@
 #include "Math/RotationZ.h"
 #include "Math/RotationZYX.h"
 
-#include "BigPixelDetector.hpp"
+#include "PixelModuleDetector.hpp"
 #include "Detector.hpp"
 #include "HexagonalPixelDetector.hpp"
 #include "core/utils/log.h"
@@ -91,7 +91,7 @@ std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& c
     } else if(coordinates == "hexagonal") {
         return std::make_shared<HexagonalPixelDetector>(config);
     } else if(coordinates == "cartesian_big") {
-        return std::make_shared<BigPixelDetector>(config);
+        return std::make_shared<PixelModuleDetector>(config);
     } else {
         throw InvalidValueError(config, "coordinates", "Coordinates can only set to be cartesian now");
     }

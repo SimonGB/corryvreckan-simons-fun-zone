@@ -6,14 +6,14 @@
  * Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
-#include "BigPixelDetector.hpp"
+#include "PixelModuleDetector.hpp"
 #include "core/utils/log.h"
 #include "exceptions.h"
 
 using namespace ROOT::Math;
 using namespace corryvreckan;
 
-BigPixelDetector::BigPixelDetector(const Configuration& config) : PixelDetector(config) {
+PixelModuleDetector::PixelModuleDetector(const Configuration& config) : PixelDetector(config) {
 
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
@@ -22,7 +22,7 @@ BigPixelDetector::BigPixelDetector(const Configuration& config) : PixelDetector(
     }
 }
 
-void BigPixelDetector::config_bigpixel(const Configuration& config) {
+void PixelModuleDetector::config_bigpixel(const Configuration& config) {
 
     m_big_pixel = config.getMatrix<int>("big_pixel");
     big_pixel_x.assign(m_big_pixel.at(0).begin(), m_big_pixel.at(0).end());
@@ -60,7 +60,7 @@ void BigPixelDetector::config_bigpixel(const Configuration& config) {
 }
 
 // Functions to get row and column from local position// FIXME: Replace with new coordinate transformation
-double BigPixelDetector::getRow(const PositionVector3D<Cartesian3D<double>> localPosition) const {
+double PixelModuleDetector::getRow(const PositionVector3D<Cartesian3D<double>> localPosition) const {
 
     int n_big_y_left = 0;
     bool is_big_y_pixel = 0;
@@ -95,7 +95,7 @@ double BigPixelDetector::getRow(const PositionVector3D<Cartesian3D<double>> loca
     return row;
 }
 
-double BigPixelDetector::getColumn(const PositionVector3D<Cartesian3D<double>> localPosition) const {
+double PixelModuleDetector::getColumn(const PositionVector3D<Cartesian3D<double>> localPosition) const {
 
     int n_big_x_left = 0;
     bool is_big_x_pixel = 0;
@@ -131,7 +131,7 @@ double BigPixelDetector::getColumn(const PositionVector3D<Cartesian3D<double>> l
 }
 
 // Function to get local position from row and column
-PositionVector3D<Cartesian3D<double>> BigPixelDetector::getLocalPosition(double column, double row) const {
+PositionVector3D<Cartesian3D<double>> PixelModuleDetector::getLocalPosition(double column, double row) const {
 
     int n_big_x_left = 0;
     bool is_big_x_pixel = 0;
@@ -175,12 +175,12 @@ PositionVector3D<Cartesian3D<double>> BigPixelDetector::getLocalPosition(double 
         0.);
 }
 
-XYVector BigPixelDetector::getSize() const {
+XYVector PixelModuleDetector::getSize() const {
     return XYVector(m_pitch.X() * (m_nPixels.X() + static_cast<double>(big_pixel_x.size())),
                     m_pitch.Y() * (m_nPixels.Y() + static_cast<double>(big_pixel_y.size())));
 }
 
-XYVector BigPixelDetector::getSpatialResolution(double column = 0, double row = 0) const {
+XYVector PixelModuleDetector::getSpatialResolution(double column = 0, double row = 0) const {
     bool is_big_x_pixel = 0;
     bool is_big_y_pixel = 0;
 
@@ -203,7 +203,7 @@ XYVector BigPixelDetector::getSpatialResolution(double column = 0, double row = 
     return XYVector(resolution_x, resolution_y);
 }
 
-TMatrixD BigPixelDetector::getSpatialResolutionMatrixGlobal(double column = 0, double row = 0) const {
+TMatrixD PixelModuleDetector::getSpatialResolutionMatrixGlobal(double column = 0, double row = 0) const {
     TMatrixD errorMatrix(3, 3);
     TMatrixD locToGlob(3, 3), globToLoc(3, 3);
     auto spatial_resolution = getSpatialResolution(column, row);
@@ -214,7 +214,7 @@ TMatrixD BigPixelDetector::getSpatialResolutionMatrixGlobal(double column = 0, d
     return (locToGlob * errorMatrix * globToLoc);
 }
 
-Configuration BigPixelDetector::getConfiguration() const {
+Configuration PixelModuleDetector::getConfiguration() const {
     auto config = PixelDetector::getConfiguration();
 
     config.setMatrix("big_pixel", m_big_pixel);
