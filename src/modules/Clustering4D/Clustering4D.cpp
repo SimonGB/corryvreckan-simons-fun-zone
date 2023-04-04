@@ -110,7 +110,6 @@ void Clustering4D::initialize() {
                                              -0.5,
                                              m_detector->nPixels().Y() - 0.5);
 
->>>>>>> cluster_error_plots
     title =
         m_detector->getName() + " pixel - seed pixel timestamp (all pixels w/o seed);ts_{pixel} - ts_ {seed} [ns];events";
     pxTimeMinusSeedTime = new TH1F("pxTimeMinusSeedTime", title.c_str(), 1000, -99.5 * 1.5625, 900.5 * 1.5625);
