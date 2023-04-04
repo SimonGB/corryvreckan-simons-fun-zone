@@ -24,7 +24,7 @@ PixelModuleDetector::PixelModuleDetector(const Configuration& config) : PixelDet
 
 void PixelModuleDetector::config_bigpixel(const Configuration& config) {
 
-    m_big_pixel = config.getMatrix<int>("big_pixel");
+    m_big_pixel = config.getMatrix<int>("big_pixels");
     big_pixel_x.assign(m_big_pixel.at(0).begin(), m_big_pixel.at(0).end());
     big_pixel_y.assign(m_big_pixel.at(1).begin(), m_big_pixel.at(1).end());
 
@@ -217,7 +217,7 @@ TMatrixD PixelModuleDetector::getSpatialResolutionMatrixGlobal(double column = 0
 Configuration PixelModuleDetector::getConfiguration() const {
     auto config = PixelDetector::getConfiguration();
 
-    config.setMatrix("big_pixel", m_big_pixel);
+    config.setMatrix("big_pixels", m_big_pixel);
     config.set<XYVector>("big_pixel_spatial_resolution", m_big_pixel_spatial_resolution);
 
     return config;

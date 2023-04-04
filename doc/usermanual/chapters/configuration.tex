@@ -341,10 +341,10 @@ Detectors with different gemetries are supported in the \corry framework and can
 \item A regular matrix of rectangular pixels is defined via \parameter{coordinates = cartesian}. This is the default option.
 \item A matrix of rectangular pixels containing columns and/or rows with double sized pixels, resembling a silicon pixel detector module with several readout chips, can be defined via \parameter{cartesian_module}. The following parameters can additionally be set to configure such a detector:
   \begin{itemize}
-  \item The matrix \parameter{big_pixel} lists the columns and rows with double sized pixels. The following example describes a sensor with 52 x 80 pixels and larger pixels in the left, right and upper edges:
+  \item The matrix \parameter{big_pixels} lists the columns and rows with double sized pixels. The following example describes a sensor with 52 x 80 pixels and larger pixels in the left, right and upper edges:
     \begin{minted}[frame=single,framesep=3pt,breaklines=true,tabsize=2,linenos]{ini}
       coordinates = cartesian_module
-      big_pixel = [[0,51],[79]]
+      big_pixels = [[0,51],[79]]
     \end{minted}
   \item The resolution of clusters centered inside a large pixel can be defined via the vector \parameter{big_pixel_spatial_resolution}. This defaults to $2 * spatial_resolution$.
   \end{itemize}
