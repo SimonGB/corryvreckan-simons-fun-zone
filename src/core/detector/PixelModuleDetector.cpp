@@ -21,6 +21,11 @@ PixelModuleDetector::PixelModuleDetector(const Configuration& config) : PixelDet
         config_bigpixel(config);
         build_axes(config);
     }
+
+    if(isDUT()) {
+        LOG(ERROR) << "A PixelModuleDetector was configured to be a DUT (" << this->getName()
+                   << "). Please be aware that regions with large pixels might be treated unexpectedly.";
+    }
 }
 
 void PixelModuleDetector::config_bigpixel(const Configuration& config) {

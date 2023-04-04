@@ -62,11 +62,6 @@ Detector::Detector(const Configuration& config) : m_role(DetectorRole::NONE) {
     m_detectorCoordinates = config.get<std::string>("coordinates", "cartesian");
     std::transform(m_detectorCoordinates.begin(), m_detectorCoordinates.end(), m_detectorCoordinates.begin(), ::tolower);
 
-    if(this->isDUT()) {
-        LOG(ERROR) << "A PixelModuleDetector was configured to be a DUT (" << this->getName()
-                   << "). Please be aware that regions with large pixels might be treated unexpectedly.";
-    }
-
     m_timeOffset = config.get<double>("time_offset", 0.0);
     if(m_timeOffset > 0.) {
         LOG(TRACE) << "Time offset: " << m_timeOffset;
