@@ -31,7 +31,7 @@ AnalysisDUT::AnalysisDUT(Configuration& config, std::shared_ptr<Detector> detect
     config_.setDefault<double>("charge_histo_range", 1000.0);
     config_.setDefault<int>("n_raw_bins", 1000);
     config_.setDefault<double>("raw_histo_range", 1000.0);
-    config_.setDefault<double>("inpixel_bin_size", Units::get<double>(0.5, "um"));
+    config_.setDefault<ROOT::Math::XYPoint>("inpixel_bin_size", {Units::get(0.5, "um"), Units::get(0.5, "um")});
 
     time_cut_frameedge_ = config_.get<double>("time_cut_frameedge");
     spatial_cut_sensoredge_ = config_.get<double>("spatial_cut_sensoredge");
@@ -42,7 +42,12 @@ AnalysisDUT::AnalysisDUT(Configuration& config, std::shared_ptr<Detector> detect
     correlations_ = config_.get<bool>("correlations");
     n_chargebins_ = config_.get<int>("n_charge_bins");
     charge_histo_range_ = config_.get<double>("charge_histo_range");
-    inpixelBinSize_ = config_.get<double>("inpixel_bin_size");
+    if(config_.getArray<double>("inpixel_bin_size").size() == 2) {
+        inpixelBinSize_ = config_.get<ROOT::Math::XYPoint>("inpixel_bin_size");
+    } else {
+        auto binsize = config_.get<double>("inpixel_bin_size");
+        inpixelBinSize_ = ROOT::Math::XYPoint(binsize, binsize);
+    }
 
     // if no separate raw histo bin settings are given, use the ones specified for the charge
     if(config_.has("n_charge_bins") & !config_.has("n_raw_bins")) {
@@ -642,8 +647,8 @@ void AnalysisDUT::initialize() {
                                    -1000,
                                    1000);
 
-    auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / inpixelBinSize_));
-    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / inpixelBinSize_));
+    auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / inpixelBinSize_.x()));
+    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / inpixelBinSize_.y()));
     if(nbins_x > 1e4 || nbins_y > 1e4) {
         throw InvalidValueError(config_, "inpixel_bin_size", "Too many bins for in-pixel histograms.");
     }
