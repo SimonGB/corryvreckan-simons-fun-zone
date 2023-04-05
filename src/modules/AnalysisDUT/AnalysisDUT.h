@@ -130,7 +130,7 @@ namespace corryvreckan {
         TProfile2D* hclusterSize_trackPos_TProfile;
 
         // Member variables
-        double inpixelBinSize_;
+        ROOT::Math::XYPoint inpixelBinSize_;
         double time_cut_frameedge_;
         double spatial_cut_sensoredge_;
         double chi2_ndof_cut_;
