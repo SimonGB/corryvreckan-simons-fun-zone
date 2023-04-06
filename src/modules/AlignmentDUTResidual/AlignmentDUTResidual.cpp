@@ -11,6 +11,7 @@
 
 #include "AlignmentDUTResidual.h"
 
+#include <TFormula.h>
 #include <TMath.h>
 #include <TProfile.h>
 #include <TVirtualFitter.h>
@@ -105,31 +106,37 @@ void AlignmentDUTResidual::initialize() {
 
     // Define residual_x
     AlignmentDUTResidual::formula_residualX = std::make_shared<TFormula>("frx", m_residual_x.c_str(), false);
+    // check formula format
+    if(!AlignmentDUTResidual::formula_residualX->IsValid()) {
+        throw InvalidValueError(config_, "residual_x", "Expression is not a valid function");
+    }
     if(static_cast<size_t>(AlignmentDUTResidual::formula_residualX->GetNpar()) != m_parameters_residualX.size()) {
         throw InvalidValueError(
             config_,
             "parameters_residual_x",
             "The number of function parameters does not line up with the amount of parameters in the function.");
-    } else {
-        // Apply parameters to the function
-        for(size_t n = 0; n < m_parameters_residualX.size(); ++n) {
-            AlignmentDUTResidual::formula_residualX->SetParameter(static_cast<int>(n), m_parameters_residualX.at(n));
-            LOG(DEBUG) << "residualX: Parameter [" << n << "] = " << m_parameters_residualX.at(n);
-        }
+    }
+    // Apply parameters to the function
+    for(size_t n = 0; n < m_parameters_residualX.size(); ++n) {
+        AlignmentDUTResidual::formula_residualX->SetParameter(static_cast<int>(n), m_parameters_residualX.at(n));
+        LOG(DEBUG) << "residualX: Parameter [" << n << "] = " << m_parameters_residualX.at(n);
     }
     // Define residual_y
     AlignmentDUTResidual::formula_residualY = std::make_shared<TFormula>("fry", m_residual_y.c_str(), false);
+    // check formula format
+    if(!AlignmentDUTResidual::formula_residualY->IsValid()) {
+        throw InvalidValueError(config_, "residual_y", "Expression is not a valid function");
+    }
     if(static_cast<size_t>(AlignmentDUTResidual::formula_residualY->GetNpar()) != m_parameters_residualY.size()) {
         throw InvalidValueError(
             config_,
             "parameters_residual_y",
             "The number of function parameters does not line up with the amount of parameters in the function.");
-    } else {
-        // Apply parameters to the function
-        for(size_t n = 0; n < m_parameters_residualY.size(); ++n) {
-            AlignmentDUTResidual::formula_residualY->SetParameter(static_cast<int>(n), m_parameters_residualY.at(n));
-            LOG(DEBUG) << "residualY: Parameter [" << n << "] = " << m_parameters_residualY.at(n);
-        }
+    }
+    // Apply parameters to the function
+    for(size_t n = 0; n < m_parameters_residualY.size(); ++n) {
+        AlignmentDUTResidual::formula_residualY->SetParameter(static_cast<int>(n), m_parameters_residualY.at(n));
+        LOG(DEBUG) << "residualY: Parameter [" << n << "] = " << m_parameters_residualY.at(n);
     }
 }
 
