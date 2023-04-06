@@ -108,7 +108,7 @@ void AlignmentDUTResidual::initialize() {
     if(static_cast<size_t>(AlignmentDUTResidual::formula_residualX->GetNpar()) != m_parameters_residualX.size()) {
         throw InvalidValueError(
             config_,
-            "parameters_residualX",
+            "parameters_residual_x",
             "The number of function parameters does not line up with the amount of parameters in the function.");
     } else {
         // Apply parameters to the function
@@ -122,7 +122,7 @@ void AlignmentDUTResidual::initialize() {
     if(static_cast<size_t>(AlignmentDUTResidual::formula_residualY->GetNpar()) != m_parameters_residualY.size()) {
         throw InvalidValueError(
             config_,
-            "parameters_residualY",
+            "parameters_residual_y",
             "The number of function parameters does not line up with the amount of parameters in the function.");
     } else {
         // Apply parameters to the function
