@@ -297,7 +297,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
     }
 
     // If there are no detectors then stop trying to track
-    if(trees.size() < 2) {
+    if(reference_first == reference_last) {
         // Fill histogram
         tracksPerEvent->Fill(0);
 
