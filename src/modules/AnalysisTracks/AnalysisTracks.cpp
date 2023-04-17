@@ -69,7 +69,7 @@ StatusCode AnalysisTracks::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto j = i + 1;
             while(j < val.size()) {
                 auto p = val.at(i) - val.at(j);
-                _distance_between_tracks_.at(key)->Fill((p.Mag2()));
+                _distance_between_tracks_.at(key)->Fill(sqrt(p.Mag2()));
                 j++;
             }
         }
