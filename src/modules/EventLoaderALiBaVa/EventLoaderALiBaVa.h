@@ -48,7 +48,7 @@ namespace corryvreckan {
 
     private:
         std::shared_ptr<Detector> detector_;
-        std::shared_ptr<DataFileRoot> m_alibava;
+        std::shared_ptr<DataFileRoot> alibava_;
 
         TH1F* hChargeSignal{};
         TH1F* hADCSignal{};
@@ -61,9 +61,9 @@ namespace corryvreckan {
         TH2F* hPedestalCorrect2D{};
         TH2F* hNoiseCorrect2D{};
 
-        double m_chargecut{};
-        double m_calibration_constant{};
-        std::vector<unsigned int> m_roi_ch{};
+        double chargecut_{};
+        double charge_calibration_{};
+        std::vector<unsigned int> roi_ch_{};
     };
 
 } // namespace corryvreckan

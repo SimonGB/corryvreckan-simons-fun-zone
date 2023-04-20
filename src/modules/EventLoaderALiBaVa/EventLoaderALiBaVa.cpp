@@ -42,8 +42,8 @@ void EventLoaderALiBaVa::initialize() {
     double timecut_low = config_.get<double>("timecut_low");
     double timecut_up = config_.get<double>("timecut_up");
     int ignore_events = config_.get<int>("ignore_events");
-    m_calibration_constant = config_.get<double>("calibration_constant");
-    m_chargecut = config_.get<double>("chargecut");
+    charge_calibration_ = config_.get<double>("calibration_constant");
+    chargecut_ = config_.get<double>("chargecut");
     int polarity = config_.get<int>("polarity");
 
     // Check if input directory exists
@@ -105,29 +105,29 @@ void EventLoaderALiBaVa::initialize() {
         "noiseCorrect2D", "Corrected Noise in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
 
     // Create a shared pointer with the data file.
-    m_alibava.reset(DataFileRoot::OpenFile(datafilename.c_str()));
+    alibava_.reset(DataFileRoot::OpenFile(datafilename.c_str()));
 
     // Find all non masked channels from the detector config and put them into a vector
     for(unsigned int col = 0; col < 256; col++) {
         if(!detector_->masked(static_cast<int>(col), 0)) {
-            m_roi_ch.push_back(col);
+            roi_ch_.push_back(col);
         }
     }
 
     // Set the region of interest
-    m_alibava->set_ROI(m_roi_ch);
+    alibava_->set_ROI(roi_ch_);
 
     // Set the polarity of the signal
-    m_alibava->set_polarity(polarity);
+    alibava_->set_polarity(polarity);
 
     // Create a pointer with the pedestal file
     DataFileRoot* PedestalPointer = DataFileRoot::OpenFile(pedestalfilename.c_str());
-    PedestalPointer->set_ROI(m_roi_ch);
+    PedestalPointer->set_ROI(roi_ch_);
 
     // Calculate the pedestals, and compute and apply the common mode noise correction
     PedestalPointer->compute_pedestals_alternative();
 
-    for(auto chan : m_roi_ch) {
+    for(auto chan : roi_ch_) {
         double ped_val, noise_val;
         ped_val = PedestalPointer->ped(chan);
         noise_val = PedestalPointer->noise(chan);
@@ -136,7 +136,7 @@ void EventLoaderALiBaVa::initialize() {
     }
 
     PedestalPointer->compute_cmmd_alternative();
-    for(auto chan : m_roi_ch) {
+    for(auto chan : roi_ch_) {
         double ped_val, noise_val;
         ped_val = PedestalPointer->ped(chan);
         noise_val = PedestalPointer->noise(chan);
@@ -152,14 +152,14 @@ void EventLoaderALiBaVa::initialize() {
     PedestalPointer->close();
     delete PedestalPointer;
     // Load the calculated pedestal info into the original datafile
-    m_alibava->load_pedestals(ped_f.c_str(), kTRUE);
+    alibava_->load_pedestals(ped_f.c_str(), kTRUE);
 
     // Set the timecuts
-    m_alibava->set_timecut(timecut_low, timecut_up);
+    alibava_->set_timecut(timecut_low, timecut_up);
 
     // Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
     for(int ievt = 0; ievt < ignore_events; ievt++) {
-        m_alibava->read_event();
+        alibava_->read_event();
     }
 }
 
@@ -173,7 +173,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     // Read a data event from the ALiBaVa data file
     // Give feedback according to return code
-    int return_code = m_alibava->read_event();
+    int return_code = alibava_->read_event();
 
     if(return_code == 1) {
         LOG(DEBUG) << "Successfully read event from ALiBaVa file";
@@ -185,13 +185,13 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     }
 
     // Calculate the common mode for the signal in this event
-    m_alibava->calc_common_mode_signal();
+    alibava_->calc_common_mode_signal();
     // Process the opened data event, i.e. pedestal correction, common mode noise correction
-    m_alibava->process_event();
+    alibava_->process_event();
     // This gets the TDC time from the event, allowing timecuts around the event peak
     // The timecut is set in the ALiBaVa_loader() function.
-    double TDCTime = m_alibava->time();
-    if(!m_alibava->valid_time(TDCTime)) {
+    double TDCTime = alibava_->time();
+    if(!alibava_->valid_time(TDCTime)) {
         LOG(DEBUG) << "Event time of " << TDCTime << " ns outside of timecut limits; ignoring event";
         return StatusCode::DeadTime;
     }
@@ -209,10 +209,10 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     double max_signal = 0;
     // This loops over the channels in the current ALiBaVa event
-    for(auto chan : m_roi_ch) {
-        double ADCSignal = m_alibava->ADC_signal(chan);
-        double SNRatio = m_alibava->sn(chan);
-        double CalSignal = ADCSignal * m_calibration_constant;
+    for(auto chan : roi_ch_) {
+        double ADCSignal = alibava_->ADC_signal(chan);
+        double SNRatio = alibava_->sn(chan);
+        double CalSignal = ADCSignal * charge_calibration_;
 
         if(ADCSignal > max_signal) {
             max_signal = ADCSignal;
@@ -220,7 +220,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
         // The chargecut is applied here
         // Not needed anymore but left in for now, other wise stuff explodes in Correlation
-        if(CalSignal > m_chargecut) {
+        if(CalSignal > chargecut_) {
             // Create a pixel for every channel in this event with all the information and put it in the vector.
             // The value in the pixel reserved for the ADC value is used for the S/N ratio multiplied by 100000.
 
@@ -249,7 +249,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 }
 
 void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-    m_alibava->close();
-    // delete m_alibava;
-    m_alibava.reset();
+    alibava_->close();
+    // delete alibava_;
+    alibava_.reset();
 }
