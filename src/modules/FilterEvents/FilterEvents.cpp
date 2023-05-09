@@ -53,15 +53,17 @@ void FilterEvents::initialize() {
     auto tag_filters = config_.getMap<std::string, std::string>("filter_tags", std::map<std::string, std::string>{});
     load_tag_filters(tag_filters);
 
-    hFilter_ = new TH1F("FilteredEvents", "Events filtered;events", 6, 0.5, 6.5);
+    hFilter_ = new TH1F("FilteredEvents", "Events filtered;events", 8, 0.5, 8.5);
     hFilter_->GetXaxis()->SetBinLabel(1, "Events");
+    hFilter_->GetXaxis()->SetBinLabel(2, "Excluded trigger");
     std::string label = (only_tracks_on_dut_ ? "Too few tracks on dut " : "Too few tracks");
-    hFilter_->GetXaxis()->SetBinLabel(2, label.c_str());
-    label = (only_tracks_on_dut_ ? "Too many tracks on dut " : "Too many tracks");
     hFilter_->GetXaxis()->SetBinLabel(3, label.c_str());
-    hFilter_->GetXaxis()->SetBinLabel(4, "Too few clusters");
-    hFilter_->GetXaxis()->SetBinLabel(5, "Too many clusters");
-    hFilter_->GetXaxis()->SetBinLabel(6, "Events passed ");
+    label = (only_tracks_on_dut_ ? "Too many tracks on dut " : "Too many tracks");
+    hFilter_->GetXaxis()->SetBinLabel(4, label.c_str());
+    hFilter_->GetXaxis()->SetBinLabel(5, "Too few clusters");
+    hFilter_->GetXaxis()->SetBinLabel(6, "Too many clusters");
+    hFilter_->GetXaxis()->SetBinLabel(7, "Rejected by tag filter");
+    hFilter_->GetXaxis()->SetBinLabel(8, "Events passed ");
 }
 
 StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -73,14 +75,14 @@ StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
     status = filter_tags(clipboard) ? StatusCode::DeadTime : status;
 
     if(status == StatusCode::Success) {
-        hFilter_->Fill(6);
+        hFilter_->Fill(8);
     }
     return status;
 }
 
 void FilterEvents::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
-    LOG(STATUS) << "Skipped " << hFilter_->GetBinContent(1) << " events. Events passed " << hFilter_->GetBinContent(6);
+    LOG(STATUS) << "Skipped " << hFilter_->GetBinContent(1) << " events. Events passed " << hFilter_->GetBinContent(8);
 }
 
 bool FilterEvents::filter_trigger_windows(const std::shared_ptr<Clipboard>& clipboard) {
@@ -111,11 +113,11 @@ bool FilterEvents::filter_tracks(const std::shared_ptr<Clipboard>& clipboard) {
     }
 
     if(num_tracks > max_number_tracks_) {
-        hFilter_->Fill(3); // too many tracks
+        hFilter_->Fill(4); // too many tracks
         LOG(TRACE) << "Number of tracks above maximum";
         return true;
     } else if(num_tracks < min_number_tracks_) {
-        hFilter_->Fill(2); //  too few tracks
+        hFilter_->Fill(3); //  too few tracks
         LOG(TRACE) << "Number of tracks below minimum";
         return true;
     }
@@ -129,12 +131,12 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
         // Check if number of Clusters on plane is within acceptance
         auto num_clusters = clipboard->getData<Cluster>(det).size();
         if(num_clusters > max_clusters_per_reference_) {
-            hFilter_->Fill(5); //  too many clusters
+            hFilter_->Fill(6); //  too many clusters
             LOG(TRACE) << "Number of Clusters on above maximum";
             return true;
         }
         if(num_clusters < min_clusters_per_reference_) {
-            hFilter_->Fill(4); //  too few clusters
+            hFilter_->Fill(5); //  too few clusters
             LOG(TRACE) << "Number of Clusters on below minimum";
             return true;
         }
@@ -182,6 +184,7 @@ bool FilterEvents::filter_tags(const std::shared_ptr<Clipboard>& clipboard) {
         try {
             auto tag_value = event->getTag(tag_name);
             if(tag_value.empty()) {
+                hFilter_->Fill(7);
                 return true;
             } else {
                 bool is_tag_filter_passed = filter_func(tag_value);
@@ -189,6 +192,7 @@ bool FilterEvents::filter_tags(const std::shared_ptr<Clipboard>& clipboard) {
                            << (is_tag_filter_passed ? "PASSED" : "REJETED");
                 // If filter not passed, then reject (i.e. return true), otherwise check other filters
                 if(!is_tag_filter_passed) {
+                    hFilter_->Fill(7);
                     return true;
                 }
             }
