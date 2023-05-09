@@ -11,6 +11,8 @@
 #ifndef FILTEREVENTS_H
 #define FILTEREVENTS_H
 #include <TH1F.h>
+#include <array>
+#include <vector>
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
 #include "objects/Track.hpp"
@@ -50,12 +52,20 @@ namespace corryvreckan {
         // Histogram with filters applied
         TH1F* hFilter_;
 
+        std::vector<std::array<uint32_t, 2>> exclude_trigger_windows_{};
         long unsigned max_number_tracks_{};
         long unsigned min_number_tracks_{};
         long unsigned min_clusters_per_reference_{};
         long unsigned max_clusters_per_reference_{};
         bool only_tracks_on_dut_{};
         std::map<std::string, std::function<bool(const std::string&)>> tag_filter_funcs_{};
+
+        /**
+         * @brief Function to filter events based on trigger windows
+         * @param clipboard with the current event
+         * @return true if the event is within one of the trigger windows, false otherwise
+         */
+        bool filter_trigger_windows(const std::shared_ptr<Clipboard>& clipboard);
 
         /**
          * @brief Function to filter events based on the number of tracks
@@ -80,7 +90,7 @@ namespace corryvreckan {
         /**
          * @brief Function to filter events based on tag requirements
          * @param clipboard with the current event
-         * @return true if tags in configuration do not fulfill the specified requirements, false otherwise
+         * @return true if tags in configuration fulfill the specified requirements, false otherwise
          */
         bool filter_tags(const std::shared_ptr<Clipboard>& clipboard);
     };

@@ -14,6 +14,7 @@ Events can also be skipped based on tag values where the tag value is either che
 
 ### Parameters
 
+* `exclude_trigger_windows`: List of trigger windows to exclude in analysis. A trigger window is a list of a lower and a higher trigger ID bound. For example, the trigger window `[51, 99]` would ignore all events with trigger numbers between 50 and 100. Defaults to an empty list.
 * `min_tracks`: Minimum number of tracks to continue analyzing event. Defaults to `0`.
 * `max_tracks`: Maximum number of tracks to continue analyzing event. Defaults to `10`.
 * `only_tracks_on_dut`: Apply the `min_tracks` and `max_tracks` cut only on tracks that intersect the DUT. If more than one DUT is defined in the geometry,the bool is set to its default. Defaults to `false`
@@ -27,6 +28,7 @@ Events can also be skipped based on tag values where the tag value is either che
 ### Usage
 ```toml
 [FilterEvents]
+exclude_trigger_windows = [[0, 100], [2600, 2600]]
 min_tracks = 0
 max_tracks = 10
 min_clusters_per_plane = 0

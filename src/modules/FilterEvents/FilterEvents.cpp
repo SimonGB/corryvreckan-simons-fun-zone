@@ -24,6 +24,21 @@ void FilterEvents::initialize() {
     config_.setDefault<unsigned>("min_clusters_per_plane", 0);
     config_.setDefault<unsigned>("max_clusters_per_plane", 100);
 
+    // Get trigger windows as matrix from config, copy to vec<arr<2>> if requirements fulfilled
+    auto exclude_trigger_windows_matrix = config_.getMatrix("exclude_trigger_windows", Matrix<uint32_t>{});
+    for(auto& trigger_window : exclude_trigger_windows_matrix) {
+        if(trigger_window.size() != 2) {
+            throw InvalidValueError(config_,
+                                    "exclude_trigger_windows",
+                                    "Trigger windows may only contain two values, a lower and an upper bound");
+        }
+        if(trigger_window[0] > trigger_window[1]) {
+            throw InvalidValueError(
+                config_, "exclude_trigger_windows", "Lower bound of trigger window may not be larger than upper bound");
+        }
+        exclude_trigger_windows_.push_back({trigger_window[0], trigger_window[1]});
+    }
+
     min_number_tracks_ = config_.get<unsigned>("min_tracks");
     max_number_tracks_ = config_.get<unsigned>("max_tracks");
     min_clusters_per_reference_ = config_.get<unsigned>("min_clusters_per_plane");
@@ -52,7 +67,8 @@ void FilterEvents::initialize() {
 StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     hFilter_->Fill(1); // number of events
-    auto status = filter_tracks(clipboard) ? StatusCode::DeadTime : StatusCode::Success;
+    auto status = filter_trigger_windows(clipboard) ? StatusCode::DeadTime : StatusCode::Success;
+    status = filter_tracks(clipboard) ? StatusCode::DeadTime : status;
     status = filter_cluster(clipboard) ? StatusCode::DeadTime : status;
     status = filter_tags(clipboard) ? StatusCode::DeadTime : status;
 
@@ -65,6 +81,20 @@ StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
 void FilterEvents::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     LOG(STATUS) << "Skipped " << hFilter_->GetBinContent(1) << " events. Events passed " << hFilter_->GetBinContent(6);
+}
+
+bool FilterEvents::filter_trigger_windows(const std::shared_ptr<Clipboard>& clipboard) {
+    const auto trigger_list = clipboard->getEvent()->triggerList();
+    for(auto& [trigger_window_low, trigger_window_high] : exclude_trigger_windows_) {
+        for(auto& [trigger_id, trigger_ts] : trigger_list) {
+            if(trigger_id >= trigger_window_low && trigger_id <= trigger_window_high) {
+                hFilter_->Fill(2);
+                LOG(TRACE) << "Excluding event within trigger window";
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool FilterEvents::filter_tracks(const std::shared_ptr<Clipboard>& clipboard) {
