@@ -81,8 +81,7 @@ StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
 }
 
 void FilterEvents::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-
-    LOG(STATUS) << "Skipped " << hFilter_->GetBinContent(1) << " events. Events passed " << hFilter_->GetBinContent(8);
+    LOG(STATUS) << hFilter_->GetBinContent(8) << " out of " << hFilter_->GetBinContent(1) << " events passed.";
 }
 
 bool FilterEvents::filter_trigger_windows(const std::shared_ptr<Clipboard>& clipboard) {
