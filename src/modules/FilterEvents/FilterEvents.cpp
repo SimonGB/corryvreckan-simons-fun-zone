@@ -157,7 +157,10 @@ bool FilterEvents::filter_tags(const std::shared_ptr<Clipboard>& clipboard) {
                 bool is_tag_filter_passed = filter_func(tag_value);
                 LOG(TRACE) << "Event with tag : " << tag_name << " -- value : " << tag_value << " -- "
                            << (is_tag_filter_passed ? "PASSED" : "REJETED");
-                return !is_tag_filter_passed;
+                // If filter not passed, then reject (i.e. return true), otherwise check other filters
+                if(!is_tag_filter_passed) {
+                    return true;
+                }
             }
         } catch(std::out_of_range& e) {
             throw MissingKeyError(tag_name, config_.getName());
