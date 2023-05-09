@@ -64,14 +64,14 @@ namespace corryvreckan {
         /**
          * @brief Function to filter events based on the number of tracks
          * @param clipboard with the current event
-         * @return true if number of tracks is within sopecified range, false otherwise
+         * @return true if number of tracks is within specified range, false otherwise
          */
         bool filter_tracks(const std::shared_ptr<Clipboard>& clipboard);
 
         /**
-         * @brief Function to filter events based on the number of clusters on each reerence plane
+         * @brief Function to filter events based on the number of clusters on each reference plane
          * @param clipboard with the current event
-         * @return true if number of clusters on one plane is within sopecified range, false otherwise
+         * @return true if number of clusters on one plane is within specified range, false otherwise
          */
         bool filter_cluster(const std::shared_ptr<Clipboard>& clipboard);
 
