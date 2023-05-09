@@ -10,13 +10,11 @@
  */
 #ifndef FILTEREVENTS_H
 #define FILTEREVENTS_H
-#include <TCanvas.h>
 #include <TH1F.h>
-#include <TH2F.h>
-#include <iostream>
+#include <array>
+#include <vector>
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
-#include "objects/Pixel.hpp"
 #include "objects/Track.hpp"
 
 namespace corryvreckan {
@@ -54,6 +52,7 @@ namespace corryvreckan {
         // Histogram with filters applied
         TH1F* hFilter_;
 
+        std::vector<std::array<uint32_t, 2>> exclude_trigger_windows_{};
         long unsigned max_number_tracks_{};
         long unsigned min_number_tracks_{};
         long unsigned min_clusters_per_reference_{};
@@ -62,16 +61,23 @@ namespace corryvreckan {
         std::map<std::string, std::function<bool(const std::string&)>> tag_filter_funcs_{};
 
         /**
+         * @brief Function to filter events based on trigger windows
+         * @param clipboard with the current event
+         * @return true if the event is within one of the trigger windows, false otherwise
+         */
+        bool filter_trigger_windows(const std::shared_ptr<Clipboard>& clipboard);
+
+        /**
          * @brief Function to filter events based on the number of tracks
          * @param clipboard with the current event
-         * @return true if number of tracks is within sopecified range, false otherwise
+         * @return true if number of tracks is not within specified range, false otherwise
          */
         bool filter_tracks(const std::shared_ptr<Clipboard>& clipboard);
 
         /**
-         * @brief Function to filter events based on the number of clusters on each reerence plane
+         * @brief Function to filter events based on the number of clusters on each reference plane
          * @param clipboard with the current event
-         * @return true if number of clusters on one plane is within sopecified range, false otherwise
+         * @return true if number of clusters on one plane is not within specified range, false otherwise
          */
         bool filter_cluster(const std::shared_ptr<Clipboard>& clipboard);
 
