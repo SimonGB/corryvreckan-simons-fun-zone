@@ -23,7 +23,6 @@ void FilterEvents::initialize() {
     config_.setDefault<bool>("only_tracks_on_dut", false);
     config_.setDefault<unsigned>("min_clusters_per_plane", 0);
     config_.setDefault<unsigned>("max_clusters_per_plane", 100);
-    config_.setDefaultMap<std::string, std::string>("filter_tags", std::map<std::string, std::string>{});
 
     min_number_tracks_ = config_.get<unsigned>("min_tracks");
     max_number_tracks_ = config_.get<unsigned>("max_tracks");
