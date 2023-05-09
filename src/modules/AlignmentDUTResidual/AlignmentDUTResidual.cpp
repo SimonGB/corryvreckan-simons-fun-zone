@@ -229,7 +229,7 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
             auto position = associatedCluster->local();
             auto intercept = AlignmentDUTResidual::globalDetector->getLocalIntercept(track.get());
 
-            // Calculate the local residuals
+            // Calculate the residuals in local coordinates
             double residualX = formula_residuals[0]->Eval(intercept.X(), position.X());
             double residualY = formula_residuals[1]->Eval(intercept.Y(), position.Y());
 
