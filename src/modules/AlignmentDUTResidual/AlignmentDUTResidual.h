@@ -55,6 +55,7 @@ namespace corryvreckan {
 
     private:
         static void MinimiseResiduals(Int_t& npar, Double_t* grad, Double_t& result, Double_t* par, Int_t flag);
+        void SetResidualFunction(long unsigned int index);
 
         std::shared_ptr<Detector> m_detector;
         int m_discardedtracks{};
@@ -77,8 +78,7 @@ namespace corryvreckan {
         TH1F* residualsXPlot;
         TH1F* residualsYPlot;
 
-        static std::shared_ptr<TFormula> formula_residualX;
-        static std::shared_ptr<TFormula> formula_residualY;
+        static std::shared_ptr<TFormula> formula_residuals[2];
 
         TProfile* profile_dY_X;
         TProfile* profile_dY_Y;
