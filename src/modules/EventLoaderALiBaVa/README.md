@@ -18,7 +18,7 @@ The detector needs to be defined in the geometry file with n columns and 1 row (
 
 The ROI can be set by creating a mask file for the detector and setting all channels outside the ROI to masked.
 
-The AliBaVa system provides the value for the collected charge only in arbitrary ADC units. The charge collection efficiency of the Beetle chips itself is temperature dependent. In order to obtain the collected charge in electrons for further calculations, a temperature dependent calibration formula can be passed to the Eventloader. The formula must adhere to the syntax of the ROOT TFormula. The temperature in the formula must be given in units of Kelvin. The temperature used to evalute the formula is the one reported by the beetle chips. 
+The AliBaVa system provides the value for the collected charge only in arbitrary ADC units. The charge collection efficiency of the Beetle chips itself is temperature dependent. In order to obtain the collected charge in electrons for further calculations, a temperature dependent calibration formula can be passed to the Eventloader. The formula must adhere to the syntax of the ROOT TFormula. The temperature in the formula must be given in units of Kelvin. The temperature used to evaluate the formula is the one reported by the beetle chips. 
 
 The code for reading and interpreting ALiBaVa data is based on analysis scripts originally written by [Alibava Systems S.L.](https://alibavasystems.com/alibava-system-classic/) and is published here with their consent. All related code is located in the `ALiBaVa` sub-folder of the module source.
 
@@ -42,8 +42,10 @@ For each detector the following plots are produced:
 * Uncorrected noise
 * Corrected pedestal
 * Corrected noise
+* Corrected noise in electrons
 * 2D Corrected pedestal
 * 2D Corrected noise
+* 2D Corrected noise in electrons
 * Time profile
 
 ### Usage
