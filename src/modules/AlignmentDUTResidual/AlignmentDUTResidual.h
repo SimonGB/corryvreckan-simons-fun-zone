@@ -55,7 +55,7 @@ namespace corryvreckan {
 
     private:
         static void MinimiseResiduals(Int_t& npar, Double_t* grad, Double_t& result, Double_t* par, Int_t flag);
-        void SetResidualFunction(long unsigned int index);
+        void SetResidualsFunctions();
 
         std::shared_ptr<Detector> m_detector;
         int m_discardedtracks{};
