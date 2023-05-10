@@ -78,7 +78,8 @@ namespace corryvreckan {
         TH1F* residualsXPlot;
         TH1F* residualsYPlot;
 
-        static std::shared_ptr<TFormula> formula_residuals[2];
+        static std::shared_ptr<TFormula> formula_residual_x;
+        static std::shared_ptr<TFormula> formula_residual_y;
 
         TProfile* profile_dY_X;
         TProfile* profile_dY_Y;

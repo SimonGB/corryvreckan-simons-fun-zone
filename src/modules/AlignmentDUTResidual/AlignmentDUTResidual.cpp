@@ -22,7 +22,8 @@ using namespace corryvreckan;
 TrackVector AlignmentDUTResidual::globalTracks;
 std::shared_ptr<Detector> AlignmentDUTResidual::globalDetector;
 ThreadPool* AlignmentDUTResidual::thread_pool;
-std::shared_ptr<TFormula> AlignmentDUTResidual::formula_residuals[2];
+std::shared_ptr<TFormula> AlignmentDUTResidual::formula_residual_x;
+std::shared_ptr<TFormula> AlignmentDUTResidual::formula_residual_y;
 
 AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector) {
@@ -149,8 +150,8 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             auto intercept = m_detector->globalToLocal(trackIntercept);
 
             // Calculate the local residuals
-            double residualX = formula_residuals[0]->Eval(intercept.X(), position.X());
-            double residualY = formula_residuals[1]->Eval(intercept.Y(), position.Y());
+            double residualX = formula_residual_x->Eval(intercept.X(), position.X());
+            double residualY = formula_residual_y->Eval(intercept.Y(), position.Y());
 
             // Fill the alignment residual profile plots
             residualsXPlot->Fill(static_cast<double>(Units::convert(residualX, "um")));
@@ -229,8 +230,8 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
             auto intercept = AlignmentDUTResidual::globalDetector->getLocalIntercept(track.get());
 
             // Calculate the residuals in local coordinates
-            double residualX = formula_residuals[0]->Eval(intercept.X(), position.X());
-            double residualY = formula_residuals[1]->Eval(intercept.Y(), position.Y());
+            double residualX = formula_residual_x->Eval(intercept.X(), position.X());
+            double residualY = formula_residual_y->Eval(intercept.Y(), position.Y());
 
             double errorX = associatedCluster->errorX();
             double errorY = associatedCluster->errorY();
@@ -263,17 +264,17 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 void AlignmentDUTResidual::SetResidualFunction(long unsigned int index) {
     // set new definition of residual
     auto m_residuals = config_.getArray<std::string>("residuals");
-    LOG(INFO) << "Definition of residual_" << (index == 0 ? "x" : "y") << ": " << m_residuals[index].c_str()
+    LOG(DEBUG) << "Definition of residual_" << (index == 0 ? "x" : "y") << ": " << m_residuals[index].c_str()
               << " [x = track intercept, y = cluster position]";
     // Get parameters for the new definition of residual
     auto m_parameters_residuals = config_.getMatrix<double>("parameters_residuals");
     // Define residual
-    AlignmentDUTResidual::formula_residuals[index] =
+    std::shared_ptr<TFormula> ResidualFormula =
         std::make_shared<TFormula>("formula_residual", m_residuals[index].c_str(), false);
-    if(!AlignmentDUTResidual::formula_residuals[index]->IsValid()) {
+    if(!ResidualFormula->IsValid()) {
         throw InvalidValueError(config_, "residuals", "Expression is not a valid function");
     }
-    if(static_cast<size_t>(AlignmentDUTResidual::formula_residuals[index]->GetNpar()) !=
+    if(static_cast<size_t>(ResidualFormula->GetNpar()) !=
        m_parameters_residuals[index].size()) {
         throw InvalidValueError(
             config_,
@@ -282,10 +283,16 @@ void AlignmentDUTResidual::SetResidualFunction(long unsigned int index) {
     }
     // Apply parameters to the function
     for(size_t n = 0; n < m_parameters_residuals[index].size(); ++n) {
-        AlignmentDUTResidual::formula_residuals[index]->SetParameter(static_cast<int>(n),
+        ResidualFormula->SetParameter(static_cast<int>(n),
                                                                      m_parameters_residuals[index].at(n));
-        LOG(INFO) << "residual" << (index == 0 ? "x" : "y") << ": Parameter [" << n
+        LOG(DEBUG) << "residual" << (index == 0 ? "x" : "y") << ": Parameter [" << n
                   << "] = " << m_parameters_residuals[index].at(n);
+    }
+    if(index == 0){
+      AlignmentDUTResidual::formula_residual_x = ResidualFormula;
+    }
+    else{
+      AlignmentDUTResidual::formula_residual_y = ResidualFormula;
     }
 }
 
