@@ -60,7 +60,7 @@ protected: // This is ugly but comfortable
     double _cnoise_roi;
 
     EventDataBlock _data;
-    const std::string _idf;
+    static std::string _idf;
     double _mean_temp_pedestal = std::numeric_limits<double>::quiet_NaN();
 
 protected:
