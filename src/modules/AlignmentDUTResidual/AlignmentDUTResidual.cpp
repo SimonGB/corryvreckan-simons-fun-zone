@@ -263,8 +263,8 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 void AlignmentDUTResidual::SetResidualsFunctions() {
     // Get definition of residuals, default x-y
     auto m_residuals = config_.getArray<std::string>("residuals");
-    LOG(DEBUG) << "Definition of residual_x: " << m_residuals[0].c_str()
-               << ", definition of residual_y: " << m_residuals[1].c_str() << " [x = track intercept, y = cluster position]";
+    LOG(DEBUG) << "Definition of residual_x: " << m_residuals.at(0).c_str()
+               << ", definition of residual_y: " << m_residuals.at(1).c_str() << " [x = track intercept, y = cluster position]";
     // Get parameters for the new definition of residuals
     auto m_parameters_residuals = config_.getArray<double>("parameters_residuals", {});
     // Define residual
@@ -277,23 +277,24 @@ void AlignmentDUTResidual::SetResidualsFunctions() {
         throw InvalidValueError(config_, "residuals", "Expression is not a valid function");
     }
     // Check number of parameters
-    if((static_cast<size_t>(formula_residual_x->GetNpar()) + static_cast<size_t>(formula_residual_y->GetNpar())) !=
+    if(static_cast<size_t>(formula_residual_x->GetNpar() + formula_residual_y->GetNpar()) !=
        m_parameters_residuals.size()) {
         throw InvalidValueError(
             config_,
             "parameters_residuals",
             "The number of function parameters does not line up with the amount of parameters in the functions.");
     }
+
     // Apply parameters to the functions
     for(auto n = 0; n < formula_residual_x->GetNpar(); ++n) {
-        formula_residual_x->SetParameter(static_cast<int>(n), m_parameters_residuals.at(static_cast<int>(n)));
-        LOG(DEBUG) << "residual_x: Parameter [" << n << "] = " << m_parameters_residuals.at(static_cast<int>(n));
+        formula_residual_x->SetParameter(n, m_parameters_residuals.at(static_cast<size_t>(n)));
+        LOG(DEBUG) << "residual_x: Parameter [" << n << "] = " << m_parameters_residuals.at(static_cast<size_t>(n));
     }
     for(auto n = 0; n < formula_residual_y->GetNpar(); ++n) {
-        formula_residual_y->SetParameter(static_cast<int>(n),
-                                         m_parameters_residuals.at(static_cast<int>(n + formula_residual_x->GetNpar())));
+        formula_residual_y->SetParameter(n,
+                                         m_parameters_residuals.at(static_cast<size_t>(n + formula_residual_x->GetNpar())));
         LOG(DEBUG) << "residual_y: Parameter [" << n
-                   << "] = " << m_parameters_residuals.at(static_cast<int>(n + formula_residual_x->GetNpar()));
+                   << "] = " << m_parameters_residuals.at(static_cast<size_t>(n + formula_residual_x->GetNpar()));
     }
 }
 
