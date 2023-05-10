@@ -43,7 +43,7 @@ number_of_tracks = 200000
 
 [AlignmentDUTResidual]
 log_level = INFO
-# example of redefinition of residual_x
+# example of redefinition of residuals in x and y 
 residuals = "(TMath::Abs(x - y) - [0])*TMath::Sign(1,(x - y))","(TMath::Abs(x - y) - [0])*TMath::Sign(1,(x - y))*[1]"
 parameters_residuals = [[16.9um],[17.4um,1]]
 ```

@@ -37,7 +37,6 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     config_.setDefault<double>("max_track_chi2ndof", 10.);
     config_.setDefault<unsigned int>("workers", std::max(std::thread::hardware_concurrency() - 1, 1u));
     config_.setDefaultArray<std::string>("residuals", {"x - y", "x - y"});
-    config_.setDefaultMatrix<double>("parameters_residuals", {{}, {}});
 
     m_workers = config.get<unsigned int>("workers");
     nIterations = config_.get<size_t>("iterations");
@@ -265,7 +264,7 @@ void AlignmentDUTResidual::SetResidualFunction(long unsigned int index) {
     // set new definition of residual
     auto m_residuals = config_.getArray<std::string>("residuals");
     LOG(INFO) << "Definition of residual_" << (index == 0 ? "x" : "y") << ": " << m_residuals[index].c_str()
-              << " [x = track intercepts, y = cluster position]";
+              << " [x = track intercept, y = cluster position]";
     // Get parameters for the new definition of residual
     auto m_parameters_residuals = config_.getMatrix<double>("parameters_residuals");
     // Define residual
