@@ -264,7 +264,8 @@ void AlignmentDUTResidual::SetResidualsFunctions() {
     // Get definition of residuals, default x-y
     auto m_residuals = config_.getArray<std::string>("residuals");
     LOG(DEBUG) << "Definition of residual_x: " << m_residuals.at(0).c_str()
-               << ", definition of residual_y: " << m_residuals.at(1).c_str() << " [x = track intercept, y = cluster position]";
+               << ", definition of residual_y: " << m_residuals.at(1).c_str()
+               << " [x = track intercept, y = cluster position]";
     // Get parameters for the new definition of residuals
     auto m_parameters_residuals = config_.getArray<double>("parameters_residuals", {});
     // Define residual
@@ -277,8 +278,7 @@ void AlignmentDUTResidual::SetResidualsFunctions() {
         throw InvalidValueError(config_, "residuals", "Expression is not a valid function");
     }
     // Check number of parameters
-    if(static_cast<size_t>(formula_residual_x->GetNpar() + formula_residual_y->GetNpar()) !=
-       m_parameters_residuals.size()) {
+    if(static_cast<size_t>(formula_residual_x->GetNpar() + formula_residual_y->GetNpar()) != m_parameters_residuals.size()) {
         throw InvalidValueError(
             config_,
             "parameters_residuals",
