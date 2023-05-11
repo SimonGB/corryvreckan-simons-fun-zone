@@ -291,15 +291,16 @@ void AlignmentDUTResidual::SetResidualsFunctions() {
     }
 
     // Apply parameters to the functions
-    for(auto n = 0; n < formula_residual_x->GetNpar(); ++n) {
+    auto N_params_x = formula_residual_x->GetNpar();
+    auto N_params_y = formula_residual_y->GetNpar();
+    for(auto n = 0; n < N_params_x; ++n) {
         formula_residual_x->SetParameter(n, m_parameters_residuals.at(static_cast<size_t>(n)));
         LOG(DEBUG) << "residual_x: Parameter [" << n << "] = " << m_parameters_residuals.at(static_cast<size_t>(n));
     }
-    for(auto n = 0; n < formula_residual_y->GetNpar(); ++n) {
-        formula_residual_y->SetParameter(n,
-                                         m_parameters_residuals.at(static_cast<size_t>(n + formula_residual_x->GetNpar())));
+    for(auto n = 0; n < N_params_y; ++n) {
+        formula_residual_y->SetParameter(n, m_parameters_residuals.at(static_cast<size_t>(n + N_params_x)));
         LOG(DEBUG) << "residual_y: Parameter [" << n
-                   << "] = " << m_parameters_residuals.at(static_cast<size_t>(n + formula_residual_x->GetNpar()));
+                   << "] = " << m_parameters_residuals.at(static_cast<size_t>(n + N_params_x));
     }
 }
 
