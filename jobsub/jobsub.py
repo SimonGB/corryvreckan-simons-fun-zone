@@ -16,16 +16,16 @@ python jobsub.py --help
 to see the list of command line options.
 
 """
+import argparse
 import sys
 import logging
 import misc
-import time, multiprocessing
+import os
+import multiprocessing
 import hashlib
 
 def runCorryvreckanLocally(filename, jobtask, silent):
     """ Runs Corryvreckan and stores log of output """
-    import os
-    from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
     log = logging.getLogger('jobsub.' + jobtask)
 
     rcode = None # the return code that will be set by a later subprocess method
@@ -58,11 +58,9 @@ def runCorryvreckanLocally(filename, jobtask, silent):
         return 2
     return rcode
 
-def runCorryvreckanCondor(filename, subfile, runnr):
+def runCorryvreckanCondor(filename, subfile, jobtask):
     """ Submits the Corryvreckan job to HTCondor """
-    import os
-    from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
-    log = logging.getLogger('jobsub.' + runnr)
+    log = logging.getLogger('jobsub.' + jobtask)
     # We are running on HTCondor.
 
     rcode = None 
@@ -76,7 +74,7 @@ def runCorryvreckanCondor(filename, subfile, runnr):
         return 1
 
     # Add condor_submit parameters:
-    cmd = cmd+" -batch-name \"Corry"+runnr+"\" "
+    cmd = cmd+" -batch-name \"Corry"+jobtask+"\" "
 
     # check for Corryvreckan executable
     corry = misc.checkProgram("corry")
@@ -142,25 +140,6 @@ def main(argv=None):
             self.counter+=1
             return self.method(*args,**kwargs)
     log.error=callcounted(log.error)
-
-    import os.path
-    import configparser
-    try:
-        import argparse
-    except ImportError:
-        log.debug("No locally installed argparse module found; trying the package provided with jobsub.")
-        # argparse is not installed; use (old) version provided with jobsub
-        # determine path to subdirectory
-        libdir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))),"pymodules","argparse")
-        if libdir not in sys.path:
-            sys.path.append(libdir)
-        # try again loading the module
-        try:
-            import argparse
-        except ImportError:
-            # nothing we can do now
-            log.critical("Could not load argparse module. For python versions prior to 2.7, please install it from http://code.google.com/p/argparse")
-            return 1
 
     if argv is None:
         argv = sys.argv
@@ -240,7 +219,7 @@ def main(argv=None):
 
     # dictionary keeping our parameters
     # here you can set some minimal default config values that will (possibly) be overwritten by the config file
-    parameters = {"conf_file":"analysis.conf", "logpath":"."}
+    parameters = {"logpath":"."}
 
     # Parse option part of the  argument here -> overwriting config options
     if args.option is None:
@@ -341,7 +320,7 @@ def main(argv=None):
         for suffix, steering_string in zip(suffixes, steering_strings):
             try:
                 #submission_settings.append((args, misc.createSteeringFile(log, args, steering_string, suffix), parameters))
-                suffix_hash = string = hashlib.shake_128(suffix.encode()).hexdigest(16)
+                suffix_hash = hashlib.shake_128(suffix.encode()).hexdigest(16)
                 steering_filename = misc.createSteeringFile(log, args, steering_string, suffix_hash)
                 results.append(submitJobs(log, pool, args, steering_filename, parameters))
             except Exception as e:
