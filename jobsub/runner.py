@@ -26,15 +26,16 @@ class Runner():
             if not line:
                 break
 
+            line_strip = line.strip()
             if not self.silent:
-                if b'WARNING' in line.strip():
-                    self.log.warning(line.strip())
-                elif b'ERROR' in line.strip():
-                    self.log.error(line.strip())
-                elif b'FATAL' in line.strip():
-                    self.log.critical(line.strip())
+                if b'(WARNING) ' in line_strip or b'(W) ' in line_strip:
+                    self.log.warning(line_strip)
+                elif b'(ERROR) ' in line_strip or b'(E) ' in line_strip:
+                    self.log.error(line_strip)
+                elif b'(FATAL) ' in line_strip or b'(F) ' in line_strip:
+                    self.log.critical(line_strip)
                 else:
-                    self.log.info(line.strip())
+                    self.log.info(line_strip)
             self.log_file.write(str(line,'utf-8'))
 
     async def read_and_display(self, cmd):
