@@ -283,7 +283,9 @@ void AlignmentDUTResidual::SetResidualsFunctions() {
         throw InvalidValueError(config_, "residuals", "Expression is not a valid function");
     }
     // Check number of parameters
-    if(static_cast<size_t>(formula_residual_x->GetNpar() + formula_residual_y->GetNpar()) != m_parameters_residuals.size()) {
+    const auto N_params_x = formula_residual_x->GetNpar();
+    const auto N_params_y = formula_residual_y->GetNpar();
+    if(static_cast<size_t>(N_params_x + N_params_y) != m_parameters_residuals.size()) {
         throw InvalidValueError(
             config_,
             "parameters_residuals",
@@ -291,8 +293,6 @@ void AlignmentDUTResidual::SetResidualsFunctions() {
     }
 
     // Apply parameters to the functions
-    auto N_params_x = formula_residual_x->GetNpar();
-    auto N_params_y = formula_residual_y->GetNpar();
     for(auto n = 0; n < N_params_x; ++n) {
         formula_residual_x->SetParameter(n, m_parameters_residuals.at(static_cast<size_t>(n)));
         LOG(DEBUG) << "residual_x: Parameter [" << n << "] = " << m_parameters_residuals.at(static_cast<size_t>(n));
