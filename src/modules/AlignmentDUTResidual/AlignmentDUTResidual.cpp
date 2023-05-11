@@ -263,6 +263,11 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 void AlignmentDUTResidual::SetResidualsFunctions() {
     // Get definition of residuals, default x-y
     auto m_residuals = config_.getArray<std::string>("residuals");
+    // Check size of array
+    if(m_residuals.size() != 2) {
+        throw InvalidValueError(
+            config_, "residuals", "Both and only the residual_x and residual_y functions must be defined");
+    }
     LOG(DEBUG) << "Definition of residual_x: " << m_residuals.at(0).c_str()
                << ", definition of residual_y: " << m_residuals.at(1).c_str()
                << " [x = track intercept, y = cluster position]";
