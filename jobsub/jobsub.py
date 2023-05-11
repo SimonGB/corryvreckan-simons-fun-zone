@@ -58,9 +58,9 @@ def runCorryvreckanLocally(filename, jobtask, silent):
         return 2
     return rcode
 
-def runCorryvreckanCondor(filename, subfile, runnr):
+def runCorryvreckanCondor(filename, subfile, jobtask):
     """ Submits the Corryvreckan job to HTCondor """
-    log = logging.getLogger('jobsub.' + runnr)
+    log = logging.getLogger('jobsub.' + jobtask)
     # We are running on HTCondor.
 
     rcode = None 
@@ -74,7 +74,7 @@ def runCorryvreckanCondor(filename, subfile, runnr):
         return 1
 
     # Add condor_submit parameters:
-    cmd = cmd+" -batch-name \"Corry"+runnr+"\" "
+    cmd = cmd+" -batch-name \"Corry"+jobtask+"\" "
 
     # check for Corryvreckan executable
     corry = misc.checkProgram("corry")
