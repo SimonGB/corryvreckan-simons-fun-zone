@@ -673,10 +673,6 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
     LOG(DEBUG) << "Found " << upstream_tracklets.size() << " upstream tracklets";
     LOG(DEBUG) << "Found " << downstream_tracklets.size() << " downstream tracklets";
 
-    // Fill histograms for up- and downstream tracklets
-    fill_tracklet_histograms(upstream, upstream_tracklets);
-    fill_tracklet_histograms(downstream, downstream_tracklets);
-
     // Multiplet merging
     MultipletVector multiplets;
     for(auto& uptracklet : upstream_tracklets) {
@@ -797,11 +793,20 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
     LOG(DEBUG) << "Found " << multiplets.size() << " multiplets";
     multipletMultiplicity->Fill(static_cast<double>(multiplets.size()));
 
+    // if requested ensure unique usage of clusters
+    if(unique_cluster_usage_ && multiplets.size() > 1) {
+        multiplets = remove_duplicate(multiplets);
+    }
+    // Fill histograms for up- and downstream tracklets that are used in the final tracks
+    TrackVector upstream_selected;
+    TrackVector downstream_selected;
+    for(auto it = multiplets.begin(); it != multiplets.end(); ++it) {
+        upstream_selected.push_back((*it)->getUpstreamTracklet());
+        downstream_selected.push_back((*it)->getDownstreamTracklet());
+    }
+    fill_tracklet_histograms(upstream, upstream_selected);
+    fill_tracklet_histograms(downstream, downstream_selected);
     if(multiplets.size() > 0 && !refit_gbl_) {
-        // if requested ensure unique usage of clusters
-        if(unique_cluster_usage_ && multiplets.size() > 1) {
-            multiplets = remove_duplicate(multiplets);
-        }
         clipboard->putData(multiplets);
     } else if(multiplets.size() > 0 && refit_gbl_) {
         auto gbltracks = refit(multiplets);
