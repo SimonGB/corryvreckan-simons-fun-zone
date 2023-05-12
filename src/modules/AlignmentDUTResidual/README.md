@@ -23,6 +23,9 @@ This module uses tracks for alignment. The module moves the detector it is insta
 * `max_associated_clusters`: Maximum number of associated clusters per track allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `1`.
 * `max_track_chi2ndof`: Maximum track chi^2 value allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `10.0`.
 * `workers`: Specify the number of workers to use in total, should be strictly larger than zero. Defaults to the number of native threads available on the system minus one, if this can be determined, otherwise one thread is used.
+* `residuals`: Array of formulas for unbiased x and y residuals. Any 2D TFormula can be used, the variables `x` and `y` represent the *track intercept* with the plane and the *cluster position* respectively. Default formulas: `x - y`. Parameters can be used (`[0]`, `[1]`, ...) and have to be separately specified (see below). It should be noted that the formula does *not* support units, values with units have to be specified as separate parameters. Both and only the functions residual_x and residual_y must be defined if used. 
+* `parameters_residuals`: Array of factors, representing the parameters of the above correction function. Defaults to an empty array, i.e. by default no parameters are needed.
+
 
 ### Plots produced
 For the DUT, the following plots are produced:
@@ -39,5 +42,7 @@ For the DUT, the following plots are produced:
 number_of_tracks = 200000
 
 [AlignmentDUTResidual]
-log_level = INFO
+# example of redefinition of residuals in x and y
+residuals = "(TMath::Abs(x - y) - [0])*TMath::Sign(1,(x - y))","(TMath::Abs(x - y) - [0])*TMath::Sign(1,(x - y))*[1]"
+parameters_residuals = 16.9um, 17.4um, 1
 ```

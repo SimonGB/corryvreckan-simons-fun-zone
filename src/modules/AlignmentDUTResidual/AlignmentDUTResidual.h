@@ -10,6 +10,7 @@
  */
 
 #include <TCanvas.h>
+#include <TFormula.h>
 #include <TGraph.h>
 #include <TH1F.h>
 #include <TH2F.h>
@@ -54,6 +55,7 @@ namespace corryvreckan {
 
     private:
         static void MinimiseResiduals(Int_t& npar, Double_t* grad, Double_t& result, Double_t* par, Int_t flag);
+        void SetResidualsFunctions();
 
         std::shared_ptr<Detector> m_detector;
         int m_discardedtracks{};
@@ -75,6 +77,9 @@ namespace corryvreckan {
 
         TH1F* residualsXPlot;
         TH1F* residualsYPlot;
+
+        static std::shared_ptr<TFormula> formula_residual_x;
+        static std::shared_ptr<TFormula> formula_residual_y;
 
         TProfile* profile_dY_X;
         TProfile* profile_dY_Y;
