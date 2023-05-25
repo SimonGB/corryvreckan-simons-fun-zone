@@ -73,16 +73,24 @@ AnalysisTiming::AnalysisTiming(Configuration& config, std::shared_ptr<Detector> 
 
 void AnalysisTiming::initialize() {
     // Basic histograms
-    hTimeResidual_ = new TH1D("residualsTime",
-                              "Time residual;time_{ref}-time_{dut} [ns];# entries",
-                              static_cast<Int_t>(time_range_ / time_binning_),
-                              time_offset_ - 0.5 * time_range_,
-                              time_offset_ + 0.5 * time_range_);
+    const auto time_bins = static_cast<int>(time_range_ / time_binning_);
+    const auto time_xlow = time_offset_ - 0.5 * time_range_;
+    const auto time_xup = time_offset_ + 0.5 * time_range_;
+    hTimeResidual_ =
+        new TH1D("residualTime", "Time residual;time_{ref}-time_{dut} [ns];# entries", time_bins, time_xlow, time_xup);
+    hTimeResidualOverTime_ = new TH2F("residualTimeOverTime",
+                                      "Time residual over time;time_{ref} [s];time_{ref}-time_{dut} [ns];# entries",
+                                      600,
+                                      -3.,
+                                      3600. - 3.,
+                                      time_bins,
+                                      time_xlow,
+                                      time_xup);
 
     // 2D sensor histograms
     const auto npix_x = detector_->nPixels().X();
     const auto npix_y = detector_->nPixels().Y();
-    hResidualMeanSensor_ = new TProfile2D("residualsTime_mean_sensor",
+    hResidualMeanSensor_ = new TProfile2D("residualTime_mean_sensor",
                                           "Mean time residual sensor map;x [px];y [px];time [ns]",
                                           npix_x,
                                           -0.5,
@@ -91,7 +99,7 @@ void AnalysisTiming::initialize() {
                                           -0.5,
                                           npix_y - 0.5,
                                           "s");
-    hResidualStdDevSensor_ = new TProfile2D("residualsTime_stddev_sensor",
+    hResidualStdDevSensor_ = new TProfile2D("residualTime_stddev_sensor",
                                             "Standard deviation time residual sensor map;x [px];y [px];time [ns]",
                                             npix_x,
                                             -0.5,
@@ -108,7 +116,7 @@ void AnalysisTiming::initialize() {
     if(nbins_inpix_x > 1e4 || nbins_inpix_y > 1e4) {
         throw InvalidValueError(config_, "inpixel_bin_size", "Too many bins for in-pixel histograms.");
     }
-    hResidualMeanInpix_ = new TProfile2D("residualsTime_mean_inpix",
+    hResidualMeanInpix_ = new TProfile2D("residualTime_mean_inpix",
                                          "Mean time residual in-pixel map;x [px];y [px];time [ns]",
                                          nbins_inpix_x,
                                          -0.5 * pitch_x,
@@ -117,7 +125,7 @@ void AnalysisTiming::initialize() {
                                          -0.5 * pitch_y,
                                          0.5 * pitch_y,
                                          "s");
-    hResidualStdDevInpix_ = new TProfile2D("residualsTime_stddev_inpix",
+    hResidualStdDevInpix_ = new TProfile2D("residualTime_stddev_inpix",
                                            "Standard deviation time residual in-pixel map;x [px];y [px];time [ns]",
                                            nbins_inpix_x,
                                            -0.5 * pitch_x,
@@ -179,7 +187,10 @@ StatusCode AnalysisTiming::run(const std::shared_ptr<Clipboard>& clipboard) {
         auto time_residual = cluster_ref->timestamp() - cluster_dut->timestamp();
         LOG(DEBUG) << "Found time residual " << Units::display(time_residual, {"ps", "ns", "us", "ms"})
                    << " at reference time " << Units::display(cluster_ref->timestamp(), {"ps", "ns", "us", "ms", "s"});
+
+        // Fill basic histograms
         hTimeResidual_->Fill(time_residual);
+        hTimeResidualOverTime_->Fill(static_cast<double>(Units::convert(cluster_ref->timestamp(), "s")), time_residual);
 
         // Fill 2D histograms
         auto intercept_local = detector_->getLocalIntercept(track.get());

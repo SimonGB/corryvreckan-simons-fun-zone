@@ -10,6 +10,7 @@
 
 ### Description
 This module allows to study the time resolution of any detector with respect to any other detector.
+This can be used to study the time resolution using the time residual between two DUTs.
 
 ### Parameters
 * `reference_name`: Name of the detector to use as reference. Defaults to the reference detector defined in the geometry file.

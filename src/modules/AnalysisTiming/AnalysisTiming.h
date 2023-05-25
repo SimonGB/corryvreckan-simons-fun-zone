@@ -14,6 +14,7 @@
 
 #include <TH1D.h>
 #include <TH1F.h>
+#include <TH2F.h>
 #include <TProfile2D.h>
 #include <TTree.h>
 
@@ -70,6 +71,7 @@ namespace corryvreckan {
 
         // histograms
         TH1D* hTimeResidual_;
+        TH2F* hTimeResidualOverTime_;
         TProfile2D* hResidualMeanSensor_;
         TProfile2D* hResidualStdDevSensor_;
         TProfile2D* hResidualMeanInpix_;
