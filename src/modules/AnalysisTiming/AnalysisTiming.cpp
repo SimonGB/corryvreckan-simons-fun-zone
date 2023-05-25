@@ -206,7 +206,9 @@ void AnalysisTiming::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
     for(Int_t nx = 0; nx < hResidualMeanSensor_->GetNbinsX(); ++nx) {
         for(Int_t ny = 0; ny < hResidualMeanSensor_->GetNbinsY(); ++ny) {
             const auto std_dev = hResidualMeanSensor_->GetBinError(nx, ny);
-            hResidualStdDevSensor_->Fill(static_cast<double>(nx), static_cast<double>(ny), std_dev);
+            if(std_dev > 0.) {
+                hResidualStdDevSensor_->Fill(static_cast<double>(nx), static_cast<double>(ny), std_dev);
+            }
         }
     }
     // Fill 2D inpixel standard deviation histogram
@@ -217,9 +219,11 @@ void AnalysisTiming::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
     for(Int_t nx = 0; nx < hResidualMeanInpix_->GetNbinsX(); ++nx) {
         for(Int_t ny = 0; ny < hResidualMeanInpix_->GetNbinsY(); ++ny) {
             const auto std_dev = hResidualMeanInpix_->GetBinError(nx, ny);
-            const auto x = -0.5 * pitch_x + nx * bin_width_x;
-            const auto y = -0.5 * pitch_y + ny * bin_width_y;
-            hResidualStdDevInpix_->Fill(x, y, std_dev);
+            if(std_dev > 0.) {
+                const auto x = -0.5 * pitch_x + nx * bin_width_x;
+                const auto y = -0.5 * pitch_y + ny * bin_width_y;
+                hResidualStdDevInpix_->Fill(x, y, std_dev);
+            }
         }
     }
 }
