@@ -16,7 +16,6 @@
 #include <TH1F.h>
 #include <TH2F.h>
 #include <TProfile2D.h>
-#include <TTree.h>
 
 #include "core/module/Module.hpp"
 
@@ -83,12 +82,6 @@ namespace corryvreckan {
         double time_binning_;
         double time_offset_;
         ROOT::Math::XYPoint inpixel_bin_size_;
-
-        // TTree, FIXME: replace with over time histograms
-        TTree* tTimeTree_;
-        double tTimeTree_ref_ts_;
-        double tTimeTree_dut_ts_;
-        double tTimeTree_time_residual_;
     };
 
 } // namespace corryvreckan

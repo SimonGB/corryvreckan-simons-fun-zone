@@ -144,12 +144,6 @@ void AnalysisTiming::initialize() {
     hCutHisto_->GetXaxis()->SetBinLabel(1 + ETrackSelection::kPassedChi2Ndf, "Passed Chi2/ndof");
     hCutHisto_->GetXaxis()->SetBinLabel(1 + ETrackSelection::kClusterOnRef, "Cluster on reference");
     hCutHisto_->GetXaxis()->SetBinLabel(1 + ETrackSelection::kClusterOnDUT, "Cluster on DUT");
-
-    // FIXME: remove
-    tTimeTree_ = new TTree("timeTree", "TTree with time information");
-    tTimeTree_->Branch("ref_ts", &tTimeTree_ref_ts_);
-    tTimeTree_->Branch("dut_ts", &tTimeTree_dut_ts_);
-    tTimeTree_->Branch("time_residual", &tTimeTree_time_residual_);
 }
 
 StatusCode AnalysisTiming::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -197,12 +191,6 @@ StatusCode AnalysisTiming::run(const std::shared_ptr<Clipboard>& clipboard) {
         auto intercept_pixel = detector_->getInterceptPixel(intercept_local);
         hResidualMeanSensor_->Fill(intercept_pixel.first, intercept_pixel.second, time_residual);
         hResidualMeanInpix_->Fill(intercept_local.X(), intercept_local.Y(), time_residual);
-
-        // Fill TTree, FIXME: remove
-        tTimeTree_ref_ts_ = cluster_ref->timestamp();
-        tTimeTree_dut_ts_ = cluster_dut->timestamp();
-        tTimeTree_time_residual_ = time_residual;
-        tTimeTree_->Fill();
     }
 
     // Return value telling analysis to keep running
