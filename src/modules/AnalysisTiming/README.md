@@ -26,11 +26,9 @@ This can be used to study the time resolution using the time residual between tw
 For each detector the following plots are produced:
 
 * Time residual histogram
+* Time residual over time (1h)
 * 2D sensor map for the mean and standard deviation of the time residual
 * 2D in-pixel map for the mean and standard deviation of the time residual
-
-TODO:
-* Time residual over time
 
 ### Usage
 ```toml
