@@ -117,7 +117,7 @@ void AnalysisTiming::initialize() {
         throw InvalidValueError(config_, "inpixel_bin_size", "Too many bins for in-pixel histograms.");
     }
     hResidualMeanInpix_ = new TProfile2D("residualTime_mean_inpix",
-                                         "Mean time residual in-pixel map;x [px];y [px];time [ns]",
+                                         "Mean time residual in-pixel map;x [mm];y [mm];time [ns]",
                                          nbins_inpix_x,
                                          -0.5 * pitch_x,
                                          0.5 * pitch_x,
@@ -126,7 +126,7 @@ void AnalysisTiming::initialize() {
                                          0.5 * pitch_y,
                                          "s");
     hResidualStdDevInpix_ = new TProfile2D("residualTime_stddev_inpix",
-                                           "Standard deviation time residual in-pixel map;x [px];y [px];time [ns]",
+                                           "Standard deviation time residual in-pixel map;x [mm];y [mm];time [ns]",
                                            nbins_inpix_x,
                                            -0.5 * pitch_x,
                                            0.5 * pitch_x,
@@ -202,11 +202,11 @@ void AnalysisTiming::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
               << hCutHisto_->GetBinContent(1 + ETrackSelection::kAllTrack) << " tracks";
 
     // Fill 2D sensor standard deviation histogram
-    for(Int_t nx = 0; nx < hResidualMeanSensor_->GetNbinsX(); ++nx) {
-        for(Int_t ny = 0; ny < hResidualMeanSensor_->GetNbinsY(); ++ny) {
+    for(Int_t nx = 1; nx <= hResidualMeanSensor_->GetNbinsX(); ++nx) {
+        for(Int_t ny = 1; ny <= hResidualMeanSensor_->GetNbinsY(); ++ny) {
             const auto std_dev = hResidualMeanSensor_->GetBinError(nx, ny);
             if(std_dev > 0.) {
-                hResidualStdDevSensor_->Fill(static_cast<double>(nx), static_cast<double>(ny), std_dev);
+                hResidualStdDevSensor_->Fill(static_cast<double>(nx - 1), static_cast<double>(ny - 1), std_dev);
             }
         }
     }
@@ -215,12 +215,12 @@ void AnalysisTiming::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
     const auto pitch_y = detector_->getPitch().Y();
     const auto bin_width_x = pitch_x / hResidualMeanInpix_->GetNbinsX();
     const auto bin_width_y = pitch_y / hResidualMeanInpix_->GetNbinsY();
-    for(Int_t nx = 0; nx < hResidualMeanInpix_->GetNbinsX(); ++nx) {
-        for(Int_t ny = 0; ny < hResidualMeanInpix_->GetNbinsY(); ++ny) {
+    for(Int_t nx = 1; nx <= hResidualMeanInpix_->GetNbinsX(); ++nx) {
+        for(Int_t ny = 1; ny <= hResidualMeanInpix_->GetNbinsY(); ++ny) {
             const auto std_dev = hResidualMeanInpix_->GetBinError(nx, ny);
             if(std_dev > 0.) {
-                const auto x = -0.5 * pitch_x + nx * bin_width_x;
-                const auto y = -0.5 * pitch_y + ny * bin_width_y;
+                const auto x = -0.5 * pitch_x + (nx - 0.5) * bin_width_x;
+                const auto y = -0.5 * pitch_y + (ny - 0.5) * bin_width_y;
                 hResidualStdDevInpix_->Fill(x, y, std_dev);
             }
         }
