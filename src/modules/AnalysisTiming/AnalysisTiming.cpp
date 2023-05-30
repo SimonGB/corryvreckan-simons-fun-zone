@@ -189,8 +189,9 @@ StatusCode AnalysisTiming::run(const std::shared_ptr<Clipboard>& clipboard) {
         // Fill 2D histograms
         auto intercept_local = detector_->getLocalIntercept(track.get());
         auto intercept_pixel = detector_->getInterceptPixel(intercept_local);
+        auto intercept_inpix = detector_->inPixel(intercept_local);
         hResidualMeanSensor_->Fill(intercept_pixel.first, intercept_pixel.second, time_residual);
-        hResidualMeanInpix_->Fill(intercept_local.X(), intercept_local.Y(), time_residual);
+        hResidualMeanInpix_->Fill(intercept_inpix.X(), intercept_inpix.Y(), time_residual);
     }
 
     // Return value telling analysis to keep running
