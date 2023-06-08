@@ -233,37 +233,63 @@ void TrackingMultiplet::initialize() {
         std::string stream_name_caps = stream == upstream ? "Upstream" : "Downstream";
 
         TDirectory* directory = getROOTDirectory();
-        TDirectory* local_directory = directory->mkdir(stream_name.c_str());
+        TDirectory* local_directory_all = directory->mkdir((stream_name + "_all").c_str());
+        TDirectory* local_directory_final = directory->mkdir((stream_name + "_final").c_str());
 
-        if(local_directory == nullptr) {
+        if(local_directory_all == nullptr || local_directory_final == nullptr) {
             throw RuntimeError("Cannot create or access local ROOT directory for module " + this->getUniqueName());
         }
-        local_directory->cd();
 
         title = "";
         std::string hist_name = "";
 
+        local_directory_all->cd();
+
+        title = stream_name_caps + " tracklet multiplicity;" + stream_name + " tracklet candidates;events";
+        hist_name = stream_name + "MultiplicityAll";
+        trackletMultiplicityAll[stream] = new TH1F(hist_name.c_str(), title.c_str(), 40, 0, 40);
+
+        title = "Clusters per " + stream_name_caps + " tracklet;clusters;" + stream_name + " tracklet candidates";
+        hist_name = stream_name + "ClustersPerTrackletAll";
+        clustersPerTrackletAll[stream] = new TH1F(hist_name.c_str(), title.c_str(), 10, 0, 10);
+
+        title = stream_name_caps + " tracklet angle X;angle x [mrad];" + stream_name + " tracklet candidates";
+        hist_name = stream_name + "AngleXAll";
+        trackletAngleXAll[stream] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
+        title = stream_name_caps + " tracklet angle Y;angle y [mrad];" + stream_name + " tracklet candidates";
+        hist_name = stream_name + "AngleYAll";
+        trackletAngleYAll[stream] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
+
+        title = stream_name_caps + " tracklet X at scatterer;position x [mm];" + stream_name + " tracklet candidates";
+        hist_name = stream_name + "PositionAtScattererXAll";
+        trackletPositionAtScattererXAll[stream] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
+        title = stream_name_caps + " tracklet Y at scatterer;position y [mm];" + stream_name + " tracklet candidates";
+        hist_name = stream_name_caps + "PositionAtScattererYAll";
+        trackletPositionAtScattererYAll[stream] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
+
+        local_directory_final->cd();
+
         title = stream_name_caps + " tracklet multiplicity;" + stream_name + " tracklets;events";
-        hist_name = stream_name + "Multiplicity";
-        trackletMultiplicity[stream] = new TH1F(hist_name.c_str(), title.c_str(), 40, 0, 40);
+        hist_name = stream_name + "MultiplicityFinal";
+        trackletMultiplicityFinal[stream] = new TH1F(hist_name.c_str(), title.c_str(), 40, 0, 40);
 
         title = "Clusters per " + stream_name_caps + " tracklet;clusters;" + stream_name + " tracklets";
-        hist_name = stream_name + "ClustersPerTracklet";
-        clustersPerTracklet[stream] = new TH1F(hist_name.c_str(), title.c_str(), 10, 0, 10);
+        hist_name = stream_name + "ClustersPerTrackletFinal";
+        clustersPerTrackletFinal[stream] = new TH1F(hist_name.c_str(), title.c_str(), 10, 0, 10);
 
         title = stream_name_caps + " tracklet angle X;angle x [mrad];" + stream_name + " tracklets";
-        hist_name = stream_name + "AngleX";
-        trackletAngleX[stream] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
+        hist_name = stream_name + "AngleXFinal";
+        trackletAngleXFinal[stream] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
         title = stream_name_caps + " tracklet angle Y;angle y [mrad];" + stream_name + " tracklets";
-        hist_name = stream_name + "AngleY";
-        trackletAngleY[stream] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
+        hist_name = stream_name + "AngleYFinal";
+        trackletAngleYFinal[stream] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
 
         title = stream_name_caps + " tracklet X at scatterer;position x [mm];" + stream_name + " tracklets";
-        hist_name = stream_name + "PositionAtScattererX";
-        trackletPositionAtScattererX[stream] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
+        hist_name = stream_name + "PositionAtScattererXFinal";
+        trackletPositionAtScattererXFinal[stream] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
         title = stream_name_caps + " tracklet Y at scatterer;position y [mm];" + stream_name + " tracklets";
-        hist_name = stream_name_caps + "PositionAtScattererY";
-        trackletPositionAtScattererY[stream] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
+        hist_name = stream_name_caps + "PositionAtScattererYFinal";
+        trackletPositionAtScattererYFinal[stream] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
     }
 
     // Loop over all up- and downstream planes
@@ -281,21 +307,38 @@ void TrackingMultiplet::initialize() {
         }
         local_directory->cd();
 
-        TDirectory* local_res = local_directory->mkdir("local_residuals");
-        local_res->cd();
+        TDirectory* local_res_all = local_directory->mkdir("local_residuals_all");
+        TDirectory* local_res_final = local_directory->mkdir("local_residuals_final");
+        TDirectory* global_res_all = local_directory->mkdir("global_residuals_all");
+        TDirectory* global_res_final = local_directory->mkdir("global_residuals_final");
+
+        local_res_all->cd();
 
         title = detectorID + " Local Residual X;x-x_{track} [mm];events";
-        residualsX_local[detectorID] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
+        residualsX_localAll[detectorID] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
         title = detectorID + " Local Residual Y;y-y_{track} [mm];events";
-        residualsY_local[detectorID] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
+        residualsY_localAll[detectorID] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
 
-        TDirectory* global_res = local_directory->mkdir("global_residuals");
-        global_res->cd();
+        global_res_all->cd();
 
         title = detectorID + " Global Residual X;x-x_{track} [mm];events";
-        residualsX_global[detectorID] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
+        residualsX_globalAll[detectorID] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
         title = detectorID + " Global Residual Y;y-y_{track} [mm];events";
-        residualsY_global[detectorID] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
+        residualsY_globalAll[detectorID] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
+
+        local_res_final->cd();
+
+        title = detectorID + " Local Residual X;x-x_{track} [mm];events";
+        residualsX_localFinal[detectorID] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
+        title = detectorID + " Local Residual Y;y-y_{track} [mm];events";
+        residualsY_localFinal[detectorID] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
+
+        global_res_final->cd();
+
+        title = detectorID + " Global Residual X;x-x_{track} [mm];events";
+        residualsX_globalFinal[detectorID] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
+        title = detectorID + " Global Residual Y;y-y_{track} [mm];events";
+        residualsY_globalFinal[detectorID] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
     }
 }
 
@@ -563,32 +606,62 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
     return tracklets;
 }
 
-// Filling the histograms for up- & downstream tracklets
-void TrackingMultiplet::fill_tracklet_histograms(const streams& stream, TrackVector tracklets) {
+// Filling the histograms for up- & downstream tracklets (all tracklets as well as the finally selected ones)
+void TrackingMultiplet::fill_tracklet_histograms(const streams& stream,
+                                                 TrackVector tracklets,
+                                                 TrackVector tracklets_selected) {
 
     std::string stream_name = stream == upstream ? "upstream" : "downstream";
 
-    trackletMultiplicity[stream]->Fill(static_cast<double>(tracklets.size()));
+    trackletMultiplicityAll[stream]->Fill(static_cast<double>(tracklets.size()));
+    trackletMultiplicityFinal[stream]->Fill(static_cast<double>(tracklets_selected.size()));
 
     if(tracklets.size() > 0) {
         LOG(DEBUG) << "Filling plots for " << stream_name << " tracklets";
 
         for(auto& tracklet : tracklets) {
-            clustersPerTracklet[stream]->Fill(static_cast<double>(tracklet->getNClusters()));
-            trackletAngleX[stream]->Fill(static_cast<double>(Units::convert(
+            clustersPerTrackletAll[stream]->Fill(static_cast<double>(tracklet->getNClusters()));
+            trackletAngleXAll[stream]->Fill(static_cast<double>(Units::convert(
                 tracklet->getDirection(scatterer_position_).X() / tracklet->getDirection(scatterer_position_).Z(), "mrad")));
-            trackletAngleY[stream]->Fill(static_cast<double>(Units::convert(
+            trackletAngleYAll[stream]->Fill(static_cast<double>(Units::convert(
                 tracklet->getDirection(scatterer_position_).Y() / tracklet->getDirection(scatterer_position_).Z(), "mrad")));
-            trackletPositionAtScattererX[stream]->Fill(tracklet->getIntercept(scatterer_position_).X());
-            trackletPositionAtScattererY[stream]->Fill(tracklet->getIntercept(scatterer_position_).Y());
+            trackletPositionAtScattererXAll[stream]->Fill(tracklet->getIntercept(scatterer_position_).X());
+            trackletPositionAtScattererYAll[stream]->Fill(tracklet->getIntercept(scatterer_position_).Y());
 
             auto trackletClusters = tracklet->getClusters();
             for(auto& trackletCluster : trackletClusters) {
                 std::string detectorID = trackletCluster->detectorID();
-                residualsX_global[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).X());
-                residualsY_global[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).Y());
-                residualsX_local[detectorID]->Fill(tracklet->getLocalResidual(detectorID).X());
-                residualsY_local[detectorID]->Fill(tracklet->getLocalResidual(detectorID).Y());
+                residualsX_globalAll[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).X());
+                residualsY_globalAll[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).Y());
+                residualsX_localAll[detectorID]->Fill(tracklet->getLocalResidual(detectorID).X());
+                residualsY_localAll[detectorID]->Fill(tracklet->getLocalResidual(detectorID).Y());
+            }
+        }
+    }
+
+    if(tracklets_selected.size() > 0) {
+        LOG(DEBUG) << "Filling plots for " << stream_name << " tracklets_selected";
+
+        for(auto& tracklet_selected : tracklets_selected) {
+            clustersPerTrackletFinal[stream]->Fill(static_cast<double>(tracklet_selected->getNClusters()));
+            trackletAngleXFinal[stream]->Fill(
+                static_cast<double>(Units::convert(tracklet_selected->getDirection(scatterer_position_).X() /
+                                                       tracklet_selected->getDirection(scatterer_position_).Z(),
+                                                   "mrad")));
+            trackletAngleYFinal[stream]->Fill(
+                static_cast<double>(Units::convert(tracklet_selected->getDirection(scatterer_position_).Y() /
+                                                       tracklet_selected->getDirection(scatterer_position_).Z(),
+                                                   "mrad")));
+            trackletPositionAtScattererXFinal[stream]->Fill(tracklet_selected->getIntercept(scatterer_position_).X());
+            trackletPositionAtScattererYFinal[stream]->Fill(tracklet_selected->getIntercept(scatterer_position_).Y());
+
+            auto trackletClusters = tracklet_selected->getClusters();
+            for(auto& trackletCluster : trackletClusters) {
+                std::string detectorID = trackletCluster->detectorID();
+                residualsX_globalFinal[detectorID]->Fill(tracklet_selected->getGlobalResidual(detectorID).X());
+                residualsY_globalFinal[detectorID]->Fill(tracklet_selected->getGlobalResidual(detectorID).Y());
+                residualsX_localFinal[detectorID]->Fill(tracklet_selected->getLocalResidual(detectorID).X());
+                residualsY_localFinal[detectorID]->Fill(tracklet_selected->getLocalResidual(detectorID).Y());
             }
         }
     }
@@ -804,8 +877,8 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         upstream_selected.push_back((*it)->getUpstreamTracklet());
         downstream_selected.push_back((*it)->getDownstreamTracklet());
     }
-    fill_tracklet_histograms(upstream, upstream_selected);
-    fill_tracklet_histograms(downstream, downstream_selected);
+    fill_tracklet_histograms(upstream, upstream_tracklets, upstream_selected);
+    fill_tracklet_histograms(downstream, downstream_tracklets, downstream_selected);
     if(multiplets.size() > 0 && !refit_gbl_) {
         clipboard->putData(multiplets);
     } else if(multiplets.size() > 0 && refit_gbl_) {

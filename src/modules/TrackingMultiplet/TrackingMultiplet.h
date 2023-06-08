@@ -52,7 +52,7 @@ namespace corryvreckan {
         /**
          * @brief Fill histograms for upstream or downstream tracklets
          */
-        void fill_tracklet_histograms(const streams& stream, TrackVector);
+        void fill_tracklet_histograms(const streams& stream, TrackVector tracklets, TrackVector tracklets_selected);
 
     private:
         // Configuration members
@@ -81,18 +81,28 @@ namespace corryvreckan {
         std::vector<std::string> exclude_from_seed_;
 
         // Member histograms
-        std::map<streams, TH1F*> trackletMultiplicity;
-        std::map<streams, TH1F*> clustersPerTracklet;
+        std::map<streams, TH1F*> trackletMultiplicityAll;
+        std::map<streams, TH1F*> clustersPerTrackletAll;
+        std::map<streams, TH1F*> trackletMultiplicityFinal;
+        std::map<streams, TH1F*> clustersPerTrackletFinal;
 
-        std::map<streams, TH1F*> trackletAngleX;
-        std::map<streams, TH1F*> trackletAngleY;
-        std::map<streams, TH1F*> trackletPositionAtScattererX;
-        std::map<streams, TH1F*> trackletPositionAtScattererY;
+        std::map<streams, TH1F*> trackletAngleXAll;
+        std::map<streams, TH1F*> trackletAngleYAll;
+        std::map<streams, TH1F*> trackletPositionAtScattererXAll;
+        std::map<streams, TH1F*> trackletPositionAtScattererYAll;
+        std::map<streams, TH1F*> trackletAngleXFinal;
+        std::map<streams, TH1F*> trackletAngleYFinal;
+        std::map<streams, TH1F*> trackletPositionAtScattererXFinal;
+        std::map<streams, TH1F*> trackletPositionAtScattererYFinal;
 
-        std::map<std::string, TH1F*> residualsX_local;
-        std::map<std::string, TH1F*> residualsY_local;
-        std::map<std::string, TH1F*> residualsX_global;
-        std::map<std::string, TH1F*> residualsY_global;
+        std::map<std::string, TH1F*> residualsX_localAll;
+        std::map<std::string, TH1F*> residualsY_localAll;
+        std::map<std::string, TH1F*> residualsX_globalAll;
+        std::map<std::string, TH1F*> residualsY_globalAll;
+        std::map<std::string, TH1F*> residualsX_localFinal;
+        std::map<std::string, TH1F*> residualsY_localFinal;
+        std::map<std::string, TH1F*> residualsX_globalFinal;
+        std::map<std::string, TH1F*> residualsY_globalFinal;
 
         TH1F* multipletMultiplicity;
         TH1F* trackChi2;
