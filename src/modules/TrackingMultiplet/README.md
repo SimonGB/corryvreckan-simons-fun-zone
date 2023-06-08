@@ -44,7 +44,7 @@ For each upstream tracklet, the downstream tracklet with the lowest matching dis
 
 ### Plots produced
 
-For both upstream and downstream tracklets, the following plots are produced:
+For both upstream and downstream tracklets (multiplet candidates and accepted tracks), the following plots are produced:
 
 * Histogram of the tracklets per event
 * Histogram of the number of clusters per tracklet
@@ -53,12 +53,13 @@ For both upstream and downstream tracklets, the following plots are produced:
 
 The following plots are produced only once:
 
-* Histogram of the number of accepted multiplets per event
 * Histograms of the matching distance of multiplet candidates in X/Y
 * Histograms of the matching distance of accepted multiplets in X/Y
 * Histograms of kink angles of accepted multiplets in X/Y
+* Histogram of the number of accepted multiplets per event
+* Histogram of the chi2(ndf) of the accepted tracks
 
-For each detector the following plots are produced:
+For each detector the following plots are produced both for multiplet candidates and accepted tracks:
 
 * Histograms of the global and local track residual in X/Y.
 
