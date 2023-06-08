@@ -107,6 +107,8 @@ namespace corryvreckan {
         TH1F* multipletMultiplicity;
         TH1F* trackChi2;
         TH1F* trackChi2ndof;
+        TH1F* trackChi2_refit;
+        TH1F* trackChi2ndof_refit;
 
         TH1F* matchingDistanceAtScattererX;
         TH1F* matchingDistanceAtScattererY;

@@ -207,11 +207,19 @@ void TrackingMultiplet::initialize() {
     std::string title = "Multiplet multiplicity;multiplets;events";
     multipletMultiplicity = new TH1F("multipletMultiplicity", title.c_str(), 40, 0, 40);
 
-    title = "Track #chi^{2};#chi^{2};events";
+    title = "Multiplet track #chi^{2};#chi^{2};events";
     trackChi2 = new TH1F("trackChi2", title.c_str(), 150, 0, 150);
 
-    title = "Track #chi^{2}/ndof;#chi^{2}/ndof;events";
+    title = "Multiplet track #chi^{2}/ndof;#chi^{2}/ndof;events";
     trackChi2ndof = new TH1F("trackChi2ndof", title.c_str(), 100, 0, 50);
+
+    if(refit_gbl_) {
+        title = "GBL-refit track #chi^{2};#chi^{2};events";
+        trackChi2_refit = new TH1F("trackChi2_refit", title.c_str(), 150, 0, 150);
+
+        title = "GBL-refit track #chi^{2}/ndof;#chi^{2}/ndof;events";
+        trackChi2ndof_refit = new TH1F("trackChi2ndof_refit", title.c_str(), 100, 0, 50);
+    }
 
     title = "Matching distance X at scatterer;distance x [mm];multiplet candidates";
     matchingDistanceAtScattererX = new TH1F("matchingDistanceAtScattererX", title.c_str(), 200, -10., 10.);
@@ -846,6 +854,35 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         downstream_tracklets.erase(used_downtracklet);
 
         multiplets.push_back(multiplet);
+    }
+
+    // refit can change chi2, so if unique cluster usage requested, decide what to keep after refitting
+    if(multiplets.size() > 0 && refit_gbl_) {
+        auto gbltracks = refit(multiplets);
+        if(unique_cluster_usage_ && gbltracks.size() > 1) {
+            gbltracks = remove_duplicate(gbltracks);
+        }
+        for(auto& gbltrack : gbltracks) {
+            trackChi2_refit->Fill(gbltrack->getChi2());
+            trackChi2ndof_refit->Fill(gbltrack->getChi2ndof());
+        }
+        clipboard->putData(gbltracks);
+    } else if(unique_cluster_usage_ && multiplets.size() > 1) {
+        multiplets = remove_duplicate(multiplets);
+        clipboard->putData(multiplets);
+    } else if(multiplets.size() > 0) {
+        clipboard->putData(multiplets);
+    }
+
+    LOG(DEBUG) << "Found " << multiplets.size() << " multiplets";
+    multipletMultiplicity->Fill(static_cast<double>(multiplets.size()));
+
+    // Fill multiplet histograms
+    TrackVector upstream_selected;
+    TrackVector downstream_selected;
+    for(auto& multiplet : multiplets) {
+        upstream_selected.push_back(multiplet->getUpstreamTracklet());
+        downstream_selected.push_back(multiplet->getDownstreamTracklet());
 
         trackChi2->Fill(multiplet->getChi2());
         trackChi2ndof->Fill(multiplet->getChi2ndof());
@@ -862,33 +899,8 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         multipletKinkAtScattererX->Fill(static_cast<double>(Units::convert(kinkX, "mrad")));
         multipletKinkAtScattererY->Fill(static_cast<double>(Units::convert(kinkY, "mrad")));
     }
-
-    LOG(DEBUG) << "Found " << multiplets.size() << " multiplets";
-    multipletMultiplicity->Fill(static_cast<double>(multiplets.size()));
-
-    // if requested ensure unique usage of clusters
-    if(unique_cluster_usage_ && multiplets.size() > 1) {
-        multiplets = remove_duplicate(multiplets);
-    }
-    // Fill histograms for up- and downstream tracklets that are used in the final tracks
-    TrackVector upstream_selected;
-    TrackVector downstream_selected;
-    for(auto it = multiplets.begin(); it != multiplets.end(); ++it) {
-        upstream_selected.push_back((*it)->getUpstreamTracklet());
-        downstream_selected.push_back((*it)->getDownstreamTracklet());
-    }
     fill_tracklet_histograms(upstream, upstream_tracklets, upstream_selected);
     fill_tracklet_histograms(downstream, downstream_tracklets, downstream_selected);
-    if(multiplets.size() > 0 && !refit_gbl_) {
-        clipboard->putData(multiplets);
-    } else if(multiplets.size() > 0 && refit_gbl_) {
-        auto gbltracks = refit(multiplets);
-        // refit can change chi2, so if unique cluster usage requested, decide what to keep after refitting
-        if(unique_cluster_usage_ && gbltracks.size() > 1) {
-            gbltracks = remove_duplicate(gbltracks);
-        }
-        clipboard->putData(gbltracks);
-    }
 
     // Return value telling analysis to keep running
     return StatusCode::Success;
