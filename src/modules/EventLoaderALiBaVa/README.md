@@ -18,6 +18,8 @@ The detector needs to be defined in the geometry file with n columns and 1 row (
 
 The ROI can be set by creating a mask file for the detector and setting all channels outside the ROI to masked.
 
+The AliBaVa system provides the value for the collected charge only in arbitrary ADC units. The charge collection efficiency of the Beetle chips itself is temperature dependent. In order to obtain the collected charge in electrons for further calculations, a temperature dependent calibration formula can be passed to the Eventloader. The formula must adhere to the syntax of the ROOT TFormula. The temperature in the formula must be given in units of Kelvin. The temperature used to evaluate the formula is the one reported by the beetle chips. 
+
 The code for reading and interpreting ALiBaVa data is based on analysis scripts originally written by [Alibava Systems S.L.](https://alibavasystems.com/alibava-system-classic/) and is published here with their consent. All related code is located in the `ALiBaVa` sub-folder of the module source.
 
 ### Parameters
@@ -26,7 +28,7 @@ The code for reading and interpreting ALiBaVa data is based on analysis scripts 
 * `timecut_low`: Readouts with a timestamp smaller than the lower limit are discarded. Each time a readout is triggered in the ALiBaVa system, the readout is given a timestamp by the ALiBaVa system in relation to its internal, 100ns period clock cycle. Default is 0ns
 * `timecut_up`: Readouts with a timestamp larger than the upper limit are discarded. Each time a readout is triggered in the ALiBaVa system, the readout is given a timestamp by the ALiBaVa system in relation to its internal, 100ns period clock cycle. Default is 100ns
 * `ignore_events`: Number of events at the start which will be ignored. This is done to ensure synchronization between ALiBaVa system and telescope. Default is 1.
-* `calibration_constant`: Rudimentary way to allow for a conversion from ADC to kiloelectrons. Will change in the future. Default is 1.
+* `charge_calibration_formula`: Allow for temperature dependent calibration of ADC to electrons. The temperature in the formula needs to be given in Kelvin. The formula needs to follow the standards for a ROOT TFormula. The parameters of the function can also be set with `charge_calibration_parameters`. Default is 1.
 * `chargecut`: If the charge of a strip is below the charge cut, the strip will not be added to the current event. Default is 0.
 * `polarity`: Correction factor for the sign of the signal. Either +1 or -1. Depending on the type of detector (p-in-n or n-in-p) the signal measured by the ALiBaVa system is negative, the polarity corrects this in the analysis. Default is `-1` (needed for n-in-p sensors)
 
@@ -40,8 +42,10 @@ For each detector the following plots are produced:
 * Uncorrected noise
 * Corrected pedestal
 * Corrected noise
+* Corrected noise in electrons
 * 2D Corrected pedestal
 * 2D Corrected noise
+* 2D Corrected noise in electrons
 * Time profile
 
 ### Usage

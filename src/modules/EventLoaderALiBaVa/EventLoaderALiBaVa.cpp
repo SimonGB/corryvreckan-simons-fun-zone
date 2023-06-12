@@ -33,7 +33,7 @@ void EventLoaderALiBaVa::initialize() {
     config_.setDefault<double>("timecut_low", 0);
     config_.setDefault<double>("timecut_up", std::numeric_limits<double>::max());
     config_.setDefault<int>("ignore_events", 1);
-    config_.setDefault<double>("calibration_constant", 1.0);
+    config_.setDefault<std::string>("charge_calibration_formula", "1.0");
     config_.setDefault<double>("chargecut", 0);
     config_.setDefault<int>("polarity", -1);
 
@@ -42,9 +42,10 @@ void EventLoaderALiBaVa::initialize() {
     double timecut_low = config_.get<double>("timecut_low");
     double timecut_up = config_.get<double>("timecut_up");
     int ignore_events = config_.get<int>("ignore_events");
-    m_calibration_constant = config_.get<double>("calibration_constant");
-    m_chargecut = config_.get<double>("chargecut");
+    chargecut_ = config_.get<double>("chargecut");
     int polarity = config_.get<int>("polarity");
+
+    charge_calibration_formula_ = parse_formula();
 
     // Check if input directory exists
     std::filesystem::path directory = input_directory;
@@ -81,53 +82,67 @@ void EventLoaderALiBaVa::initialize() {
     }
 
     // Create histograms
-    hChargeSignal = new TH1F("chargeSignal", "Charge of signal; Charge [e]; # entries", 100, -96000, 32000);
+    hChargeSignal = new TH1F("chargeSignal", "Charge of signal; Charge [e]; # entries", 200, -2000, 50000);
 
-    hADCSignal = new TH1F("ADCSignal", "ADC of signal; Signal [ADC]; # entries", 100, -200, 600);
+    hADCSignal = new TH1F("ADCSignal", "ADC of signal; Signal [ADC]; # entries", 140, -20.5, 119.5);
 
     hSNR = new TH1F("SNRatio", "Signal to noise ratio; SNRatio; # entries", 100, -50, 200);
 
-    hPedestal = new TH1F("pedestal", "Uncorrected pedestal; # channel; Pedestal[ADC]", 256, -0.5, 255.5);
+    hPedestal = new TH1F("pedestal", "Pedestal; # channel; Pedestal [ADC]", 256, -0.5, 255.5);
 
-    hPedestalCorrect = new TH1F("pedestalCorrect", "Corrected pedestal; # channel; Pedestal[ADC]", 256, -0.5, 255.5);
+    hPedestalCorrect = new TH1F("pedestalCorrect", "Corrected pedestal; # channel; Pedestal [ADC]", 256, -0.5, 255.5);
 
-    hNoise = new TH1F("noise", "Uncorrected Noise; # channel; Noise[ADC]", 256, -0.5, 255.5);
+    hNoise = new TH1F("noise", "Uncorrected Noise; # channel; Noise [ADC]", 256, -0.5, 255.5);
 
-    hNoiseCorrect = new TH1F("noiseCorrect", "Corrected Noise; # channel; Noise[ADC]", 256, -0.5, 255.5);
+    hNoiseCorrect = new TH1F("noiseCorrect", "Corrected Noise; # channel; Noise [ADC]", 256, -0.5, 255.5);
+
+    hNoiseElectrons = new TH1F("noiseElectrons", "Corrected Noise in electrons; # channel; Noise [e]", 256, -0.5, 255.5);
 
     hTimeProfile =
         new TProfile("timeProfile", "Time profile; Time [ns]; Ave. signal highest channel [ADC]", 35, 0, 35, 0, 200);
 
     hPedestalCorrect2D = new TH2F(
-        "pedestalCorrect2D", "Corrected pedestal in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
+        "pedestalCorrect2D", "Corrected pedestal in 2D; # columns; # rows; Pedestal [ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
 
     hNoiseCorrect2D = new TH2F(
-        "noiseCorrect2D", "Corrected Noise in 2D; # columns; # rows; Pedestal[ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
+        "noiseCorrect2D", "Corrected Noise in 2D; # columns; # rows; Pedestal [ADC]", 256, -0.5, 255.5, 1, -0.5, 0.5);
+
+    hNoiseElectrons2D = new TH2F("noiseElectrons2D",
+                                 "Corrected Noise in 2D in electrons; # columns; # rows; Noise [e]",
+                                 256,
+                                 -0.5,
+                                 255.5,
+                                 1,
+                                 -0.5,
+                                 0.5);
+
+    hTemperature =
+        new TProfile("tempProfile", "Temperature vs Time; Time [s]; Temperature [K]", 120, 0, 7200, 223.15, 323.15);
 
     // Create a shared pointer with the data file.
-    m_alibava.reset(DataFileRoot::OpenFile(datafilename.c_str()));
+    alibava_.reset(DataFileRoot::OpenFile(datafilename.c_str()));
 
     // Find all non masked channels from the detector config and put them into a vector
     for(unsigned int col = 0; col < 256; col++) {
         if(!detector_->masked(static_cast<int>(col), 0)) {
-            m_roi_ch.push_back(col);
+            roi_ch_.push_back(col);
         }
     }
 
     // Set the region of interest
-    m_alibava->set_ROI(m_roi_ch);
+    alibava_->set_ROI(roi_ch_);
 
     // Set the polarity of the signal
-    m_alibava->set_polarity(polarity);
+    alibava_->set_polarity(polarity);
 
     // Create a pointer with the pedestal file
     DataFileRoot* PedestalPointer = DataFileRoot::OpenFile(pedestalfilename.c_str());
-    PedestalPointer->set_ROI(m_roi_ch);
+    PedestalPointer->set_ROI(roi_ch_);
 
     // Calculate the pedestals, and compute and apply the common mode noise correction
     PedestalPointer->compute_pedestals_alternative();
 
-    for(auto chan : m_roi_ch) {
+    for(auto chan : roi_ch_) {
         double ped_val, noise_val;
         ped_val = PedestalPointer->ped(chan);
         noise_val = PedestalPointer->noise(chan);
@@ -136,14 +151,19 @@ void EventLoaderALiBaVa::initialize() {
     }
 
     PedestalPointer->compute_cmmd_alternative();
-    for(auto chan : m_roi_ch) {
+    double mean_ped_temp = PedestalPointer->get_mean_pedestal_temp();
+    for(auto chan : roi_ch_) {
         double ped_val, noise_val;
         ped_val = PedestalPointer->ped(chan);
         noise_val = PedestalPointer->noise(chan);
         hPedestalCorrect->SetBinContent(static_cast<int>(chan + 1), ped_val);
         hNoiseCorrect->SetBinContent(static_cast<int>(chan + 1), noise_val);
+        hNoiseElectrons->SetBinContent(static_cast<int>(chan + 1),
+                                       noise_val * charge_calibration_formula_->Eval(mean_ped_temp));
         hPedestalCorrect2D->SetBinContent(static_cast<int>(chan + 1), 1, ped_val);
         hNoiseCorrect2D->SetBinContent(static_cast<int>(chan + 1), 1, noise_val);
+        hNoiseElectrons2D->SetBinContent(
+            static_cast<int>(chan + 1), 1, noise_val * charge_calibration_formula_->Eval(mean_ped_temp));
     }
 
     // Save the calculated pedestal information in a temporary file
@@ -152,14 +172,14 @@ void EventLoaderALiBaVa::initialize() {
     PedestalPointer->close();
     delete PedestalPointer;
     // Load the calculated pedestal info into the original datafile
-    m_alibava->load_pedestals(ped_f.c_str(), kTRUE);
+    alibava_->load_pedestals(ped_f.c_str(), kTRUE);
 
     // Set the timecuts
-    m_alibava->set_timecut(timecut_low, timecut_up);
+    alibava_->set_timecut(timecut_low, timecut_up);
 
     // Ignore the first X events to ensure synchronisation, default is X = 1 which ignores the first event.
     for(int ievt = 0; ievt < ignore_events; ievt++) {
-        m_alibava->read_event();
+        alibava_->read_event();
     }
 }
 
@@ -173,7 +193,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     // Read a data event from the ALiBaVa data file
     // Give feedback according to return code
-    int return_code = m_alibava->read_event();
+    int return_code = alibava_->read_event();
 
     if(return_code == 1) {
         LOG(DEBUG) << "Successfully read event from ALiBaVa file";
@@ -185,13 +205,13 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
     }
 
     // Calculate the common mode for the signal in this event
-    m_alibava->calc_common_mode_signal();
+    alibava_->calc_common_mode_signal();
     // Process the opened data event, i.e. pedestal correction, common mode noise correction
-    m_alibava->process_event();
+    alibava_->process_event();
     // This gets the TDC time from the event, allowing timecuts around the event peak
     // The timecut is set in the ALiBaVa_loader() function.
-    double TDCTime = m_alibava->time();
-    if(!m_alibava->valid_time(TDCTime)) {
+    double TDCTime = alibava_->time();
+    if(!alibava_->valid_time(TDCTime)) {
         LOG(DEBUG) << "Event time of " << TDCTime << " ns outside of timecut limits; ignoring event";
         return StatusCode::DeadTime;
     }
@@ -207,12 +227,16 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
         LOG(DEBUG) << "No trigger timestamp setting 0 ns as cluster timestamp.";
     }
 
+    // Get temperature and convert it into Kelvin
+    double temp = alibava_->temp() + 273.15;
+    hTemperature->Fill(static_cast<double>(Units::convert(event->start(), "s")), temp, 1);
+
     double max_signal = 0;
     // This loops over the channels in the current ALiBaVa event
-    for(auto chan : m_roi_ch) {
-        double ADCSignal = m_alibava->ADC_signal(chan);
-        double SNRatio = m_alibava->sn(chan);
-        double CalSignal = ADCSignal * m_calibration_constant;
+    for(auto chan : roi_ch_) {
+        double ADCSignal = alibava_->ADC_signal(chan);
+        double SNRatio = alibava_->sn(chan);
+        double CalSignal = ADCSignal * charge_calibration_formula_->Eval(temp);
 
         if(ADCSignal > max_signal) {
             max_signal = ADCSignal;
@@ -220,7 +244,7 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 
         // The chargecut is applied here
         // Not needed anymore but left in for now, other wise stuff explodes in Correlation
-        if(CalSignal > m_chargecut) {
+        if(CalSignal > chargecut_) {
             // Create a pixel for every channel in this event with all the information and put it in the vector.
             // The value in the pixel reserved for the ADC value is used for the S/N ratio multiplied by 100000.
 
@@ -249,7 +273,47 @@ StatusCode EventLoaderALiBaVa::run(const std::shared_ptr<Clipboard>& clipboard) 
 }
 
 void EventLoaderALiBaVa::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-    m_alibava->close();
-    // delete m_alibava;
-    m_alibava.reset();
+    alibava_->close();
+    // delete alibava_;
+    alibava_.reset();
+}
+
+std::shared_ptr<TFormula> EventLoaderALiBaVa::parse_formula() {
+
+    const std::string formula_title = "charge_calibration_formula";
+    auto function = config_.get<std::string>(formula_title);
+
+    // Create the formula for the charge calibration
+    std::shared_ptr<TFormula> formula;
+    formula = std::make_shared<TFormula>(formula_title.c_str(), function.c_str(), false);
+
+    // Check if it is a valid formula
+    if(!formula->IsValid()) {
+        throw InvalidValueError(config_, formula_title, "Invalid formula");
+    } else {
+        LOG(DEBUG) << "Found charge calibration formula";
+    }
+
+    // Check if we have the correct number of dimensions
+    if(formula->GetNdim() > 1) {
+        throw InvalidValueError(config_, formula_title, "Invalid number of dimensions, only 1d is supported");
+    }
+
+    auto n_params = static_cast<size_t>(formula->GetNpar());
+    if(n_params != 0) {
+        LOG(DEBUG) << "Found charge calibration formula with " << n_params << " parameters";
+
+        auto parameters = config_.getArray<double>("charge_calibration_parameters");
+        if(n_params != parameters.size()) {
+            throw InvalidValueError(
+                config_,
+                "charge_calibration_parameters",
+                "The number of provided parameters does not line up with the sum of parameters in the function.");
+        }
+
+        for(auto i = 0; i < formula->GetNpar(); i++) {
+            formula->SetParameter(i, parameters.at(static_cast<size_t>(i)));
+        }
+    }
+    return formula;
 }

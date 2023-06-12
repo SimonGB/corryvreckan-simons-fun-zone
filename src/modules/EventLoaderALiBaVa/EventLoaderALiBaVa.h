@@ -12,6 +12,7 @@
 #ifndef EventLoaderALiBaVa_H
 #define EventLoaderALiBaVa_H 1
 
+#include <TFormula.h>
 #include "ALiBaVa/DataFileRoot.h"
 #include "core/module/Module.hpp"
 
@@ -47,8 +48,10 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
+        std::shared_ptr<TFormula> parse_formula();
+
         std::shared_ptr<Detector> detector_;
-        std::shared_ptr<DataFileRoot> m_alibava;
+        std::shared_ptr<DataFileRoot> alibava_;
 
         TH1F* hChargeSignal{};
         TH1F* hADCSignal{};
@@ -57,13 +60,16 @@ namespace corryvreckan {
         TH1F* hNoise{};
         TH1F* hPedestalCorrect{};
         TH1F* hNoiseCorrect{};
+        TH1F* hNoiseElectrons{};
         TProfile* hTimeProfile{};
+        TProfile* hTemperature{};
         TH2F* hPedestalCorrect2D{};
         TH2F* hNoiseCorrect2D{};
+        TH2F* hNoiseElectrons2D{};
 
-        double m_chargecut{};
-        double m_calibration_constant{};
-        std::vector<unsigned int> m_roi_ch{};
+        double chargecut_{};
+        std::shared_ptr<TFormula> charge_calibration_formula_;
+        std::vector<unsigned int> roi_ch_{};
     };
 
 } // namespace corryvreckan
