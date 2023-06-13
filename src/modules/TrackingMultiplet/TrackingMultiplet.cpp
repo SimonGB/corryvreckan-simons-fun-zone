@@ -184,10 +184,20 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
     isolation_cut_ = config_.get<double>("isolation_cut");
 
     track_model_ = config_.get<std::string>("track_model", "straightline");
+    config_.setDefault<double>("beta_factor", 1);
+    config_.setDefault<int>("particle_charge", 1);
     if(track_model_ != "gbl") {
         config_.setDefault("momentum", 5000);
     }
     momentum_ = config_.get<double>("momentum");
+    beta_ = config_.get<double>("beta_factor");
+    charge_ = config_.get<int>("particle_charge");
+
+    // warning if wrong beta
+    if(beta_ <= 0 || beta_ > 1) {
+        LOG(WARNING) << "Lorentz beta must be larger than 0 and smaller than 1! Setting it to 1.";
+        beta_ = 1.0;
+    }
 
     config_.setDefault<bool>("unique_cluster_usage", false);
     unique_cluster_usage_ = config_.get<bool>("unique_cluster_usage");
@@ -355,6 +365,8 @@ TrackVector TrackingMultiplet::refit(MultipletVector multiplets) {
             track->addCluster(cluster);
         }
         track->setParticleMomentum(momentum_);
+        track->setParticleCharge(charge_);
+        track->setParticleBetaFactor(beta_);
         track->fit();
         track->setTimestamp(m->timestamp());
 
@@ -410,6 +422,8 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
             trackletCandidate->addCluster(clusterFirst.get());
             trackletCandidate->addCluster(clusterLast.get());
             trackletCandidate->setParticleMomentum(momentum_);
+            trackletCandidate->setParticleCharge(charge_);
+            trackletCandidate->setParticleBetaFactor(beta_);
 
             auto averageTimestamp = calculate_average_timestamp(trackletCandidate.get());
             trackletCandidate->setTimestamp(averageTimestamp);

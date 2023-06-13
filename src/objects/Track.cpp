@@ -128,6 +128,14 @@ void Track::setParticleMomentum(double p) {
     momentum_ = p;
 }
 
+void Track::setParticleCharge(double q) {
+    charge_ = q;
+}
+
+void Track::setParticleBetaFactor(double b) {
+    beta_ = b;
+}
+
 double Track::getChi2() const {
     if(!isFitted_) {
         throw RequestParameterBeforeFitError(this, "chi2");

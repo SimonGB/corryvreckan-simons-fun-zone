@@ -309,6 +309,8 @@ namespace corryvreckan {
         double chi2ndof_;
         bool isFitted_{};
         double momentum_{-1};
+        double beta_{1};
+        int charge_{1};
 
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(Track, 12)
