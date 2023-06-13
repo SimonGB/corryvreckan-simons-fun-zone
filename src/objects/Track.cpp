@@ -128,7 +128,7 @@ void Track::setParticleMomentum(double p) {
     momentum_ = p;
 }
 
-void Track::setParticleCharge(double q) {
+void Track::setParticleCharge(int q) {
     charge_ = q;
 }
 
