@@ -110,7 +110,7 @@ namespace corryvreckan {
          * @brief Set the charge number of the particle
          * @param charge Charge number of the particle
          */
-        void setParticleCharge(double charge);
+        void setParticleCharge(int charge);
 
         /**
          * @brief Set the Lorentz beta factor of the particle
