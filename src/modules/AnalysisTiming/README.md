@@ -1,12 +1,12 @@
 ---
-# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2023 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # AnalysisTiming
 **Maintainer**: Stephan Lachnit (stephan.lachnit@cern.ch)
 **Module Type**: *DETECTOR*
 **Detector Type**: *all*
-**Status**: Immature
+**Status**: Functional
 
 ### Description
 This module allows to study the time resolution of any detector with respect to any other detector.
