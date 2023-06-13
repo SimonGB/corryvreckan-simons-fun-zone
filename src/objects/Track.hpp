@@ -107,6 +107,18 @@ namespace corryvreckan {
         void setParticleMomentum(double momentum);
 
         /**
+         * @brief Set the charge number of the particle
+         * @param charge Charge number of the particle
+         */
+        void setParticleCharge(double charge);
+
+        /**
+         * @brief Set the Lorentz beta factor of the particle
+         * @param beta Lorentz beta factor of the particle
+         */
+        void setParticleBetaFactor(double beta);
+
+        /**
          * @brief Get the chi2 of the track fit
          * @return chi2
          */
