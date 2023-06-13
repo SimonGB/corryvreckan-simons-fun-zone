@@ -21,10 +21,16 @@ EtaCalculation::EtaCalculation(Configuration& config, std::shared_ptr<Detector> 
     : Module(config, detector), detector_(detector) {
 
     config_.setDefault<double>("chi2ndof_cut", 100.);
+    config_.setDefault<bool>("calculate_x", true);
+    config_.setDefault<bool>("calculate_y", true);
     config_.setDefault<std::string>("eta_formula_x", "[0] + [1]*x + [2]*x^2 + [3]*x^3 + [4]*x^4 + [5]*x^5");
     config_.setDefault<std::string>("eta_formula_y", "[0] + [1]*x + [2]*x^2 + [3]*x^3 + [4]*x^4 + [5]*x^5");
 
     chi2ndof_cut_ = config_.get<double>("chi2ndof_cut");
+	calculate_x_ = config_.get<bool>("calculate_x");
+	calculate_y_ = config_.get<bool>("calculate_y");
+    
+    
 }
 
 void EtaCalculation::initialize() {
@@ -71,7 +77,8 @@ void EtaCalculation::calculate_eta(const Track* track, const Cluster* cluster) {
     }
     auto localIntercept = detector_->getLocalIntercept(track);
 
-    if(cluster->columnWidth() == 2) {
+    if(cluster->columnWidth() == 2 && calculate_x_) {
+		LOG(DEBUG) << "Calculating correction in local X";
         auto reference_col = 0;
         for(auto& pixel : cluster->pixels()) {
             if(pixel->column() > reference_col) {
@@ -85,13 +92,15 @@ void EtaCalculation::calculate_eta(const Track* track, const Cluster* cluster) {
         etaDistributionX_->Fill(xmod_cluster, xmod_track);
         etaDistributionXprofile_->Fill(xmod_cluster, xmod_track);
     }
-    if(cluster->rowWidth() == 2) {
+    if(cluster->rowWidth() == 2 && calculate_y_) {
+		LOG(DEBUG) << "Calculating correction in local Y";
         auto reference_row = 0;
         for(auto& pixel : cluster->pixels()) {
             if(pixel->row() > reference_row) {
                 reference_row = pixel->row();
             }
         }
+       
         // Map residual onto range -pitch/2 to pitch/2
         auto reference_Y = detector_->getPitch().Y() * (reference_row - 0.5 * detector_->nPixels().Y());
         auto ymod_cluster = cluster->local().Y() - reference_Y;
@@ -110,6 +119,7 @@ StatusCode EtaCalculation::run(const std::shared_ptr<Clipboard>& clipboard) {
 
         // Cut on the chi2/ndof
         if(track->getChi2ndof() > chi2ndof_cut_) {
+			LOG(DEBUG) << "The Chi2 is too high; skipping track";
             continue;
         }
 
@@ -160,13 +170,23 @@ std::string EtaCalculation::fit(const std::string& fname, double pitch, TProfile
 void EtaCalculation::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     std::stringstream config;
-    config << "eta_formula_x = \"" << config_.get<std::string>("eta_formula_x") << "\"" << std::endl
-           << "eta_constants_x"
-           << " = " << fit("eta_formula_x", detector_->getPitch().X(), etaDistributionXprofile_) << std::endl
-           << "eta_formula_y = \"" << config_.get<std::string>("eta_formula_y") << "\"" << std::endl
-           << "eta_constants_y"
-           << " = " << fit("eta_formula_y", detector_->getPitch().Y(), etaDistributionYprofile_);
+    if (calculate_x_) {
+		LOG(INFO) << "Calculating correction in local X";
+		config << "eta_formula_x = \"" << config_.get<std::string>("eta_formula_x") << "\"" << std::endl
+			   << "eta_constants_x"
+			   << " = " << fit("eta_formula_x", detector_->getPitch().X(), etaDistributionXprofile_) << std::endl;
+		
 
+		}
+         
+    if (calculate_y_) {
+		LOG(INFO) << "Calculating correction in local Y";
+		config << "eta_formula_y = \"" << config_.get<std::string>("eta_formula_y") << "\"" << std::endl
+			   << "eta_constants_y"
+			   << " = " << fit("eta_formula_y", detector_->getPitch().Y(), etaDistributionYprofile_);
+		
+
+		}
     LOG(INFO) << "To apply this correction, place the following in the configuration:" << std::endl
               << "[EtaCorrection]" << std::endl
               << "name = " << detector_->getName() << std::endl
