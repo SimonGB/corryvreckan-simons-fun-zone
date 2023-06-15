@@ -37,6 +37,8 @@ For each upstream tracklet, the downstream tracklet with the lowest matching dis
 * `timestamp_from`: Defines the detector which provides the track timestamp. This detector is by default added to `required_detector`. If empty, the average timestamp of upstream and downstream tracklet will be used. Empty by default.
 * `track_model`: Specifies the track model used for the up and downstream arms. Defaults to `straightline`
 * `momentum`: Defines the beam momentum. Only required if `track_model="gbl"`
+* `beta_factor`: Lorentz beta factor. For low momentum particles, it impacts the estimation of the scattering angle. Defaults to `1`.
+* `particle_charge`: Particle charge number. Defaults to `1`.
 * `refit_gbl`: Refit the multiplet tracks with GBL. Defaults to false.
 * `unique_cluster_usage`: Only use a cluster for one track - in the case of multiple assignments, the track with the best chi2/ndof is kept. Defaults to `false`
 
