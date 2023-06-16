@@ -107,6 +107,18 @@ namespace corryvreckan {
         void setParticleMomentum(double momentum);
 
         /**
+         * @brief Set the charge number of the particle
+         * @param charge Charge number of the particle
+         */
+        void setParticleCharge(int charge);
+
+        /**
+         * @brief Set the Lorentz beta factor of the particle
+         * @param beta Lorentz beta factor of the particle
+         */
+        void setParticleBetaFactor(double beta);
+
+        /**
          * @brief Get the chi2 of the track fit
          * @return chi2
          */
@@ -309,6 +321,8 @@ namespace corryvreckan {
         double chi2ndof_;
         bool isFitted_{};
         double momentum_{-1};
+        double beta_{1};
+        int charge_{1};
 
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(Track, 12)

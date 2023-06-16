@@ -30,6 +30,8 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     config_.setDefault<bool>("exclude_dut", true);
     config_.setDefault<std::string>("track_model", "straightline");
     config_.setDefault<double>("momentum", Units::get<double>(5, "GeV"));
+    config_.setDefault<double>("lorentz_beta", 1);
+    config_.setDefault<int>("particle_charge", 1);
     config_.setDefault<double>("max_plot_chi2", 50.0);
     config_.setDefault<double>("volume_radiation_length", Units::get<double>(304.2, "m"));
     config_.setDefault<bool>("volume_scattering", false);
@@ -63,6 +65,8 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
 
     track_model_ = config_.get<std::string>("track_model");
     momentum_ = config_.get<double>("momentum");
+    beta_ = config_.get<double>("lorentz_beta");
+    charge_ = config_.get<int>("particle_charge");
     max_plot_chi2_ = config_.get<double>("max_plot_chi2");
     volume_radiation_length_ = config_.get<double>("volume_radiation_length");
     use_volume_scatterer_ = config_.get<bool>("volume_scattering");
@@ -79,6 +83,11 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     // print a warning if beam energy < 1 GeV
     if(momentum_ < Units::get<double>(1, "GeV")) {
         LOG(WARNING) << "Beam energy is less than 1 GeV";
+    }
+
+    // warning if wrong beta
+    if(beta_ <= 0 || beta_ > 1) {
+        throw InvalidValueError(config_, "lorentz_beta", "Lorentz beta must be larger than 0 and smaller than 1!");
     }
 }
 
@@ -345,6 +354,8 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 track->setVolumeScatter(volume_radiation_length_);
             }
             track->setParticleMomentum(momentum_);
+            track->setParticleCharge(charge_);
+            track->setParticleBetaFactor(beta_);
 
             // Fit initial trajectory guess
             refTrack.fit();

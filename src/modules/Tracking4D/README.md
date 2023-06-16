@@ -28,7 +28,9 @@ The DUT plane can be excluded from the track finding.
 * `track_model`: Select the track model used for reconstruction. A simple line fit ignoring scattering (`straightline`) and a General-Broken-Lines (`gbl`) are currently supported. Defaults to  `straightline`.
 * `momentum`: Set the beam momentum. Defaults to 5 GeV
 * `volume_scattering`: Select if volume scattering will be taken into account - defaults to false
-* `volume_radiation_length`: Define the radiation length of the volume around the telescope. Defaults to dry air with a radiation length of`304.2 m`
+* `volume_radiation_length`: Define the radiation length of the volume around the telescope. Defaults to dry air with a radiation length of `304.2 m`
+* `lorentz_beta`: Lorentz beta factor. For low momentum particles, it impacts the estimation of the scattering angle. Defaults to `1`.
+* `particle_charge`: Particle charge number. Defaults to `1`.
 * `reject_by_roi`: If true, tracks intercepting any detector outside its ROI will be rejected. Defaults to `false`.
 * `unique_cluster_usage`: Only use a cluster for one track - in the case of multiple assignments, the track with the best chi2/ndof is kept. Defaults to `false`
 * `max_plot_chi2`: Option to define the maximum chi2 in plots for chi2 and chi2/ndof - with an ill-aligned telescope, this is necessary for an initial alignment step. Defaults to `50.0`

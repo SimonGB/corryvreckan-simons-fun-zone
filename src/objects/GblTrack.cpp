@@ -115,9 +115,10 @@ void GblTrack::add_plane(std::vector<Plane>::iterator& plane,
     auto addScattertoGblPoint = [this, &total_material, &localTangent](GblPoint& point, double material) {
         Eigen::Matrix<double, 2, 2> scatter;
 
-        // lambda to calculate the scattering theta, beta2 assumed to be one and the momentum in MeV
+        // lambda to calculate the scattering theta, momentum expected in MeV, beta and particle charge from config
         auto scatteringTheta = [this](double mbCurrent, double mbTotal) -> double {
-            return (13.6 / momentum_ * sqrt(mbCurrent) * (1 + 0.038 * log(mbTotal)));
+            return (13.6 / (momentum_ * beta_) * fabs(charge_) * sqrt(mbCurrent) *
+                    (1 + 0.038 * log(charge_ * charge_ * mbTotal / (beta_ * beta_))));
         };
 
         // This can only happen if someone messes up the tracking code. Simply renormalizing would shadow the mistake made at

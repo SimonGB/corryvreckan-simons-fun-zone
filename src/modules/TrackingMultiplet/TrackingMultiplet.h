@@ -67,6 +67,8 @@ namespace corryvreckan {
         double scatterer_matching_cut_;
         double isolation_cut_;
         double momentum_;
+        double beta_;
+        int charge_;
         size_t min_hits_upstream_;
         size_t min_hits_downstream_;
         bool refit_gbl_{};
