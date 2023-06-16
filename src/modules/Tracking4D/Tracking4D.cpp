@@ -30,7 +30,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     config_.setDefault<bool>("exclude_dut", true);
     config_.setDefault<std::string>("track_model", "straightline");
     config_.setDefault<double>("momentum", Units::get<double>(5, "GeV"));
-    config_.setDefault<double>("beta_factor", 1);
+    config_.setDefault<double>("lorentz_beta", 1);
     config_.setDefault<int>("particle_charge", 1);
     config_.setDefault<double>("max_plot_chi2", 50.0);
     config_.setDefault<double>("volume_radiation_length", Units::get<double>(304.2, "m"));
@@ -65,7 +65,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
 
     track_model_ = config_.get<std::string>("track_model");
     momentum_ = config_.get<double>("momentum");
-    beta_ = config_.get<double>("beta_factor");
+    beta_ = config_.get<double>("lorentz_beta");
     charge_ = config_.get<int>("particle_charge");
     max_plot_chi2_ = config_.get<double>("max_plot_chi2");
     volume_radiation_length_ = config_.get<double>("volume_radiation_length");
@@ -87,8 +87,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
 
     // warning if wrong beta
     if(beta_ <= 0 || beta_ > 1) {
-        LOG(WARNING) << "Lorentz beta must be larger than 0 and smaller than 1! Setting it to 1.";
-        beta_ = 1.0;
+        throw InvalidValueError(config_, "lorentz_beta", "Lorentz beta must be larger than 0 and smaller than 1!");
     }
 }
 

@@ -184,19 +184,18 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
     isolation_cut_ = config_.get<double>("isolation_cut");
 
     track_model_ = config_.get<std::string>("track_model", "straightline");
-    config_.setDefault<double>("beta_factor", 1);
+    config_.setDefault<double>("lorentz_beta", 1);
     config_.setDefault<int>("particle_charge", 1);
     if(track_model_ != "gbl") {
         config_.setDefault("momentum", 5000);
     }
     momentum_ = config_.get<double>("momentum");
-    beta_ = config_.get<double>("beta_factor");
+    beta_ = config_.get<double>("lorentz_beta");
     charge_ = config_.get<int>("particle_charge");
 
     // warning if wrong beta
     if(beta_ <= 0 || beta_ > 1) {
-        LOG(WARNING) << "Lorentz beta must be larger than 0 and smaller than 1! Setting it to 1.";
-        beta_ = 1.0;
+        throw InvalidValueError(config_, "lorentz_beta", "Lorentz beta must be larger than 0 and smaller than 1!");
     }
 
     config_.setDefault<bool>("unique_cluster_usage", false);

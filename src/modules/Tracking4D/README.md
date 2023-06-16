@@ -29,7 +29,7 @@ The DUT plane can be excluded from the track finding.
 * `momentum`: Set the beam momentum. Defaults to 5 GeV
 * `volume_scattering`: Select if volume scattering will be taken into account - defaults to false
 * `volume_radiation_length`: Define the radiation length of the volume around the telescope. Defaults to dry air with a radiation length of `304.2 m`
-* `beta_factor`: Lorentz beta factor. For low momentum particles, it impacts the estimation of the scattering angle. Defaults to `1`.
+* `lorentz_beta`: Lorentz beta factor. For low momentum particles, it impacts the estimation of the scattering angle. Defaults to `1`.
 * `particle_charge`: Particle charge number. Defaults to `1`.
 * `reject_by_roi`: If true, tracks intercepting any detector outside its ROI will be rejected. Defaults to `false`.
 * `unique_cluster_usage`: Only use a cluster for one track - in the case of multiple assignments, the track with the best chi2/ndof is kept. Defaults to `false`
