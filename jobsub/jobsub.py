@@ -319,8 +319,7 @@ def main(argv=None):
         # Job submission based on selected method - local/condor
         for suffix, steering_string in zip(suffixes, steering_strings):
             try:
-                #submission_settings.append((args, misc.createSteeringFile(log, args, steering_string, suffix), parameters))
-                suffix_hash = hashlib.shake_128(suffix.encode()).hexdigest(16)
+                suffix_hash = f'{run}_' + hashlib.shake_128(suffix.encode()).hexdigest(16)
                 steering_filename = misc.createSteeringFile(log, args, steering_string, suffix_hash)
                 results.append(submitJobs(log, pool, args, steering_filename, parameters))
             except Exception as e:
