@@ -130,7 +130,7 @@ def createSteeringFile(log, args, steering_string, suffix):
         steering_file.write(steering_string)
     finally:
         steering_file.close()
-    
+
     return filename
 
 def zipLogs(path, filename):
@@ -163,7 +163,7 @@ def poolChecker(results, heartbeat = 1):
     """  checks the status of parallel pool """
     import time
     log = logging.getLogger('jobsub')
-    if results == []: 
+    if results == []:
         log.warning("There were problems with the submission")
     elif None not in results:
         # parallel loop checker from https://stackoverflow.com/a/70666333
@@ -188,4 +188,3 @@ def poolChecker(results, heartbeat = 1):
             # raise exception reporting exceptions received from workers
             if all(ready) and not all(successful):
                 raise Exception(f'Workers raised following exceptions {[result._value for result in results if not result.successful()]}')
-    

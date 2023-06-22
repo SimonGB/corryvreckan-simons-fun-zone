@@ -115,7 +115,7 @@ class Loader():
         except csv.Error as e:
             self.log.error("Problem loading the csv file '"+self.filename+"': %s"%e)
             exit(1)
-        
+
         return True
 
     def process(self, runnr, steering_string_base):
@@ -136,7 +136,7 @@ class Loader():
                 results = []
                 self.log.debug(f"Assembling parameters for run: {runnr}")
                 self.parameterAssembler(parameters, results)
-                
+
                 for parameter_combination in results:
                     self.log.debug(f"Parameter combination: {parameter_combination}")
                     # make a copy of the preprocessed steering file content
