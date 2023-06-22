@@ -63,7 +63,7 @@ def runCorryvreckanCondor(filename, subfile, jobtask):
     log = logging.getLogger('jobsub.' + jobtask)
     # We are running on HTCondor.
 
-    rcode = None 
+    rcode = None
 
     # check for qsub executable
     cmd = misc.checkProgram("condor_submit")
@@ -190,7 +190,7 @@ def main(argv=None):
         handler_file.setFormatter(formatter)
         handler_file.setLevel(numeric_level)
         log.addHandler(handler_file)
-    
+
     # check existence of htcondor file
     if args.htcondor_file:
         args.htcondor_file = os.path.abspath(args.htcondor_file)
@@ -314,7 +314,7 @@ def main(argv=None):
             except KeyError:
                 log.error("Could not change RunNumber in the config file")
                 continue
-        
+
         # ----------------------------------------------------------------
         # Job submission based on selected method - local/condor
         for suffix, steering_string in zip(suffixes, steering_strings):
@@ -323,12 +323,12 @@ def main(argv=None):
                 steering_filename = misc.createSteeringFile(log, args, steering_string, suffix_hash)
                 results.append(submitJobs(log, pool, args, steering_filename, parameters))
             except Exception as e:
-                log.error(f"Could not create submission file with suffix {suffix_hash} due to {e}")            
+                log.error(f"Could not create submission file with suffix {suffix_hash} due to {e}")
 
         # Return to old directory:
         if args.subdir:
             os.chdir(base_path)
-    
+
     misc.poolChecker(results)
 
     signal.signal(signal.SIGINT, prevINTHandler)
