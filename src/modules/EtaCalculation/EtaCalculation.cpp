@@ -35,24 +35,16 @@ void EtaCalculation::initialize() {
     std::string mod_axes_x = "in-2pixel x_{cluster} [mm];in-2pixel x_{track} [mm];";
     std::string mod_axes_y = "in-2pixel y_{cluster} [mm];in-2pixel y_{track} [mm];";
 
+    auto bins_x = std::min(static_cast<int>(Units::convert(pitch_x, "um") * 2), 1000);
+    auto bins_y = std::min(static_cast<int>(Units::convert(pitch_y, "um") * 2), 1000);
+
     std::string title = "2D #eta distribution X;" + mod_axes_x + "No. entries";
-    etaDistributionX_ = new TH2F("etaDistributionX",
-                                 title.c_str(),
-                                 static_cast<int>(Units::convert(pitch_x, "um") * 2),
-                                 -pitch_x / 2,
-                                 pitch_x / 2,
-                                 static_cast<int>(Units::convert(pitch_x, "um") * 2),
-                                 -pitch_x / 2,
-                                 pitch_x / 2);
+    etaDistributionX_ =
+        new TH2F("etaDistributionX", title.c_str(), bins_x, -pitch_x / 2, pitch_x / 2, bins_x, -pitch_x / 2, pitch_x / 2);
     title = "2D #eta distribution Y;" + mod_axes_y + "No. entries";
-    etaDistributionY_ = new TH2F("etaDistributionY",
-                                 title.c_str(),
-                                 static_cast<int>(Units::convert(pitch_y, "um") * 2),
-                                 -pitch_y / 2,
-                                 pitch_y / 2,
-                                 static_cast<int>(Units::convert(pitch_y, "um") * 2),
-                                 -pitch_y / 2,
-                                 pitch_y / 2);
+
+    etaDistributionY_ =
+        new TH2F("etaDistributionY", title.c_str(), bins_y, -pitch_y / 2, pitch_y / 2, bins_y, -pitch_y / 2, pitch_y / 2);
 
     title = "#eta distribution X;" + mod_axes_x;
     etaDistributionXprofile_ = new TProfile("etaDistributionXprofile",
