@@ -46,34 +46,26 @@ void EtaCalculation::initialize() {
 
     if(calculate_x_) {
         auto bins_x = std::min(static_cast<int>(Units::convert(pitch_x, "um") * 2), 1000);
+
         std::string title = "2D #eta distribution X;" + mod_axes_x + "No. entries";
         etaDistributionX_ = new TH2F(
             "etaDistributionX", title.c_str(), bins_x, -pitch_x / 2, pitch_x / 2, bins_x, -pitch_x / 2, pitch_x / 2);
 
         title = "#eta distribution X;" + mod_axes_x;
-        etaDistributionXprofile_ = new TProfile("etaDistributionXprofile",
-                                                title.c_str(),
-                                                static_cast<int>(Units::convert(pitch_x, "um") * 2),
-                                                -pitch_x / 2,
-                                                pitch_x / 2,
-                                                -pitch_x / 2,
-                                                pitch_x / 2);
+        etaDistributionXprofile_ = new TProfile(
+            "etaDistributionXprofile", title.c_str(), bins_x, -pitch_x / 2, pitch_x / 2, -pitch_x / 2, pitch_x / 2);
     }
 
     if(calculate_y_) {
         auto bins_y = std::min(static_cast<int>(Units::convert(pitch_y, "um") * 2), 1000);
+
         std::string title = "2D #eta distribution Y;" + mod_axes_y + "No. entries";
         etaDistributionY_ = new TH2F(
             "etaDistributionY", title.c_str(), bins_y, -pitch_y / 2, pitch_y / 2, bins_y, -pitch_y / 2, pitch_y / 2);
 
         title = "#eta distribution Y;" + mod_axes_y;
-        etaDistributionYprofile_ = new TProfile("etaDistributionYprofile",
-                                                title.c_str(),
-                                                static_cast<int>(Units::convert(pitch_y, "um") * 2),
-                                                -pitch_y / 2,
-                                                pitch_y / 2,
-                                                -pitch_y / 2,
-                                                pitch_y / 2);
+        etaDistributionYprofile_ = new TProfile(
+            "etaDistributionYprofile", title.c_str(), bins_y, -pitch_y / 2, pitch_y / 2, -pitch_y / 2, pitch_y / 2);
     }
 }
 
@@ -126,6 +118,7 @@ StatusCode EtaCalculation::run(const std::shared_ptr<Clipboard>& clipboard) {
 
         // Cut on the chi2/ndof
         if(track->getChi2ndof() > chi2ndof_cut_) {
+            continue;
             LOG(DEBUG) << "Skipping track with chi2 = " << track->getChi2ndof() << " which is above cut of "
                        << chi2ndof_cut_;
         }
