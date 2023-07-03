@@ -126,8 +126,7 @@ StatusCode EtaCalculation::run(const std::shared_ptr<Clipboard>& clipboard) {
 
         // Cut on the chi2/ndof
         if(track->getChi2ndof() > chi2ndof_cut_) {
-            LOG(DEBUG) << "The Chi2 is too high; skipping track";
-            continue;
+            LOG(DEBUG) << "Skipping track with chi2 = " << track->getChi2ndof() << " which is above cut of " << chi2ndof_cut_;
         }
 
         // Look at the associated clusters and plot the eta function
