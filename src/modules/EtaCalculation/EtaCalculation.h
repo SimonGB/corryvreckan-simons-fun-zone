@@ -41,6 +41,8 @@ namespace corryvreckan {
 
         std::shared_ptr<Detector> detector_;
         double chi2ndof_cut_;
+        bool calculate_x_;
+        bool calculate_y_;
 
         // Histograms
         TH2F* etaDistributionX_;

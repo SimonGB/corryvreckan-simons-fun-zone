@@ -20,6 +20,7 @@ In order to measure the correct $`\eta`$-distribution, no additional $`\eta`$-co
 
 ### Parameters
 * `chi2ndof_cut`: Track quality cut on its Chi2 over numbers of degrees of freedom. Default value is `100`.
+* `calculate_x` / `calculate_y`: Calculate the correction for X or Y. Default value is `true`.
 * `eta_formula_x` / `eta_formula_y`: Formula to for to the recorded $`\eta`$-distributions, defaults to a polynomial of fifth order, i.e. `[0] + [1]*x + [2]*x^2 + [3]*x^3 + [4]*x^4 + [5]*x^5`.
 
 ### Plots produced
