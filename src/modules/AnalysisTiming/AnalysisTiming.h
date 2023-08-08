@@ -10,6 +10,7 @@
  */
 
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <TH1D.h>
@@ -20,11 +21,13 @@
 #include "core/module/Module.hpp"
 
 namespace corryvreckan {
+    class Cluster;
+    class Track;
+
     /** @ingroup Modules
      * @brief Module to analysise the timing between two detectors
      */
     class AnalysisTiming : public Module {
-
     public:
         /**
          * @brief Constructor of this module
@@ -48,27 +51,74 @@ namespace corryvreckan {
          */
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
-        // For track selection cut
+        class InvalidDetectorRoleError : public ConfigurationError {
+        public:
+            InvalidDetectorRoleError(const Detector* detector) {
+                error_message_ = "Role \"" + std::string(magic_enum::enum_name(detector->getRoles())) + "\" of detector \"" +
+                                 detector->getName() + "\" is not supported in AnalysisTiming module";
+            }
+        };
+
+    private:
+        // Enum for cut histogram
         enum ETrackSelection : int {
             kAllTrack = 0,
             kPassedChi2Ndf,
-            kClusterOnRef,
+            kTimestampOnRef,
             kClusterOnDUT,
             kNSelection,
         };
 
+        // Enum for defining how to extract reference timestamp
+        enum class TimestampReferenceType {
+            DUT,   // Use associated cluster from different detector
+            PLANE, // Use track cluster from different detector
+            TRACK, // Use track timestamp
+        };
+
+        /**
+         * @brief Get closest associated cluster for DUT
+         */
+        Cluster* get_dut_cluster_associated(const Track* track) const;
+
+        /**
+         * @brief Get cluster used in track for DUT
+         */
+        Cluster* get_dut_cluster_tracking(const Track* track) const;
+
+        // Function pointer type for get_dut_cluster_associated and get_dut_cluster_tracking
+        using DutClusterFunc = decltype(&AnalysisTiming::get_dut_cluster_associated);
+
+        /**
+         * @brief Get reference timestamp from closest associated cluster
+         */
+        std::optional<double> get_ref_timestamp_dut(const Track* track) const;
+
+        /**
+         * @brief Get reference timestamp from cluster used in track
+         */
+        std::optional<double> get_ref_timestamp_plane(const Track* track) const;
+
+        /**
+         * @brief Get reference timestamp from track timestamp
+         */
+        std::optional<double> get_ref_timestamp_track(const Track* track) const;
+
+        // Function pointer type for get_ref_timestamp_dut, get_ref_timestamp_plane and get_ref_timestamp_track
+        using RefTimestampFunc = decltype(&AnalysisTiming::get_ref_timestamp_dut);
+
     private:
+        // Detector variables
         std::shared_ptr<Detector> detector_;
-
-        // detector settings
+        std::string detector_name_;
+        DutClusterFunc dut_cluster_func_;
         std::string reference_name_;
-        bool reference_associated_clusters_;
-        bool dut_associated_clusters_;
+        RefTimestampFunc ref_timestamp_func_;
 
-        // cuts
+        // Cuts
         double chi2_ndof_cut_;
 
-        // histograms
+        // Histograms
         TH1D* hTimeResidual_;
         TH2F* hTimeResidualOverTime_;
         TProfile2D* hResidualMeanSensor_;
@@ -77,7 +127,7 @@ namespace corryvreckan {
         TProfile2D* hResidualStdDevInpix_;
         TH1F* hCutHisto_;
 
-        // histogram settings
+        // Histogram settings
         double time_range_;
         double time_binning_;
         double time_offset_;
