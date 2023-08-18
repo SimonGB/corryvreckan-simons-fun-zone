@@ -9,13 +9,16 @@
 **Status**: Functional
 
 ### Description
-This module allows to study the time resolution of any detector with respect to any other detector.
-This can be used to study the time resolution using the time residual between two DUTs.
+This module allows to study the time resolution of any detector with respect to a reference, which can be any other detector or the track timestamp.
+Neither the "DUT" nor the reference require to have a timestamp for every track, if one timestamp is missing the track is skipped.
+This flexibility can be used for example to study the time resolution using the time residual between two DUTs, or between two telescope planes.
 
 ### Parameters
-* `reference_name`: Name of the detector to use as reference. Defaults to the reference detector defined in the geometry file.
-* `reference_associated_clusters`: If true, uses associated cluster for tracks. Associated clusters need to be created e.g. with the `DUTAssociation` module. If false, then cluster is taken from tracking, e.g. if the detector is in `Tracking4D`. Defaults to true, except if `reference_name` is omitted.
-* `dut_associated_clusters`: Identical to `reference_associated_clusters` setting, except used for the DUT. Defaults to true.
+* `reference_type`: Either `dut`, `plane` or `track`. Defaults to `dut`.
+  If the value is `dut`, then the reference timestamp is extracted from the closest associated cluster of the reference detector. Associated clusters need to be created e.g. with the `DUTAssociation` module.
+  If the value is `plane`, then the reference timestamp is extracted from the cluster of the reference detector used in the track, e.g. if the detector provided a cluster in `Tracking4D`.
+  If the value is `track`, then the reference timestamp is taken from the track timestamp. Track timestamp with a value of `0` are filtered out.
+* `reference_name`: Name of the detector to use as reference if `reference_type` is not `track`.
 * `chi2ndof_cut`: Acceptance criterion for the maximum telescope track Chi2/ndof, defaults to `3`.
 * `time_range`: Total time window for the time residual histogram.
 * `time_binning`: Bin size for the time residual histogram.
@@ -34,8 +37,8 @@ For each detector the following plots are produced:
 ```toml
 [AnalysisTiming]
 name = "dSiPM_0"
-reference_detector = "dSiPM_1"
-reference_associated_clusters = true
+reference_name = "dSiPM_1"
+reference_type = "dut"
 time_range = 600ns
 time_binning = 95ps
 ```

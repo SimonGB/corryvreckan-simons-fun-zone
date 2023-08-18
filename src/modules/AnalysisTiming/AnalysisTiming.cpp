@@ -19,34 +19,57 @@
 
 using namespace corryvreckan;
 
-// Function to get cluster from track depending handling association, defined inline for optimization
-Cluster* get_cluster_from_track(Track* track, const std::string& detector_name, bool associated_clusters);
-
 AnalysisTiming::AnalysisTiming(Configuration& config, std::shared_ptr<Detector> detector)
-    : Module(config, detector), detector_(std::move(detector)), reference_associated_clusters_(true),
-      dut_associated_clusters_(true) {
+    : Module(config, detector), detector_(std::move(detector)), detector_name_(detector_->getName()) {
 
-    // If config is reference_name key, use that detector
-    if(config_.has("reference_name")) {
+    // Determine whether to use associated clusters or not for DUT, set function pointer
+    const auto role = detector_->getRoles();
+    switch(role) {
+    case DetectorRole::DUT:
+        dut_cluster_func_ = &AnalysisTiming::get_dut_cluster_associated;
+        LOG(INFO) << "Using closest associated clusters from " << detector_name_;
+        break;
+    case DetectorRole::NONE:
+    case DetectorRole::REFERENCE:
+        dut_cluster_func_ = &AnalysisTiming::get_dut_cluster_tracking;
+        LOG(INFO) << "Using tracking clusters from " << detector_name_;
+        break;
+    default:
+        throw InvalidDetectorRoleError(detector_.get());
+        break;
+    }
+
+    // Get reference type, defaults to DUT type
+    config_.setDefault<TimestampReferenceType>("reference_type", TimestampReferenceType::DUT);
+    auto reference_type = config_.get<TimestampReferenceType>("reference_type");
+
+    // Get reference name from config if not timestamps from track
+    if(reference_type == TimestampReferenceType::TRACK) {
+        if(config_.has("reference_name")) {
+            LOG(WARNING) << "Parameter \"reference_name\" is specified but unused";
+        }
+    } else {
         reference_name_ = config_.get<std::string>("reference_name");
     }
-    // Otherwise use reference detector
-    else {
-        reference_name_ = get_reference()->getName();
-        reference_associated_clusters_ = false;
-    }
 
-    // User setting whether to use associated clusters
-    if(config_.has("reference_associated_clusters")) {
-        reference_associated_clusters_ = config_.get<bool>("reference_associated_clusters");
+    // Set function pointer for reference timestamps
+    switch(reference_type) {
+    case TimestampReferenceType::DUT:
+        ref_timestamp_func_ = &AnalysisTiming::get_ref_timestamp_dut;
+        LOG(INFO) << "Using closest associated clusters from " << reference_name_;
+        break;
+    case TimestampReferenceType::PLANE:
+        ref_timestamp_func_ = &AnalysisTiming::get_ref_timestamp_plane;
+        LOG(INFO) << "Using tracking clusters from " << reference_name_;
+        break;
+    case TimestampReferenceType::TRACK:
+        ref_timestamp_func_ = &AnalysisTiming::get_ref_timestamp_track;
+        LOG(INFO) << "Using track timestamps as reference";
+        break;
+    default:
+        // Logic Error
+        break;
     }
-    LOG(INFO) << "Using " << (reference_associated_clusters_ ? "closest associated cluster" : "tracking cluster")
-              << " for the reference";
-    if(config_.has("dut_associated_clusters")) {
-        dut_associated_clusters_ = config_.get<bool>("dut_associated_clusters");
-    }
-    LOG(INFO) << "Using " << (dut_associated_clusters_ ? "closest associated cluster" : "tracking cluster")
-              << " for the DUT";
 
     // Configure cuts
     config_.setDefault<double>("chi2ndof_cut", 3.);
@@ -142,16 +165,16 @@ void AnalysisTiming::initialize() {
                           ETrackSelection::kNSelection);
     hCutHisto_->GetXaxis()->SetBinLabel(1 + ETrackSelection::kAllTrack, "All tracks");
     hCutHisto_->GetXaxis()->SetBinLabel(1 + ETrackSelection::kPassedChi2Ndf, "Passed Chi2/ndof");
-    hCutHisto_->GetXaxis()->SetBinLabel(1 + ETrackSelection::kClusterOnRef, "Cluster on reference");
+    hCutHisto_->GetXaxis()->SetBinLabel(1 + ETrackSelection::kTimestampOnRef, "Timestamp on ref");
     hCutHisto_->GetXaxis()->SetBinLabel(1 + ETrackSelection::kClusterOnDUT, "Cluster on DUT");
 }
 
 StatusCode AnalysisTiming::run(const std::shared_ptr<Clipboard>& clipboard) {
     // Get the telescope tracks from the clipboard
-    auto tracks = clipboard->getData<Track>();
+    const auto& tracks = clipboard->getData<Track>();
 
     // Loop over all tracks
-    for(auto& track : tracks) {
+    for(const auto& track : tracks) {
         hCutHisto_->Fill(ETrackSelection::kAllTrack);
 
         // Cut on Chi2/ndof
@@ -162,29 +185,30 @@ StatusCode AnalysisTiming::run(const std::shared_ptr<Clipboard>& clipboard) {
         hCutHisto_->Fill(ETrackSelection::kPassedChi2Ndf);
 
         // Find cluster for the reference
-        auto* cluster_ref = get_cluster_from_track(track.get(), reference_name_, reference_associated_clusters_);
-        if(cluster_ref == nullptr) {
-            LOG(TRACE) << "Reference has no clusters, skipping track";
+        const auto timestamp_ref_opt = (this->*ref_timestamp_func_)(track.get());
+        if(!timestamp_ref_opt.has_value()) {
+            LOG(TRACE) << "Reference has no timestamp, skipping track";
             continue;
         }
-        hCutHisto_->Fill(ETrackSelection::kClusterOnRef);
+        hCutHisto_->Fill(ETrackSelection::kTimestampOnRef);
 
         // Find associated cluster on the DUT
-        auto* cluster_dut = get_cluster_from_track(track.get(), detector_->getName(), dut_associated_clusters_);
+        const auto* cluster_dut = (this->*dut_cluster_func_)(track.get());
         if(cluster_dut == nullptr) {
-            LOG(TRACE) << "DUT has no associated clusters, skipping track";
+            LOG(TRACE) << "DUT has no cluster, skipping track";
             continue;
         }
         hCutHisto_->Fill(ETrackSelection::kClusterOnDUT);
 
         // Get time residual
-        auto time_residual = cluster_ref->timestamp() - cluster_dut->timestamp();
+        const auto timestamp_ref = timestamp_ref_opt.value();
+        const auto time_residual = timestamp_ref - cluster_dut->timestamp();
         LOG(DEBUG) << "Found time residual " << Units::display(time_residual, {"ps", "ns", "us", "ms"})
-                   << " at reference time " << Units::display(cluster_ref->timestamp(), {"ps", "ns", "us", "ms", "s"});
+                   << " at reference time " << Units::display(timestamp_ref, {"ps", "ns", "us", "ms", "s"});
 
         // Fill basic histograms
         hTimeResidual_->Fill(time_residual);
-        hTimeResidualOverTime_->Fill(static_cast<double>(Units::convert(cluster_ref->timestamp(), "s")), time_residual);
+        hTimeResidualOverTime_->Fill(static_cast<double>(Units::convert(timestamp_ref, "s")), time_residual);
 
         // Fill 2D histograms
         auto intercept_local = detector_->getLocalIntercept(track.get());
@@ -228,12 +252,34 @@ void AnalysisTiming::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
     }
 }
 
-Cluster* get_cluster_from_track(Track* track, const std::string& detector_name, bool associated_clusters) {
-    if(associated_clusters) {
-        if(track->getAssociatedClusters(detector_name).size() > 0) {
-            return track->getClosestCluster(detector_name);
-        }
-        return nullptr;
+Cluster* AnalysisTiming::get_dut_cluster_associated(const Track* track) const {
+    if(track->getAssociatedClusters(detector_name_).size() > 0) {
+        return track->getClosestCluster(detector_name_);
     }
-    return track->getClusterFromDetector(detector_name);
+    return nullptr;
+}
+
+Cluster* AnalysisTiming::get_dut_cluster_tracking(const Track* track) const {
+    return track->getClusterFromDetector(detector_name_);
+}
+
+std::optional<double> AnalysisTiming::get_ref_timestamp_dut(const Track* track) const {
+    if(track->getAssociatedClusters(reference_name_).size() > 0) {
+        // getClosestCluster never returns nullptr
+        return track->getClosestCluster(reference_name_)->timestamp();
+    }
+    return std::nullopt;
+}
+
+std::optional<double> AnalysisTiming::get_ref_timestamp_plane(const Track* track) const {
+    const auto* cluster_ref = track->getClusterFromDetector(reference_name_);
+    if(cluster_ref != nullptr) {
+        return cluster_ref->timestamp();
+    }
+    return std::nullopt;
+}
+
+std::optional<double> AnalysisTiming::get_ref_timestamp_track(const Track* track) const {
+    const auto track_timestamp = track->timestamp();
+    return (track_timestamp == 0.) ? std::nullopt : std::optional(track_timestamp);
 }
