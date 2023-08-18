@@ -22,11 +22,6 @@ using namespace corryvreckan;
 AnalysisTiming::AnalysisTiming(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), detector_(std::move(detector)), detector_name_(detector_->getName()) {
 
-    // Warn about using deprecated dut_associated_clusters setting
-    if(config_.has("dut_associated_clusters")) {
-        LOG(WARNING) << "Parameter \"dut_associated_clusters\" is deprecated and not used anymore";
-    }
-
     // Determine whether to use associated clusters or not for DUT, set function pointer
     const auto role = detector_->getRoles();
     switch(role) {
@@ -47,15 +42,6 @@ AnalysisTiming::AnalysisTiming(Configuration& config, std::shared_ptr<Detector> 
     // Get reference type, defaults to DUT type
     config_.setDefault<TimestampReferenceType>("reference_type", TimestampReferenceType::DUT);
     auto reference_type = config_.get<TimestampReferenceType>("reference_type");
-
-    // Check old deprecated reference_associated_clusters setting
-    if(config_.has("reference_associated_clusters")) {
-        // Warn about using deprecated setting
-        LOG(WARNING) << "Parameter \"reference_associated_clusters\" is deprecated and superseded by \"reference_type\"";
-        // Use the setting anyway, overwrite reference_type setting
-        const auto reference_associated_clusters = config_.get<bool>("reference_associated_clusters");
-        reference_type = reference_associated_clusters ? TimestampReferenceType::DUT : TimestampReferenceType::PLANE;
-    }
 
     // Get reference name from config if not timestamps from track
     if(reference_type == TimestampReferenceType::TRACK) {
