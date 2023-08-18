@@ -37,7 +37,7 @@ For each detector the following plots are produced:
 ```toml
 [AnalysisTiming]
 name = "dSiPM_0"
-reference_detector = "dSiPM_1"
+reference_name = "dSiPM_1"
 reference_type = "dut"
 time_range = 600ns
 time_binning = 95ps
