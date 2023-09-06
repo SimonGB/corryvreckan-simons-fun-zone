@@ -64,7 +64,7 @@ RUN mkdir -p ${ROOTSYS}/{src,build} && \
 # Install Peary dependencies
 RUN apt-get update && apt-get install -y unzip libreadline-dev
 
-ENV PEARY_VERSION v0.11.0
+ENV PEARY_VERSION v0.12.0
 
 # Add layer for Caribou Peary
 ENV PEARYPATH="/opt/peary"
@@ -82,7 +82,7 @@ RUN mkdir -p ${PEARYPATH}/{src,build} && \
     rm -rf ${PEARYPATH}/{src,build}
 
 
-ENV EUDAQ2_VERSION 2.5.2
+ENV EUDAQ2_VERSION 2.6.1
 
 # Add layer for EUDAQ2
 ENV EUDAQ2PATH="/opt/eudaq2"

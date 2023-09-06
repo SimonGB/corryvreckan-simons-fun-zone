@@ -275,7 +275,7 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
                 events_decoded_.push(std::const_pointer_cast<eudaq::StandardEvent>(decoded_subevent));
             }
             events_decoded_.push(decoded_event);
-            LOG(DEBUG) << event->GetDescription() << ": decoding succeeded";
+            LOG(DEBUG) << event->GetDescription() << ": decoding succeeded, event ID " << decoded_event->GetEventN();
         } else {
             LOG(DEBUG) << event->GetDescription() << ": decoding failed";
         }
