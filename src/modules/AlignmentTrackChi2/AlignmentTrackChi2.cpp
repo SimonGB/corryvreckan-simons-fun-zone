@@ -248,7 +248,7 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
                 residualFitter->SetParameter(
                     det * 6 + 0, (detectorID + "_displacementX").c_str(), detector->displacement().X(), 0.01, -50, 50);
                 residualFitter->SetParameter(
-                    det * 6 + 1, (detectorID + "_displacementY").c_str(), detector->displacement().Y(), 0.0, -50, 50);
+                    det * 6 + 1, (detectorID + "_displacementY").c_str(), detector->displacement().Y(), 0.01, -50, 50);
 
             } else {
                 residualFitter->SetParameter(
