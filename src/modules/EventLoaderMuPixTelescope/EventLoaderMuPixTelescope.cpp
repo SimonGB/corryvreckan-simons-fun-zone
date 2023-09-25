@@ -309,16 +309,19 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
 
     double time_shifted = static_cast<double>(time) * static_cast<double>(ckdivend_ + 1);
 
-    ts1_ts2["mp10_0"]->Fill(h.get_ts2(), h.timestamp_raw());
+    auto detector = detectors_.back();
+    auto name = detector->getName();
+
+    ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
     double px_timestamp = clockToTime_ * (static_cast<double>((corrected_fpgaTime >> 1) & 0xFFFFFFFFFF800) + time_shifted) -
                           static_cast<double>(timeOffset_.at(tag));
 
-    hts_ToT["mp10_0"]->Fill(static_cast<double>(h.tot_decoded()));
+    hts_ToT[name]->Fill(static_cast<double>(h.tot_decoded()));
 
     // store the ToT information if reasonable
     double tot_timestamp = clockToTime_ * (static_cast<double>(h.tot_decoded()) * multiplierToT_);
 
-    ts_TS1_ToT["mp10_0"]->Fill(static_cast<double>((static_cast<uint>(px_timestamp / 8)) & timestampMaskExtended_),
+    ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(px_timestamp / 8)) & timestampMaskExtended_),
                                (static_cast<double>(static_cast<uint>(tot_timestamp / 8) & timestampMaskExtended_)));
 
     double tot = tot_timestamp - (time_shifted * clockToTime_);
