@@ -296,8 +296,12 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
 
     uint16_t time = 0x0;
     // TS can be sampled on both edges - keep this optional
+    auto detector = detectors_.back();
     if((h.get_ts2() == uint16_t(-1)) || (!use_both_timestamps_)) {
-        time = (timestampMask_ & h.timestamp_raw());
+      (detector->getType()=="telepix2" ? 
+       time = (timestampMask_ & h.timestamp_raw()):
+	time = ((timestampMask_ & h.timestamp_raw()) << 1))                                                                                                                                                                                                          ;
+	
     } else if(h.timestamp_raw() > h.get_ts2()) {
         time = ((timestampMask_ & h.timestamp_raw()) << 1);
     } else {
@@ -309,7 +313,7 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
 
     double time_shifted = static_cast<double>(time) * static_cast<double>(ckdivend_ + 1);
 
-    auto detector = detectors_.back();
+   
     auto name = detector->getName();
 
     ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
