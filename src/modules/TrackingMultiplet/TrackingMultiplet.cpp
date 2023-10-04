@@ -244,7 +244,6 @@ void TrackingMultiplet::initialize() {
 	    std::string selection_name = selection == all ? "all" : "final";
 	    std::string selection_name_caps = selection == all ? "All" : "Final";
 	    std::string selection_axis = selection == all ? " tracklet candidates" : " tracklets";
-
 	    std::string stream_selection = stream_name + "_" + selection_name;
 
             TDirectory* directory = getROOTDirectory();
@@ -298,38 +297,31 @@ void TrackingMultiplet::initialize() {
         }
         local_directory->cd();
 
-        TDirectory* local_res_all = local_directory->mkdir("local_residuals_all");
-        TDirectory* local_res_final = local_directory->mkdir("local_residuals_final");
-        TDirectory* global_res_all = local_directory->mkdir("global_residuals_all");
-        TDirectory* global_res_final = local_directory->mkdir("global_residuals_final");
+	for(auto selection : {all, final}) {
+	    std::string selection_name = selection == all ? "all" : "final";
+	    std::string selection_name_caps = selection == all ? " All" : " Final";
+	    std::string detector_selection = detectorID + "_" + selection_name;
 
-        local_res_all->cd();
+	    std::string dir_name = "";
+            dir_name = "local_residuals_" + selection_name;
+            TDirectory* local_res = local_directory->mkdir(dir_name.c_str());
+            dir_name = "global_residuals_" + selection_name;
+            TDirectory* global_res = local_directory->mkdir(dir_name.c_str());
 
-        title = detectorID + " Local Residual X;x-x_{track} [mm];events";
-        residualsX_localAll[detectorID] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
-        title = detectorID + " Local Residual Y;y-y_{track} [mm];events";
-        residualsY_localAll[detectorID] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
-
-        global_res_all->cd();
-
-        title = detectorID + " Global Residual X;x-x_{track} [mm];events";
-        residualsX_globalAll[detectorID] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
-        title = detectorID + " Global Residual Y;y-y_{track} [mm];events";
-        residualsY_globalAll[detectorID] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
-
-        local_res_final->cd();
-
-        title = detectorID + " Local Residual X;x-x_{track} [mm];events";
-        residualsX_localFinal[detectorID] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
-        title = detectorID + " Local Residual Y;y-y_{track} [mm];events";
-        residualsY_localFinal[detectorID] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
-
-        global_res_final->cd();
-
-        title = detectorID + " Global Residual X;x-x_{track} [mm];events";
-        residualsX_globalFinal[detectorID] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
-        title = detectorID + " Global Residual Y;y-y_{track} [mm];events";
-        residualsY_globalFinal[detectorID] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
+            local_res->cd();
+    
+            title = detectorID + selection_name_caps + " Local Residual X;x-x_{track} [mm];events";
+            residualsX_local[detector_selection] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
+            title = detectorID + selection_name_caps + " Local Residual Y;y-y_{track} [mm];events";
+            residualsY_local[detector_selection] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
+    
+            global_res->cd();
+    
+            title = detectorID + selection_name_caps + " Global Residual X;x-x_{track} [mm];events";
+            residualsX_global[detector_selection] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
+            title = detectorID + selection_name_caps + " Global Residual Y;y-y_{track} [mm];events";
+            residualsY_global[detector_selection] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
+	}
     }
 }
 
@@ -625,18 +617,11 @@ void TrackingMultiplet::fill_tracklet_histograms(const streams& stream,
             auto trackletClusters = tracklet->getClusters();
             for(auto& trackletCluster : trackletClusters) {
                 std::string detectorID = trackletCluster->detectorID();
-		if (selected == all){
-		  residualsX_globalAll[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).X());
-		  residualsY_globalAll[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).Y());
-		  residualsX_localAll[detectorID]->Fill(tracklet->getLocalResidual(detectorID).X());
-		  residualsY_localAll[detectorID]->Fill(tracklet->getLocalResidual(detectorID).Y());
-		}
-		else{
-		  residualsX_globalFinal[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).X());
-		  residualsY_globalFinal[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).Y());
-		  residualsX_localFinal[detectorID]->Fill(tracklet->getLocalResidual(detectorID).X());
-		  residualsY_localFinal[detectorID]->Fill(tracklet->getLocalResidual(detectorID).Y());
-		}
+		std::string detector_selection = detectorID + "_" + selection_name;
+		residualsX_global[detector_selection]->Fill(tracklet->getGlobalResidual(detectorID).X());
+		residualsY_global[detector_selection]->Fill(tracklet->getGlobalResidual(detectorID).Y());
+		residualsX_local[detector_selection]->Fill(tracklet->getLocalResidual(detectorID).X());
+		residualsY_local[detector_selection]->Fill(tracklet->getLocalResidual(detectorID).Y());
             }
         }
     }

@@ -91,14 +91,10 @@ namespace corryvreckan {
         std::map<std::string, TH1F*> trackletPositionAtScattererX;
         std::map<std::string, TH1F*> trackletPositionAtScattererY;
 
-        std::map<std::string, TH1F*> residualsX_localAll;
-        std::map<std::string, TH1F*> residualsY_localAll;
-        std::map<std::string, TH1F*> residualsX_globalAll;
-        std::map<std::string, TH1F*> residualsY_globalAll;
-        std::map<std::string, TH1F*> residualsX_localFinal;
-        std::map<std::string, TH1F*> residualsY_localFinal;
-        std::map<std::string, TH1F*> residualsX_globalFinal;
-        std::map<std::string, TH1F*> residualsY_globalFinal;
+        std::map<std::string, TH1F*> residualsX_local;
+        std::map<std::string, TH1F*> residualsY_local;
+        std::map<std::string, TH1F*> residualsX_global;
+        std::map<std::string, TH1F*> residualsY_global;
 
         TH1F* multipletMultiplicity;
         TH1F* trackChi2;
