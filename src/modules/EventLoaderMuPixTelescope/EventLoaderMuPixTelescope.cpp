@@ -258,7 +258,19 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
                 LOG(DEBUG) << " Adding pixel hit: " << Units::display(pixel->timestamp(), "us") << " vs prev end ("
                            << eventNo_ - 1 << ")\t" << Units::display(prev_event_end_, "us") << " and current start \t"
                            << Units::display(clipboard->getEvent()->start(), "us")
-                           << " and duration: " << Units::display(clipboard->getEvent()->duration(), "us");
+                           << " and duration: " << Units::display(clipboard->getEvent()->duration(), "us");                
+                int col = pixel->column();
+                int row = pixel->row();
+
+                if(detectors_.back()->masked(col, row)) {
+                    LOG(DEBUG) << "Masking pixel (col, row) = (" << col << ", " << row << ")" << std::endl;
+                    removed_.at(t)++;
+                    pixelbuffers_.at(t).pop();
+                    continue;
+                }
+                else{
+                   LOG(DEBUG) << "Storing pixel (col, row) = (" << col << ", " << row << ")"<< std::endl;
+                }
                 pixels_.at(t).push_back(pixel);
                 hHitMap.at(names_.at(t))->Fill(pixel.get()->column(), pixel.get()->row());
                 hPixelToT.at(names_.at(t))->Fill(pixel.get()->raw());
