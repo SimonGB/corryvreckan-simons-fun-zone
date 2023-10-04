@@ -240,46 +240,46 @@ void TrackingMultiplet::initialize() {
         std::string stream_name = stream == upstream ? "upstream" : "downstream";
         std::string stream_name_caps = stream == upstream ? "Upstream" : "Downstream";
 
-	for(auto selection : {all, final}) {
-	    std::string selection_name = selection == all ? "all" : "final";
-	    std::string selection_name_caps = selection == all ? "All" : "Final";
-	    std::string selection_axis = selection == all ? " tracklet candidates" : " tracklets";
-	    std::string stream_selection = stream_name + "_" + selection_name;
+        for(auto selection : {all, final}) {
+            std::string selection_name = selection == all ? "all" : "final";
+            std::string selection_name_caps = selection == all ? "All" : "Final";
+            std::string selection_axis = selection == all ? " tracklet candidates" : " tracklets";
+            std::string stream_selection = stream_name + "_" + selection_name;
 
             TDirectory* directory = getROOTDirectory();
             TDirectory* local_directory = directory->mkdir((stream_name + "_" + selection_name).c_str());
-    
+
             if(local_directory == nullptr) {
                 throw RuntimeError("Cannot create or access local ROOT directory for module " + this->getUniqueName());
             }
-    
+
             title = "";
             std::string hist_name = "";
-    
+
             local_directory->cd();
-    
+
             title = stream_name_caps + " tracklet multiplicity;" + stream_name + selection_axis + ";events";
             hist_name = stream_name + "Multiplicity" + selection_name_caps;
             trackletMultiplicity[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 40, 0, 40);
-    
+
             title = "Clusters per " + stream_name_caps + " tracklet;clusters;" + stream_name + selection_axis;
             hist_name = stream_name + "ClustersPerTracklet" + selection_name_caps;
             clustersPerTracklet[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 10, 0, 10);
-    
+
             title = stream_name_caps + " tracklet angle X;angle x [mrad];" + stream_name + selection_axis;
             hist_name = stream_name + "AngleX" + selection_name_caps;
             trackletAngleX[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
             title = stream_name_caps + " tracklet angle Y;angle y [mrad];" + stream_name + selection_axis;
             hist_name = stream_name + "AngleY" + selection_name_caps;
             trackletAngleY[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
-    
+
             title = stream_name_caps + " tracklet X at scatterer;position x [mm];" + stream_name + selection_axis;
             hist_name = stream_name + "PositionAtScattererX" + selection_name_caps;
             trackletPositionAtScattererX[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
             title = stream_name_caps + " tracklet Y at scatterer;position y [mm];" + stream_name + selection_axis;
             hist_name = stream_name_caps + "PositionAtScattererY" + selection_name_caps;
             trackletPositionAtScattererY[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
-    	}
+        }
     }
 
     // Loop over all up- and downstream planes
@@ -297,31 +297,31 @@ void TrackingMultiplet::initialize() {
         }
         local_directory->cd();
 
-	for(auto selection : {all, final}) {
-	    std::string selection_name = selection == all ? "all" : "final";
-	    std::string selection_name_caps = selection == all ? " All" : " Final";
-	    std::string detector_selection = detectorID + "_" + selection_name;
+        for(auto selection : {all, final}) {
+            std::string selection_name = selection == all ? "all" : "final";
+            std::string selection_name_caps = selection == all ? " All" : " Final";
+            std::string detector_selection = detectorID + "_" + selection_name;
 
-	    std::string dir_name = "";
+            std::string dir_name = "";
             dir_name = "local_residuals_" + selection_name;
             TDirectory* local_res = local_directory->mkdir(dir_name.c_str());
             dir_name = "global_residuals_" + selection_name;
             TDirectory* global_res = local_directory->mkdir(dir_name.c_str());
 
             local_res->cd();
-    
+
             title = detectorID + selection_name_caps + " Local Residual X;x-x_{track} [mm];events";
             residualsX_local[detector_selection] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
             title = detectorID + selection_name_caps + " Local Residual Y;y-y_{track} [mm];events";
             residualsY_local[detector_selection] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
-    
+
             global_res->cd();
-    
+
             title = detectorID + selection_name_caps + " Global Residual X;x-x_{track} [mm];events";
             residualsX_global[detector_selection] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
             title = detectorID + selection_name_caps + " Global Residual Y;y-y_{track} [mm];events";
             residualsY_global[detector_selection] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
-	}
+        }
     }
 }
 
@@ -590,11 +590,9 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
 }
 
 // Filling the histograms for up- & downstream tracklets (all tracklets as well as the finally selected ones)
-        void fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets);
+void fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets);
 
-void TrackingMultiplet::fill_tracklet_histograms(const streams& stream,
-						 const selection& selected,
-                                                 TrackVector tracklets) {
+void TrackingMultiplet::fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets) {
 
     std::string stream_name = stream == upstream ? "upstream" : "downstream";
     std::string selection_name = selected == all ? "all" : "final";
@@ -617,15 +615,14 @@ void TrackingMultiplet::fill_tracklet_histograms(const streams& stream,
             auto trackletClusters = tracklet->getClusters();
             for(auto& trackletCluster : trackletClusters) {
                 std::string detectorID = trackletCluster->detectorID();
-		std::string detector_selection = detectorID + "_" + selection_name;
-		residualsX_global[detector_selection]->Fill(tracklet->getGlobalResidual(detectorID).X());
-		residualsY_global[detector_selection]->Fill(tracklet->getGlobalResidual(detectorID).Y());
-		residualsX_local[detector_selection]->Fill(tracklet->getLocalResidual(detectorID).X());
-		residualsY_local[detector_selection]->Fill(tracklet->getLocalResidual(detectorID).Y());
+                std::string detector_selection = detectorID + "_" + selection_name;
+                residualsX_global[detector_selection]->Fill(tracklet->getGlobalResidual(detectorID).X());
+                residualsY_global[detector_selection]->Fill(tracklet->getGlobalResidual(detectorID).Y());
+                residualsX_local[detector_selection]->Fill(tracklet->getLocalResidual(detectorID).X());
+                residualsY_local[detector_selection]->Fill(tracklet->getLocalResidual(detectorID).Y());
             }
         }
     }
-
 }
 
 StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
