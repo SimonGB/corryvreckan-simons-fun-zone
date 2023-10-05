@@ -207,11 +207,19 @@ void TrackingMultiplet::initialize() {
     std::string title = "Multiplet multiplicity;multiplets;events";
     multipletMultiplicity = new TH1F("multipletMultiplicity", title.c_str(), 40, 0, 40);
 
-    title = "Track #chi^{2};#chi^{2};events";
+    title = "Multiplet track #chi^{2};#chi^{2};events";
     trackChi2 = new TH1F("trackChi2", title.c_str(), 150, 0, 150);
 
-    title = "Track #chi^{2}/ndof;#chi^{2}/ndof;events";
+    title = "Multiplet track #chi^{2}/ndof;#chi^{2}/ndof;events";
     trackChi2ndof = new TH1F("trackChi2ndof", title.c_str(), 100, 0, 50);
+
+    if(refit_gbl_) {
+        title = "GBL-refit track #chi^{2};#chi^{2};events";
+        trackChi2_refit = new TH1F("trackChi2_refit", title.c_str(), 150, 0, 150);
+
+        title = "GBL-refit track #chi^{2}/ndof;#chi^{2}/ndof;events";
+        trackChi2ndof_refit = new TH1F("trackChi2ndof_refit", title.c_str(), 100, 0, 50);
+    }
 
     title = "Matching distance X at scatterer;distance x [mm];multiplet candidates";
     matchingDistanceAtScattererX = new TH1F("matchingDistanceAtScattererX", title.c_str(), 200, -10., 10.);
@@ -232,38 +240,46 @@ void TrackingMultiplet::initialize() {
         std::string stream_name = stream == upstream ? "upstream" : "downstream";
         std::string stream_name_caps = stream == upstream ? "Upstream" : "Downstream";
 
-        TDirectory* directory = getROOTDirectory();
-        TDirectory* local_directory = directory->mkdir(stream_name.c_str());
+        for(auto selection : {all, chosen}) {
+            std::string selection_name = selection == all ? "all" : "chosen";
+            std::string selection_name_caps = selection == all ? "All" : "Chosen";
+            std::string selection_axis = selection == all ? " tracklet candidates" : " tracklets";
+            std::string stream_selection = stream_name + "_" + selection_name;
 
-        if(local_directory == nullptr) {
-            throw RuntimeError("Cannot create or access local ROOT directory for module " + this->getUniqueName());
+            TDirectory* directory = getROOTDirectory();
+            TDirectory* local_directory = directory->mkdir((stream_name + "_" + selection_name).c_str());
+
+            if(local_directory == nullptr) {
+                throw RuntimeError("Cannot create or access local ROOT directory for module " + this->getUniqueName());
+            }
+
+            title = "";
+            std::string hist_name = "";
+
+            local_directory->cd();
+
+            title = stream_name_caps + " tracklet multiplicity;" + stream_name + selection_axis + ";events";
+            hist_name = stream_name + "Multiplicity" + selection_name_caps;
+            trackletMultiplicity[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 40, 0, 40);
+
+            title = "Clusters per " + stream_name_caps + " tracklet;clusters;" + stream_name + selection_axis;
+            hist_name = stream_name + "ClustersPerTracklet" + selection_name_caps;
+            clustersPerTracklet[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 10, 0, 10);
+
+            title = stream_name_caps + " tracklet angle X;angle x [mrad];" + stream_name + selection_axis;
+            hist_name = stream_name + "AngleX" + selection_name_caps;
+            trackletAngleX[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
+            title = stream_name_caps + " tracklet angle Y;angle y [mrad];" + stream_name + selection_axis;
+            hist_name = stream_name + "AngleY" + selection_name_caps;
+            trackletAngleY[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
+
+            title = stream_name_caps + " tracklet X at scatterer;position x [mm];" + stream_name + selection_axis;
+            hist_name = stream_name + "PositionAtScattererX" + selection_name_caps;
+            trackletPositionAtScattererX[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
+            title = stream_name_caps + " tracklet Y at scatterer;position y [mm];" + stream_name + selection_axis;
+            hist_name = stream_name_caps + "PositionAtScattererY" + selection_name_caps;
+            trackletPositionAtScattererY[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
         }
-        local_directory->cd();
-
-        title = "";
-        std::string hist_name = "";
-
-        title = stream_name_caps + " tracklet multiplicity;" + stream_name + " tracklets;events";
-        hist_name = stream_name + "Multiplicity";
-        trackletMultiplicity[stream] = new TH1F(hist_name.c_str(), title.c_str(), 40, 0, 40);
-
-        title = "Clusters per " + stream_name_caps + " tracklet;clusters;" + stream_name + " tracklets";
-        hist_name = stream_name + "ClustersPerTracklet";
-        clustersPerTracklet[stream] = new TH1F(hist_name.c_str(), title.c_str(), 10, 0, 10);
-
-        title = stream_name_caps + " tracklet angle X;angle x [mrad];" + stream_name + " tracklets";
-        hist_name = stream_name + "AngleX";
-        trackletAngleX[stream] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
-        title = stream_name_caps + " tracklet angle Y;angle y [mrad];" + stream_name + " tracklets";
-        hist_name = stream_name + "AngleY";
-        trackletAngleY[stream] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
-
-        title = stream_name_caps + " tracklet X at scatterer;position x [mm];" + stream_name + " tracklets";
-        hist_name = stream_name + "PositionAtScattererX";
-        trackletPositionAtScattererX[stream] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
-        title = stream_name_caps + " tracklet Y at scatterer;position y [mm];" + stream_name + " tracklets";
-        hist_name = stream_name_caps + "PositionAtScattererY";
-        trackletPositionAtScattererY[stream] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
     }
 
     // Loop over all up- and downstream planes
@@ -281,21 +297,31 @@ void TrackingMultiplet::initialize() {
         }
         local_directory->cd();
 
-        TDirectory* local_res = local_directory->mkdir("local_residuals");
-        local_res->cd();
+        for(auto selection : {all, chosen}) {
+            std::string selection_name = selection == all ? "all" : "chosen";
+            std::string selection_name_caps = selection == all ? " All" : " Chosen";
+            std::string detector_selection = detectorID + "_" + selection_name;
 
-        title = detectorID + " Local Residual X;x-x_{track} [mm];events";
-        residualsX_local[detectorID] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
-        title = detectorID + " Local Residual Y;y-y_{track} [mm];events";
-        residualsY_local[detectorID] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
+            std::string dir_name = "";
+            dir_name = "local_residuals_" + selection_name;
+            TDirectory* local_res = local_directory->mkdir(dir_name.c_str());
+            dir_name = "global_residuals_" + selection_name;
+            TDirectory* global_res = local_directory->mkdir(dir_name.c_str());
 
-        TDirectory* global_res = local_directory->mkdir("global_residuals");
-        global_res->cd();
+            local_res->cd();
 
-        title = detectorID + " Global Residual X;x-x_{track} [mm];events";
-        residualsX_global[detectorID] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
-        title = detectorID + " Global Residual Y;y-y_{track} [mm];events";
-        residualsY_global[detectorID] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
+            title = detectorID + selection_name_caps + " Local Residual X;x-x_{track} [mm];events";
+            residualsX_local[detector_selection] = new TH1F("LocalResidualsX", title.c_str(), 500, -0.1, 0.1);
+            title = detectorID + selection_name_caps + " Local Residual Y;y-y_{track} [mm];events";
+            residualsY_local[detector_selection] = new TH1F("LocalResidualsY", title.c_str(), 500, -0.1, 0.1);
+
+            global_res->cd();
+
+            title = detectorID + selection_name_caps + " Global Residual X;x-x_{track} [mm];events";
+            residualsX_global[detector_selection] = new TH1F("GlobalResidualsX", title.c_str(), 500, -0.1, 0.1);
+            title = detectorID + selection_name_caps + " Global Residual Y;y-y_{track} [mm];events";
+            residualsY_global[detector_selection] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
+        }
     }
 }
 
@@ -563,32 +589,37 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
     return tracklets;
 }
 
-// Filling the histograms for up- & downstream tracklets
-void TrackingMultiplet::fill_tracklet_histograms(const streams& stream, TrackVector tracklets) {
+// Filling the histograms for up- & downstream tracklets (all tracklets as well as the chosenly selected ones)
+void fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets);
+
+void TrackingMultiplet::fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets) {
 
     std::string stream_name = stream == upstream ? "upstream" : "downstream";
+    std::string selection_name = selected == all ? "all" : "chosen";
+    std::string stream_selection = stream_name + "_" + selection_name;
 
-    trackletMultiplicity[stream]->Fill(static_cast<double>(tracklets.size()));
+    trackletMultiplicity[stream_selection]->Fill(static_cast<double>(tracklets.size()));
 
     if(tracklets.size() > 0) {
         LOG(DEBUG) << "Filling plots for " << stream_name << " tracklets";
 
         for(auto& tracklet : tracklets) {
-            clustersPerTracklet[stream]->Fill(static_cast<double>(tracklet->getNClusters()));
-            trackletAngleX[stream]->Fill(static_cast<double>(Units::convert(
+            clustersPerTracklet[stream_selection]->Fill(static_cast<double>(tracklet->getNClusters()));
+            trackletAngleX[stream_selection]->Fill(static_cast<double>(Units::convert(
                 tracklet->getDirection(scatterer_position_).X() / tracklet->getDirection(scatterer_position_).Z(), "mrad")));
-            trackletAngleY[stream]->Fill(static_cast<double>(Units::convert(
+            trackletAngleY[stream_selection]->Fill(static_cast<double>(Units::convert(
                 tracklet->getDirection(scatterer_position_).Y() / tracklet->getDirection(scatterer_position_).Z(), "mrad")));
-            trackletPositionAtScattererX[stream]->Fill(tracklet->getIntercept(scatterer_position_).X());
-            trackletPositionAtScattererY[stream]->Fill(tracklet->getIntercept(scatterer_position_).Y());
+            trackletPositionAtScattererX[stream_selection]->Fill(tracklet->getIntercept(scatterer_position_).X());
+            trackletPositionAtScattererY[stream_selection]->Fill(tracklet->getIntercept(scatterer_position_).Y());
 
             auto trackletClusters = tracklet->getClusters();
             for(auto& trackletCluster : trackletClusters) {
                 std::string detectorID = trackletCluster->detectorID();
-                residualsX_global[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).X());
-                residualsY_global[detectorID]->Fill(tracklet->getGlobalResidual(detectorID).Y());
-                residualsX_local[detectorID]->Fill(tracklet->getLocalResidual(detectorID).X());
-                residualsY_local[detectorID]->Fill(tracklet->getLocalResidual(detectorID).Y());
+                std::string detector_selection = detectorID + "_" + selection_name;
+                residualsX_global[detector_selection]->Fill(tracklet->getGlobalResidual(detectorID).X());
+                residualsY_global[detector_selection]->Fill(tracklet->getGlobalResidual(detectorID).Y());
+                residualsX_local[detector_selection]->Fill(tracklet->getLocalResidual(detectorID).X());
+                residualsY_local[detector_selection]->Fill(tracklet->getLocalResidual(detectorID).Y());
             }
         }
     }
@@ -672,10 +703,6 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     LOG(DEBUG) << "Found " << upstream_tracklets.size() << " upstream tracklets";
     LOG(DEBUG) << "Found " << downstream_tracklets.size() << " downstream tracklets";
-
-    // Fill histograms for up- and downstream tracklets
-    fill_tracklet_histograms(upstream, upstream_tracklets);
-    fill_tracklet_histograms(downstream, downstream_tracklets);
 
     // Multiplet merging
     MultipletVector multiplets;
@@ -777,6 +804,35 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         downstream_tracklets.erase(used_downtracklet);
 
         multiplets.push_back(multiplet);
+    }
+
+    // refit can change chi2, so if unique cluster usage requested, decide what to keep after refitting
+    if(multiplets.size() > 0 && refit_gbl_) {
+        auto gbltracks = refit(multiplets);
+        if(unique_cluster_usage_ && gbltracks.size() > 1) {
+            gbltracks = remove_duplicate(gbltracks);
+        }
+        for(auto& gbltrack : gbltracks) {
+            trackChi2_refit->Fill(gbltrack->getChi2());
+            trackChi2ndof_refit->Fill(gbltrack->getChi2ndof());
+        }
+        clipboard->putData(gbltracks);
+    } else if(unique_cluster_usage_ && multiplets.size() > 1) {
+        multiplets = remove_duplicate(multiplets);
+        clipboard->putData(multiplets);
+    } else if(multiplets.size() > 0) {
+        clipboard->putData(multiplets);
+    }
+
+    LOG(DEBUG) << "Found " << multiplets.size() << " multiplets";
+    multipletMultiplicity->Fill(static_cast<double>(multiplets.size()));
+
+    // Fill multiplet histograms
+    TrackVector upstream_selected;
+    TrackVector downstream_selected;
+    for(auto& multiplet : multiplets) {
+        upstream_selected.push_back(multiplet->getUpstreamTracklet());
+        downstream_selected.push_back(multiplet->getDownstreamTracklet());
 
         trackChi2->Fill(multiplet->getChi2());
         trackChi2ndof->Fill(multiplet->getChi2ndof());
@@ -793,24 +849,10 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         multipletKinkAtScattererX->Fill(static_cast<double>(Units::convert(kinkX, "mrad")));
         multipletKinkAtScattererY->Fill(static_cast<double>(Units::convert(kinkY, "mrad")));
     }
-
-    LOG(DEBUG) << "Found " << multiplets.size() << " multiplets";
-    multipletMultiplicity->Fill(static_cast<double>(multiplets.size()));
-
-    if(multiplets.size() > 0 && !refit_gbl_) {
-        // if requested ensure unique usage of clusters
-        if(unique_cluster_usage_ && multiplets.size() > 1) {
-            multiplets = remove_duplicate(multiplets);
-        }
-        clipboard->putData(multiplets);
-    } else if(multiplets.size() > 0 && refit_gbl_) {
-        auto gbltracks = refit(multiplets);
-        // refit can change chi2, so if unique cluster usage requested, decide what to keep after refitting
-        if(unique_cluster_usage_ && gbltracks.size() > 1) {
-            gbltracks = remove_duplicate(gbltracks);
-        }
-        clipboard->putData(gbltracks);
-    }
+    fill_tracklet_histograms(upstream, all, upstream_tracklets);
+    fill_tracklet_histograms(downstream, all, downstream_tracklets);
+    fill_tracklet_histograms(upstream, chosen, upstream_selected);
+    fill_tracklet_histograms(downstream, chosen, downstream_selected);
 
     // Return value telling analysis to keep running
     return StatusCode::Success;

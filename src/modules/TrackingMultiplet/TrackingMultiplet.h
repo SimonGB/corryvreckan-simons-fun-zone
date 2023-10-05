@@ -30,6 +30,8 @@ namespace corryvreckan {
 
     // enum to differentiate between up- and downstream arm in functions
     enum streams { upstream, downstream };
+    // enum to differentiate between all and chosen tracks in functions
+    enum selection { all, chosen };
 
     class TrackingMultiplet : public Module {
 
@@ -52,7 +54,7 @@ namespace corryvreckan {
         /**
          * @brief Fill histograms for upstream or downstream tracklets
          */
-        void fill_tracklet_histograms(const streams& stream, TrackVector);
+        void fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets);
 
     private:
         // Configuration members
@@ -81,13 +83,13 @@ namespace corryvreckan {
         std::vector<std::string> exclude_from_seed_;
 
         // Member histograms
-        std::map<streams, TH1F*> trackletMultiplicity;
-        std::map<streams, TH1F*> clustersPerTracklet;
+        std::map<std::string, TH1F*> trackletMultiplicity;
+        std::map<std::string, TH1F*> clustersPerTracklet;
 
-        std::map<streams, TH1F*> trackletAngleX;
-        std::map<streams, TH1F*> trackletAngleY;
-        std::map<streams, TH1F*> trackletPositionAtScattererX;
-        std::map<streams, TH1F*> trackletPositionAtScattererY;
+        std::map<std::string, TH1F*> trackletAngleX;
+        std::map<std::string, TH1F*> trackletAngleY;
+        std::map<std::string, TH1F*> trackletPositionAtScattererX;
+        std::map<std::string, TH1F*> trackletPositionAtScattererY;
 
         std::map<std::string, TH1F*> residualsX_local;
         std::map<std::string, TH1F*> residualsY_local;
@@ -97,6 +99,8 @@ namespace corryvreckan {
         TH1F* multipletMultiplicity;
         TH1F* trackChi2;
         TH1F* trackChi2ndof;
+        TH1F* trackChi2_refit;
+        TH1F* trackChi2ndof_refit;
 
         TH1F* matchingDistanceAtScattererX;
         TH1F* matchingDistanceAtScattererY;
