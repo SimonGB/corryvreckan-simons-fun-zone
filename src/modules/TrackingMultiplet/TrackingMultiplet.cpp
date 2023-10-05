@@ -240,9 +240,9 @@ void TrackingMultiplet::initialize() {
         std::string stream_name = stream == upstream ? "upstream" : "downstream";
         std::string stream_name_caps = stream == upstream ? "Upstream" : "Downstream";
 
-        for(auto selection : {all, final}) {
-            std::string selection_name = selection == all ? "all" : "final";
-            std::string selection_name_caps = selection == all ? "All" : "Final";
+        for(auto selection : {all, chosen}) {
+            std::string selection_name = selection == all ? "all" : "chosen";
+            std::string selection_name_caps = selection == all ? "All" : "Chosen";
             std::string selection_axis = selection == all ? " tracklet candidates" : " tracklets";
             std::string stream_selection = stream_name + "_" + selection_name;
 
@@ -297,9 +297,9 @@ void TrackingMultiplet::initialize() {
         }
         local_directory->cd();
 
-        for(auto selection : {all, final}) {
-            std::string selection_name = selection == all ? "all" : "final";
-            std::string selection_name_caps = selection == all ? " All" : " Final";
+        for(auto selection : {all, chosen}) {
+            std::string selection_name = selection == all ? "all" : "chosen";
+            std::string selection_name_caps = selection == all ? " All" : " Chosen";
             std::string detector_selection = detectorID + "_" + selection_name;
 
             std::string dir_name = "";
@@ -589,13 +589,13 @@ TrackVector TrackingMultiplet::find_multiplet_tracklets(const streams& stream,
     return tracklets;
 }
 
-// Filling the histograms for up- & downstream tracklets (all tracklets as well as the finally selected ones)
+// Filling the histograms for up- & downstream tracklets (all tracklets as well as the chosenly selected ones)
 void fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets);
 
 void TrackingMultiplet::fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets) {
 
     std::string stream_name = stream == upstream ? "upstream" : "downstream";
-    std::string selection_name = selected == all ? "all" : "final";
+    std::string selection_name = selected == all ? "all" : "chosen";
     std::string stream_selection = stream_name + "_" + selection_name;
 
     trackletMultiplicity[stream_selection]->Fill(static_cast<double>(tracklets.size()));
@@ -851,8 +851,8 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
     }
     fill_tracklet_histograms(upstream, all, upstream_tracklets);
     fill_tracklet_histograms(downstream, all, downstream_tracklets);
-    fill_tracklet_histograms(upstream, final, upstream_selected);
-    fill_tracklet_histograms(downstream, final, downstream_selected);
+    fill_tracklet_histograms(upstream, chosen, upstream_selected);
+    fill_tracklet_histograms(downstream, chosen, downstream_selected);
 
     // Return value telling analysis to keep running
     return StatusCode::Success;

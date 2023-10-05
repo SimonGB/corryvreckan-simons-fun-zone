@@ -30,8 +30,8 @@ namespace corryvreckan {
 
     // enum to differentiate between up- and downstream arm in functions
     enum streams { upstream, downstream };
-    // enum to differentiate between all and final tracks in functions
-    enum selection { all, final };
+    // enum to differentiate between all and chosen tracks in functions
+    enum selection { all, chosen };
 
     class TrackingMultiplet : public Module {
 
