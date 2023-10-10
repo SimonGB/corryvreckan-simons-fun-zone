@@ -36,12 +36,14 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     config_.setDefault<std::string>("align_orientation_axes", "xyz");
     config_.setDefault<size_t>("max_associated_clusters", 1);
     config_.setDefault<double>("max_track_chi2ndof", 10.);
+    config_.setDefault<double>("spatial_cut_sensoredge", 1.);
     config_.setDefault<unsigned int>("workers", std::max(std::thread::hardware_concurrency() - 1, 1u));
     config_.setDefaultArray<std::string>("residuals", {"x - y", "x - y"});
 
     m_workers = config.get<unsigned int>("workers");
     nIterations = config_.get<size_t>("iterations");
     m_pruneTracks = config_.get<bool>("prune_tracks");
+    m_spatial_cut_sensoredge = config_.get<bool>("spatial_cut_sensoredge");
 
     m_alignPosition = config_.get<bool>("align_position");
     m_alignOrientation = config_.get<bool>("align_orientation");
@@ -109,6 +111,10 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
         // Do not put tracks without clusters on the DUT to the persistent storage
         if(associated_clusters.empty()) {
             LOG(TRACE) << "Discarding track for DUT alignment since no cluster associated";
+            continue;
+        }
+        // remove tracks at the sensor edge
+        if(!m_detector->hasIntercept(track.get(), m_spatial_cut_sensoredge)) {
             continue;
         }
 

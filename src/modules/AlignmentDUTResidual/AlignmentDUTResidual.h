@@ -74,7 +74,7 @@ namespace corryvreckan {
         std::string m_alignOrientation_axes;
         size_t m_maxAssocClusters;
         double m_maxTrackChi2;
-
+        double m_spatial_cut_sensoredge;
         TH1F* residualsXPlot;
         TH1F* residualsYPlot;
 
