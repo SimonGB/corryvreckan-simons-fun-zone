@@ -24,12 +24,14 @@ do
 done
 
 #hardcode this for homebrew on macos - path not found in system
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # check if homebrwe default path for version 12 is used
-    if [ ! -x "/opt/homebrew/Cellar/llvm@12/12.0.1_1/bin/clang-format" ] ; then
+    CLANG_SUBVERSION=($(ls  /opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/))
+    if [ ! -x "/opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/$CLANG_SUBVERSION/bin/clang-format" ] ; then
     printf "Default llvm@12 not found - falling back to system default. Consider installing the correct clang-format via homebrew";
     else
-    CLANG_FORMAT=$(command -v "/opt/homebrew/Cellar/llvm@12/12.0.1_1/bin/clang-format")
+    CLANG_FORMAT=$(command -v "/opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/$CLANG_SUBVERSION/bin/clang-format")
     fi
 fi
 
