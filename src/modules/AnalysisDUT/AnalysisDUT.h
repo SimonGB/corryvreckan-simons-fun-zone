@@ -129,6 +129,9 @@ namespace corryvreckan {
         TH2D* htimeRes_trackPos_TProfile;
         TProfile2D* hclusterSize_trackPos_TProfile;
 
+        // residual Profiles as function of col and row
+        TProfile *profile_dY_X_local, *profile_dY_Y_local, *profile_dX_X_local, *profile_dX_Y_local;
+
         // Member variables
         ROOT::Math::XYPoint inpixelBinSize_;
         double time_cut_frameedge_;

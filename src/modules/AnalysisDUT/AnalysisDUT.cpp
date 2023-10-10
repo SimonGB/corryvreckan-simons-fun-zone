@@ -835,6 +835,12 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             resY_vs_col->Fill(assoc_cluster->column(), local_y_distance_um);
             resX_vs_row->Fill(assoc_cluster->row(), local_x_distance_um);
             resY_vs_row->Fill(assoc_cluster->row(), local_y_distance_um);
+
+            profile_dY_X_local->Fill(assoc_cluster->column(), local_y_distance_um, 1);
+            profile_dY_Y_local->Fill(assoc_cluster->row(), local_y_distance_um, 1);
+            profile_dX_X_local->Fill(assoc_cluster->column(), local_x_distance_um, 1);
+            profile_dX_Y_local->Fill(assoc_cluster->row(), local_x_distance_um, 1);
+
             // Cluster charge normalized to path length in sensor:
             double norm = 1; // FIXME fabs(cos( turn*wt )) * fabs(cos( tilt*wt ));
             // FIXME: what does this mean? To my understanding we have the correct charge here already...
