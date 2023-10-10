@@ -1114,6 +1114,20 @@ void AnalysisDUT::createLocalResidualPlots() {
                      -500.5,
                      499.5));
     }
+    auto detname = m_detector->getName();
+    std::string title = detname + " Residuals X;x_{track}-x [#mum];events";
+    title = detname + " Residual profile dY/X;column;y_{track}-y [#mum]";
+    profile_dY_X_local =
+        new TProfile("profile_dY_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
+    title = detname + " Residual profile dY/Y;row;y_{track}-y [#mum]";
+    profile_dY_Y_local =
+        new TProfile("profile_dY_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
+    title = detname + " Residual profile dX/X;column;x_{track}-x [#mum]";
+    profile_dX_X_local =
+        new TProfile("profile_dX_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
+    title = detname + " Residual profile dX/y;row;x_{track}-x [#mum]";
+    profile_dX_Y_local =
+        new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
 
     directory->cd();
 }
