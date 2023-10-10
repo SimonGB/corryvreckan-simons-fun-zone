@@ -23,6 +23,17 @@ do
     [ -n "$CLANG_FORMAT" ] && break
 done
 
+#hardcode the homebrew default path on macos since the path is not found in system
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # check if homebrew default path for version $CLANG_FORMAT_VERSION is used
+    CLANG_SUBVERSION=($(ls  /opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/))
+    if [ ! -x "/opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/$CLANG_SUBVERSION/bin/clang-format" ] ; then
+    printf "Default llvm@$CLANG_FORMAT_VERSION not found - falling back to system default. Consider installing the correct clang-format via homebrew";
+    else
+    CLANG_FORMAT=$(command -v "/opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/$CLANG_SUBVERSION/bin/clang-format")
+    fi
+fi
 
 # set file extensions to handle
 FILE_EXTS=".c .h .cpp .hpp .cc .hh .cxx .tpp .C"
@@ -71,7 +82,7 @@ fi
 
 if ! "$CLANG_FORMAT" --version | grep "clang-format version $CLANG_FORMAT_VERSION" >/dev/null 2>/dev/null; then
     # Be indulgent with OSX users, no 4.0 seems to be available...
-    if [ "$OSTYPE" != "darwin"* ]; then
+    if [[ "$OSTYPE" != "darwin"* ]]; then
         printf "Error: clang-format version $CLANG_FORMAT_VERSION is required (exactly), cannot check format!\n"
         exit 1
     else
