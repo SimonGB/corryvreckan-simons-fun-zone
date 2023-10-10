@@ -29,7 +29,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     # check if homebrwe default path for version 12 is used
     CLANG_SUBVERSION=($(ls  /opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/))
     if [ ! -x "/opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/$CLANG_SUBVERSION/bin/clang-format" ] ; then
-    printf "Default llvm@12 not found - falling back to system default. Consider installing the correct clang-format via homebrew";
+    printf "Default llvm@$CLANG_FORMAT_VERSION not found - falling back to system default. Consider installing the correct clang-format via homebrew";
     else
     CLANG_FORMAT=$(command -v "/opt/homebrew/Cellar/llvm@$CLANG_FORMAT_VERSION/$CLANG_SUBVERSION/bin/clang-format")
     fi
