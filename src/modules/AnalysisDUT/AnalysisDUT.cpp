@@ -835,6 +835,12 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             resY_vs_col->Fill(assoc_cluster->column(), local_y_distance_um);
             resX_vs_row->Fill(assoc_cluster->row(), local_x_distance_um);
             resY_vs_row->Fill(assoc_cluster->row(), local_y_distance_um);
+
+            profile_dY_X_local->Fill(assoc_cluster->column(), local_y_distance_um, 1);
+            profile_dY_Y_local->Fill(assoc_cluster->row(), local_y_distance_um, 1);
+            profile_dX_X_local->Fill(assoc_cluster->column(), local_x_distance_um, 1);
+            profile_dX_Y_local->Fill(assoc_cluster->row(), local_x_distance_um, 1);
+
             // Cluster charge normalized to path length in sensor:
             double norm = 1; // FIXME fabs(cos( turn*wt )) * fabs(cos( tilt*wt ));
             // FIXME: what does this mean? To my understanding we have the correct charge here already...
@@ -1108,6 +1114,20 @@ void AnalysisDUT::createLocalResidualPlots() {
                      -500.5,
                      499.5));
     }
+    auto detname = m_detector->getName();
+    std::string title = detname + " Residuals X;x_{track}-x [#mum];events";
+    title = detname + " Residual profile dY/X;column;y_{track}-y [#mum]";
+    profile_dY_X_local =
+        new TProfile("profile_dY_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
+    title = detname + " Residual profile dY/Y;row;y_{track}-y [#mum]";
+    profile_dY_Y_local =
+        new TProfile("profile_dY_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
+    title = detname + " Residual profile dX/X;column;x_{track}-x [#mum]";
+    profile_dX_X_local =
+        new TProfile("profile_dX_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
+    title = detname + " Residual profile dX/y;row;x_{track}-x [#mum]";
+    profile_dX_Y_local =
+        new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
 
     directory->cd();
 }
