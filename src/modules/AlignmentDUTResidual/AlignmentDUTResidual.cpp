@@ -36,7 +36,7 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     config_.setDefault<std::string>("align_orientation_axes", "xyz");
     config_.setDefault<size_t>("max_associated_clusters", 1);
     config_.setDefault<double>("max_track_chi2ndof", 10.);
-    config_.setDefault<double>("spatial_cut_sensoredge", 1.);
+    config_.setDefault<double>("spatial_cut_sensoredge", 0.);
     config_.setDefault<unsigned int>("workers", std::max(std::thread::hardware_concurrency() - 1, 1u));
     config_.setDefaultArray<std::string>("residuals", {"x - y", "x - y"});
 
