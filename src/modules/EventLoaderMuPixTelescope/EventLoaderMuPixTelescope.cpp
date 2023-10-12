@@ -258,7 +258,7 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
                 LOG(DEBUG) << " Adding pixel hit: " << Units::display(pixel->timestamp(), "us") << " vs prev end ("
                            << eventNo_ - 1 << ")\t" << Units::display(prev_event_end_, "us") << " and current start \t"
                            << Units::display(clipboard->getEvent()->start(), "us")
-                           << " and duration: " << Units::display(clipboard->getEvent()->duration(), "us");                
+                           << " and duration: " << Units::display(clipboard->getEvent()->duration(), "us");
                 int col = pixel->column();
                 int row = pixel->row();
 
@@ -267,9 +267,8 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
                     removed_.at(t)++;
                     pixelbuffers_.at(t).pop();
                     continue;
-                }
-                else{
-                   LOG(DEBUG) << "Storing pixel (col, row) = (" << col << ", " << row << ")"<< std::endl;
+                } else {
+                    LOG(DEBUG) << "Storing pixel (col, row) = (" << col << ", " << row << ")" << std::endl;
                 }
                 pixels_.at(t).push_back(pixel);
                 hHitMap.at(names_.at(t))->Fill(pixel.get()->column(), pixel.get()->row());
@@ -310,10 +309,9 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
     // TS can be sampled on both edges - keep this optional
     auto detector = detectors_.back();
     if((h.get_ts2() == uint16_t(-1)) || (!use_both_timestamps_)) {
-      (detector->getType()=="telepix2" ? 
-       time = (timestampMask_ & h.timestamp_raw()):
-	time = ((timestampMask_ & h.timestamp_raw()) << 1))                                                                                                                                                                                                          ;
-	
+        (detector->getType() == "telepix2" ? time = (timestampMask_ & h.timestamp_raw())
+                                           : time = ((timestampMask_ & h.timestamp_raw()) << 1));
+
     } else if(h.timestamp_raw() > h.get_ts2()) {
         time = ((timestampMask_ & h.timestamp_raw()) << 1);
     } else {
@@ -325,12 +323,12 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
 
     double time_shifted = static_cast<double>(time) * static_cast<double>(ckdivend_ + 1);
 
-   
     auto name = detector->getName();
 
     ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
-    double px_timestamp = clockToTime_ * (static_cast<double>((corrected_fpgaTime >> 1) & (0xFFFFFFFFFFFFF-timestampMask_)) + time_shifted) -
-                          static_cast<double>(timeOffset_.at(tag));
+    double px_timestamp =
+        clockToTime_ * (static_cast<double>((corrected_fpgaTime >> 1) & (0xFFFFFFFFFFFFF - timestampMask_)) + time_shifted) -
+        static_cast<double>(timeOffset_.at(tag));
 
     hts_ToT[name]->Fill(static_cast<double>(h.tot_decoded()));
 
@@ -338,7 +336,7 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
     double tot_timestamp = clockToTime_ * (static_cast<double>(h.tot_decoded()) * multiplierToT_);
 
     ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(px_timestamp / 8)) & timestampMaskExtended_),
-                               (static_cast<double>(static_cast<uint>(tot_timestamp / 8) & timestampMaskExtended_)));
+                           (static_cast<double>(static_cast<uint>(tot_timestamp / 8) & timestampMaskExtended_)));
 
     double tot = tot_timestamp - (time_shifted * clockToTime_);
 
@@ -425,7 +423,8 @@ std::map<std::string, int> EventLoaderMuPixTelescope::typeString_to_typeID = {{"
                                                                               {"run2020v6", R20V6_UNSORTED_GS1_GS2_GS3},
                                                                               {"run2020v7", R20V7_UNSORTED_GS1_GS2_GS3},
                                                                               {"run2020v8", R20V8_UNSORTED_GS1_GS2_GS3},
-                                                                              {"telepix2",  TELEPIX2_UNSORTED_GS1_GS2_GS3}};
+                                                                              {"run2020v9", R20V9_UNSORTED_GS1_GS2_GS3},
+                                                                              {"telepix2", TELEPIX2_UNSORTED_GS1_GS2_GS3}};
 
 StatusCode EventLoaderMuPixTelescope::run(const std::shared_ptr<Clipboard>& clipboard) {
     eventNo_++;
