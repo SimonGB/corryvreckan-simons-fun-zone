@@ -18,8 +18,8 @@
 #include "core/module/Module.hpp"
 
 // mupix telescope includes
-#include "blockfile.hpp"
-#include "telescope_frame.hpp"
+#include <blockfile.hpp>
+#include <telescope_frame.hpp>
 
 namespace corryvreckan {
     /** @ingroup Modules
