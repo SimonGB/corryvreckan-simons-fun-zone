@@ -25,7 +25,7 @@ This module uses tracks for alignment. The module moves the detector it is insta
 * `workers`: Specify the number of workers to use in total, should be strictly larger than zero. Defaults to the number of native threads available on the system minus one, if this can be determined, otherwise one thread is used.
 * `residuals`: Array of formulas for unbiased x and y residuals. Any 2D TFormula can be used, the variables `x` and `y` represent the *track intercept* with the plane and the *cluster position* respectively. Default formulas: `x - y`. Parameters can be used (`[0]`, `[1]`, ...) and have to be separately specified (see below). It should be noted that the formula does *not* support units, values with units have to be specified as separate parameters. Both and only the functions residual_x and residual_y must be defined if used. 
 * `parameters_residuals`: Array of factors, representing the parameters of the above correction function. Defaults to an empty array, i.e. by default no parameters are needed.
-
+* `spatial_cut_sensoredge` : Define the minimal distance a track has to have from the sensors edge. Defaults to `0`
 
 ### Plots produced
 For the DUT, the following plots are produced:
