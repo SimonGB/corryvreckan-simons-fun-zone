@@ -240,6 +240,7 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
                 LOG(DEBUG) << "Reached EOF";
                 throw EndOfFile();
             } else if(!new_event && use_as_monitor_) {
+                // LOG(DEBUG) << "End of file reach, but keeping monitoring open";
                 // only want to log every 10 seconds but cannot use sleep(10) because then GUI becomes unresponsive for 10
                 // seconds
                 std::chrono::steady_clock::time_point time_reference_for_logging = std::chrono::steady_clock::now();
@@ -621,9 +622,9 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
                     // get next decoded EUDAQ StandardEvent from timesorted buffer
                     event_ = get_next_sorted_std_event();
                 }
-                // In case the monitor needs to wait for more events, continue trying
+                // In case the monitor needs to wait for more events, send StatusCode::NoData
                 if(!event_)
-                    continue;
+                    return StatusCode::NoData;
             } catch(EndOfFile&) {
                 return StatusCode::EndRun;
 #ifdef STDEVENTCONVERTER_EXCEPTIONS_
