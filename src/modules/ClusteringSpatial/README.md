@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # ClusteringSpatial
-**Maintainer**: Daniel Hynds (<daniel.hynds@cern.ch>)  
-**Module Type**: *DETECTOR*  
-**Detector Type**: *all*  
+**Maintainer**: Daniel Hynds (<daniel.hynds@cern.ch>)
+**Module Type**: *DETECTOR*
+**Detector Type**: *all*
 **Status**: Functioning
 
 ### Description
@@ -19,7 +19,6 @@ These clusters are stored on the clipboard for each device.
 * `use_trigger_timestamp`: If true, the first trigger timestamp of the Corryvreckan event is set as the cluster timestamp. Caution when using this method for very long events containing multiple triggers. If false, the last pixel added to the cluster defines the timestamp. Default value is `false`.
 * `charge_weighting`: If true, calculate a charge-weighted mean for the cluster center. If false, calculate the simple arithmetic mean. Defaults to `true`.
 * `reject_by_roi`: If true, clusters positioned outside the ROI set for the detector will be rejected. Defaults to `false`.
-* `radial_weighting`: If true, centres of clusters belonging to radial / polar detectors are calculated in the R / Phi plane considering the polar resolution of the pixels.
 
 ### Plots produced
 For each detector the following plots are produced:
