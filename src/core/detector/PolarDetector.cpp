@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of the polar detector model
  *
- * @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2017-2023 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -26,59 +26,46 @@ using namespace ROOT::Math;
 using namespace corryvreckan;
 
 PolarDetector::PolarDetector(const Configuration& config) : Detector(config) {
-    m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
-
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         build_axes(config);
     }
 
-    // Additional transformation to have local coordinates calculated from the sensor origin
-    auto origin_translate = Translation3D(0, -getCenterRadius(), 0);
-    auto origin_trf = Transform3D(origin_translate);
-    this->alignment_->setOriginTransform(origin_trf);
-
-    // Update the underlying alignment object to incorporate the transformation
-    auto displ = alignment_->displacement();
-    auto orient = alignment_->orientation();
-    this->alignment_->update(displ, orient);
-
     // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
     TMatrixD errorMatrix(3, 3);
     TMatrixD locToGlob(3, 3), globToLoc(3, 3);
-    errorMatrix(0, 0) = m_spatial_resolution.x() * m_spatial_resolution.x();
-    errorMatrix(1, 1) = m_spatial_resolution.y() * m_spatial_resolution.y();
+    errorMatrix(0, 0) = getSpatialResolution().x() * getSpatialResolution().x();
+    errorMatrix(1, 1) = getSpatialResolution().y() * getSpatialResolution().y();
     alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
     alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
     m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 
-    // Control printouts for testing purposes
-    LOG(TRACE) << "== CONTROL PRINTOUTS FOR RADIAL DETECTORS 2:";
-    LOG(TRACE) << "====> Numbers of strips:";
+    // Print detector parameters
+    LOG(DEBUG) << "Polar detector \"" << m_detectorName << "\" parameters:";
+    LOG(DEBUG) << "  Number of strips:";
     for(const auto val : number_of_strips) {
-        LOG(TRACE) << "====> " << val;
+        LOG(DEBUG) << "    " << val;
     }
-    LOG(TRACE) << "====> Row radii:";
+    LOG(DEBUG) << "  Row radii:";
     for(const auto val : row_radius) {
-        LOG(TRACE) << "====> " << val;
+        LOG(DEBUG) << "    " << Units::display(val, "mm");
     }
 
-    LOG(TRACE) << "====> Strip lengths:";
+    LOG(DEBUG) << "  Strip lengths:";
     for(const auto val : strip_length) {
-        LOG(TRACE) << "====> " << val;
+        LOG(DEBUG) << "    " << Units::display(val, "mm");
     }
 
-    LOG(TRACE) << "====> Angular pitch:";
+    LOG(DEBUG) << "  Angular pitch:";
     for(const auto val : angular_pitch) {
-        LOG(TRACE) << "====> " << val;
+        LOG(DEBUG) << "    " << Units::display(val, "urad");
     }
-    LOG(TRACE) << "===> Spatial res.: " << m_spatial_resolution;
-    LOG(TRACE) << "===> Stereo angle: " << stereo_angle;
-    LOG(TRACE) << "===> Focus shift: " << focus_translation;
+    LOG(DEBUG) << "  Spatial resolution: " << Units::display(getSpatialResolution(), {"urad", "mm"});
+    LOG(DEBUG) << "  Stereo angle: " << Units::display(stereo_angle, "mrad");
+    LOG(DEBUG) << "  Center radius: " << Units::display(center_radius, "mm");
 }
 
 void PolarDetector::build_axes(const Configuration& config) {
-
     // Get numbers of strips
     number_of_strips = config.getArray<unsigned int>("number_of_strips");
 
@@ -91,40 +78,23 @@ void PolarDetector::build_axes(const Configuration& config) {
     // Get stereo angle
     stereo_angle = config.get<double>("stereo_angle", 0.0);
 
-    // Get central radius
-    center_radius = config.get<double>("center_radius", 0.0);
-
     // If central radius wasn't provided, calculate as average radius
-    if(center_radius == 0) {
+    if(config.has("center_radius")) {
+        center_radius = config.get<double>("center_radius");
+    } else {
+        LOG(WARNING) << "Center radius not provided, calculating as radius average.";
         center_radius = (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2;
     }
-
-    // Calculate translation from sensor origin to its focal point
-    focus_translation = {getCenterRadius() * sin(stereo_angle), getCenterRadius() * (1 - cos(stereo_angle)), 0};
 
     // Set reasonable pixel pitch placeholders - length of the strip edge and strip length
     m_pitch = {row_radius.at(1) * angular_pitch.at(0), row_radius.at(1) - row_radius.at(0)};
 
-    // Calculate strip lengths
+    // Calculate strip lengths from row radii
     for(unsigned int i = 1; i < row_radius.size(); i++) {
         strip_length.push_back(row_radius.at(i) - row_radius.at(i - 1));
     }
 
-    LOG(TRACE) << "Initialized \"" << m_detectorType;
-
-    // Intrinsic spatial resolution, defaults to pitch/sqrt(12):
-    // Resolution in X direction: maximum strip pitch / sqrt(12)
-    // Resolution in Y direction: length of the first strip row / sqrt(12)
-    m_spatial_resolution =
-        config.get<ROOT::Math::XYVector>("spatial_resolution",
-                                         {*std::max_element(angular_pitch.begin(), angular_pitch.end()) / sqrt(12),
-                                          (row_radius.at(1) - row_radius.at(0)) / sqrt(12)});
-    LOG(TRACE) << "Spatial resolution (x, y) = (phi, r) = (" << m_spatial_resolution.X() << ", " << m_spatial_resolution.Y()
-               << ")";
-    if(!config.has("spatial_resolution")) {
-        LOG(WARNING) << "Spatial resolution for detector '" << m_detectorName << "' not set." << std::endl
-                     << "Using pitch/sqrt(12) as default";
-    }
+    LOG(TRACE) << "Initialized \"" << m_detectorType << "\"";
 
     // region of interest:
     m_roi = config.getMatrix<int>("roi", std::vector<std::vector<int>>());
@@ -207,10 +177,10 @@ void PolarDetector::configure_detector(Configuration& config) const {
     config.setArray("row_radius", row_radius);
 
     // Stereo angle
-    config.set("stereo_angle", stereo_angle);
+    config.set("stereo_angle", stereo_angle, {{"mrad"}});
 
     // Intrinsic resolution:
-    config.set("spatial_resolution", m_spatial_resolution, {{"um"}});
+    config.set("spatial_resolution", getSpatialResolution(), {"urad", "mm"});
 
     // Pixel mask file:
     if(!m_maskfile.empty()) {
@@ -223,7 +193,6 @@ void PolarDetector::configure_detector(Configuration& config) const {
 
 void PolarDetector::configure_pos_and_orientation(Configuration& config) const {
     config.set("position", alignment_->displacement(), {"um", "mm"});
-    config.set("orientation_mode", m_orientation_mode);
     config.set("orientation", alignment_->orientation(), {{"deg"}});
     config.set("coordinates", "polar");
 }
@@ -312,68 +281,73 @@ double PolarDetector::getColumn(const PositionVector3D<Cartesian3D<double>> loca
     // Convert local position to polar coordinates
     auto polar_pos = getPositionPolar(localPosition);
 
+    // Assign to a strip row
     auto strip_y = static_cast<unsigned int>(getRow(localPosition));
 
     // Get the strip pitch in the correct strip row
     auto pitch = angular_pitch.at(strip_y);
-    // Calculate the strip x-index
-    auto strip_x = (polar_pos.phi() + stereo_angle + pitch * number_of_strips.at(strip_y) / 2) / pitch;
 
-    return strip_x;
+    // Calculate the strip column
+    return (number_of_strips.at(strip_y) - 1) / 2 - polar_pos.phi() / pitch;
 }
 
 PositionVector3D<Polar3D<double>>
 PolarDetector::getPositionPolar(const PositionVector3D<Cartesian3D<double>> localPosition) const {
-    // Calculate the radial component
-    auto r = sqrt(localPosition.x() * localPosition.x() + localPosition.y() * localPosition.y());
-    // Shift the coordinate origin to the strip focal point
-    auto focus_pos = localPosition - focus_translation;
-    // Calculate the angular component obtained from the corrected position
-    auto phi = atan2(focus_pos.x(), focus_pos.y());
+    // Calculate polar angle
+    auto phi = (atan2(center_radius * sin(stereo_angle) + localPosition.X(),
+                      center_radius * cos(stereo_angle) + localPosition.Y()) -
+                stereo_angle);
 
-    // LOG(TRACE) << "[getPositionPolar] Converted (x, y, z) = (" << localPosition.x() << ", " << localPosition.y() << ", "
-    // << localPosition.z() << ")"; LOG(TRACE) << "[getPositionPolar]        to  (r, phi) = (" << r << ", " << phi << ")";
+    // Calculate radius
+    auto r = (center_radius * cos(stereo_angle) + localPosition.Y()) / cos(stereo_angle + phi);
 
     return {r, 0, phi};
 }
 
 PositionVector3D<Cartesian3D<double>>
 PolarDetector::getPositionCartesian(const PositionVector3D<Polar3D<double>> localPosition) const {
-    // Length of the translation vector from the local center to the focal point
-    auto len_foc = std::sqrt(focus_translation.mag2());
-    // Calculate two relevant angles needed for the transformation of the angular
-    // component to be measured from the local
-    // coordinate center instead of the strip focal point
-    auto alpha = std::acos(len_foc / (2 * getCenterRadius()));
-    auto gamma = asin(len_foc * sin(alpha + localPosition.phi() + stereo_angle) / localPosition.r());
-    // Transform the angle
-    auto phi = 2 * alpha + gamma + localPosition.phi() + stereo_angle - ROOT::Math::Pi();
+    auto local_x = localPosition.R() * sin(localPosition.Phi() + stereo_angle) - center_radius * sin(stereo_angle);
+    auto local_y = localPosition.R() * cos(localPosition.Phi() + stereo_angle) - center_radius * cos(stereo_angle);
 
-    return {localPosition.r() * sin(phi), localPosition.r() * cos(phi), 0.0};
+    return {local_x, local_y, 0};
 }
 
 // Function to get local position from row and column
 PositionVector3D<Cartesian3D<double>> PolarDetector::getLocalPosition(double column, double row) const {
-    // Whole and decimal part of the column and row
-    unsigned int column_base = static_cast<unsigned int>(floor(column + 0.5));
-    auto column_dec = column - column_base;
-    unsigned int row_base = static_cast<unsigned int>(floor(row + 0.5));
-    auto row_dec = row - row_base;
+    //
+    auto local_polar = getLocalPolarPosition(column, row);
 
-    // Calculate the radial coordinate of the strip center
-    auto local_r = (row_radius.at(row_base) + row_radius.at(row_base + 1)) / 2;
-    // Adjust for in-strip position
-    local_r += row_dec * (row_radius.at(row_base + 1) - row_radius.at(row_base));
+    return getPositionCartesian(local_polar);
+}
 
-    // Calculate the angular coordinate of the strip center
-    auto local_phi = -angular_pitch.at(row_base) * number_of_strips.at(row_base) / 2 +
-                     (column_base)*angular_pitch.at(row_base) - stereo_angle;
-    local_phi += column_dec * angular_pitch.at(row_base);
+PositionVector3D<Polar3D<double>> PolarDetector::getLocalPolarPosition(double column, double row) const {
+    // Assign to a strip row
+    auto strip_y = (row < 0) ? 0 : static_cast<unsigned int>(row);
 
-    // Convert polar coordinates to cartesian
-    auto pos = getPositionCartesian({local_r, 0, local_phi});
+    // Get the strip pitch and number of strips in the correct strip row
+    auto pitch = angular_pitch.at(strip_y);
+    auto n_strips = number_of_strips.at(strip_y);
 
-    return PositionVector3D<Cartesian3D<double>>(pos.x(), pos.y(), 0.0);
+    // Calculate polar angle
+    auto phi = pitch * ((n_strips - 1) / 2 - column);
+
+    // Split row index into integer and fractional part
+    unsigned int row_int = (row < 0) ? 0 : static_cast<unsigned int>(floor(row));
+    auto row_fract = row - row_int + 0.5;
+
+    // Get inner and outer row radius
+    auto r1 = row_radius.at(row_int);
+    auto r2 = row_radius.at(row_int + 1);
+    // Calculate radius
+    auto r = r1 + (r2 - r1) * row_fract;
+
+    // Convert radius from beam frame to strip frame
+    // Reference transformation from ATLAS12ECTechnicalSpecs_v2.3
+    auto b = -4.0 * center_radius * sin(stereo_angle / 2.0) * sin(stereo_angle / 2.0 + phi);
+    auto c = std::pow((2.0 * center_radius * sin(stereo_angle / 2.0)), 2) - r * r;
+    auto r_conv = 0.5 * (-b + sqrt(b * b - 4 * c));
+
+    return {r_conv, 0, phi};
 }
 
 // Function to get in-pixel position
@@ -514,84 +488,16 @@ bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
     return false;
 }
 
-XYVector PolarDetector::transformResolution(double R, double phi, double varianceR, double variancePhi) const {
+XYVector PolarDetector::getSpatialResolution(double, double row) const {
+    // Get integer row
+    auto row_int = static_cast<unsigned int>(floor(row + 0.5));
 
-    LOG(TRACE) << "Transforming resolution (R, phi), (varR, varPhi): (" << R << " , " << phi << ")     (" << varianceR
-               << " , " << variancePhi << ")";
+    // Get strip length and pitch for the given row
+    auto strip_r = strip_length.at(row_int);
+    auto strip_phi = angular_pitch.at(row_int);
 
-    // Use gaussian error propagation to get the resolution in X,Y
-    double F = std::sqrt(focus_translation.mag2()); // Length of focus point
-    auto alpha = std::acos(F / (2 * getCenterRadius()));
-
-    // Define a few helper variables to make the calculation easier to write down
-    double K = alpha + phi + stereo_angle;
-    double L = F / R * sin(K);
-    double M = alpha + K + asin(L);
-
-    // Calculate derivatives
-    double dXdR = L * cos(M) / std::sqrt(1 - L * L) - sin(M);
-    double dXdPhi = -1 * (F * cos(K) / std::sqrt(1 - L * L) + R) * cos(M);
-    double dYdR = -1 * L * sin(M) / std::sqrt(1 - L * L) - cos(M);
-    double dYdPhi = (F * cos(K) / std::sqrt(1 - L * L) + R) * sin(M);
-
-    // Gaussian error propagation
-    double dX = std::sqrt(dXdR * dXdR * varianceR + dXdPhi * dXdPhi * variancePhi);
-    double dY = std::sqrt(dYdR * dYdR * varianceR + dYdPhi * dYdPhi * variancePhi);
-
-    LOG(TRACE) << "Transformed resolution (dX, dY)" << dX << " , " << dY;
-
-    return {dX, dY};
-};
-
-TMatrixD PolarDetector::transformResolutionMatrixGlobal(double R, double phi, double varianceR, double variancePhi) {
-    // Get resolution in X / Y
-    auto localResolutionXY = transformResolution(R, phi, varianceR, variancePhi);
-
-    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
-    TMatrixD errorMatrix(3, 3);
-    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
-    errorMatrix(0, 0) = localResolutionXY.x() * localResolutionXY.x();
-    errorMatrix(1, 1) = localResolutionXY.y() * localResolutionXY.y();
-    alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
-    alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
-    // LOG(TRACE) << "Transformed Error Matrix" << locToGlob * errorMatrix * globToLoc;
-    return locToGlob * errorMatrix * globToLoc;
-}
-
-XYVector PolarDetector::getSpatialResolution(double column, double row) const {
-    // Get base row
-    auto row_base = static_cast<unsigned int>(floor(row + 0.5));
-
-    // Calculate reconstructed position in R and Phi
-    auto positionLocalPolar = getPositionPolar(getLocalPosition(column, row));
-    double R = positionLocalPolar.r();
-    double Phi = positionLocalPolar.phi();
-
-    // Variances
-    double rPitch = row_radius.at(row_base + 1) - row_radius.at(row_base);
-    double phiPitch = angular_pitch.at(row_base);
-
-    // Assume resolution to be pitch / sqrt(12) for now
-    double varianceR = rPitch * rPitch / 12;
-    double variancePhi = phiPitch * phiPitch / 12;
-
-    // Return transformed resolution in X / Y
-    return transformResolution(R, Phi, varianceR, variancePhi);
-}
-
-TMatrixD PolarDetector::getSpatialResolutionMatrixGlobal(double column, double row) const {
-    //
-    XYVector localResolution = getSpatialResolution(column, row);
-
-    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
-    TMatrixD errorMatrix(3, 3);
-    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
-    errorMatrix(0, 0) = localResolution.x() * localResolution.x();
-    errorMatrix(1, 1) = localResolution.y() * localResolution.y();
-    alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
-    alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
-
-    return locToGlob * errorMatrix * globToLoc;
+    // Resolution is angular pitch and strip length / sqrt(12)
+    return {strip_phi / sqrt(12), strip_r / sqrt(12)};
 }
 
 // Function to get row and column of pixel

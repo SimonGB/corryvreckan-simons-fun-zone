@@ -2,7 +2,7 @@
  * @file
  * @brief Polar detector model class
  *
- * @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2017-2023 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -135,28 +135,7 @@ namespace corryvreckan {
          * @brief Get intrinsic spatial resolution of the detector
          * @return Intrinsic spatial resolution in X and Y
          */
-        XYVector getSpatialResolution(double column, double row) const override;
-
-        /**
-         * @brief Transform the detector resolution in the R/Phi plane to cartesian coordinates using gaussian error
-         * propagation
-         * @param R R position of the hit
-         * @param phi Phi position of the hit
-         * @param varianceR Variance (resolution^2) of the hit in R
-         * @param variancePhi Variance (resolution^2) of the hit in phi
-         * @return Spatial resolution in X and Y
-         */
-        XYVector transformResolution(double R, double phi, double varianceR, double variancePhi) const;
-
-        /**
-         * @brief Return the detector resolution in X,Y as a resolution matrix
-         * @param R R position of the hit
-         * @param phi Phi position of the hit
-         * @param varianceR Variance (resolution^2) of the hit in R
-         * @param variancePhi Variance (resolution^2) of the hit in phi
-         * @return Resolution Matrix (Global)
-         */
-        TMatrixD transformResolutionMatrixGlobal(double R, double phi, double varianceR, double variancePhi);
+        XYVector getSpatialResolution(double column = 0, double row = 0) const override;
 
         /**
          * @brief Get number of pixels in x and y
@@ -216,9 +195,9 @@ namespace corryvreckan {
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
          * @return Intrinsic spatial resolution in global X and Y
          */
-        virtual TMatrixD
-        getSpatialResolutionMatrixGlobal(double column,
-                                         double row) const override; // { return m_spatial_resolution_matrix_global; }
+        virtual TMatrixD getSpatialResolutionMatrixGlobal(double, double) const override {
+            return m_spatial_resolution_matrix_global;
+        }
 
         /**
          * @brief Return a set containing all strips neighboring the given one with a configurable maximum distance
@@ -232,20 +211,21 @@ namespace corryvreckan {
          */
         std::set<std::pair<int, int>>
         getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
+
         std::vector<double> getRowRadius() { return row_radius; };
         std::vector<double> getAngularPitch() { return angular_pitch; };
+        unsigned int nStrips(const int row) { return number_of_strips.at(static_cast<unsigned int>(row)); }
+
+        PositionVector3D<Polar3D<double>> getLocalPolarPosition(double column, double row) const;
 
     private:
         // Build axis, for devices which are not auxiliary
-        // Different in Pixel/Strip Detector
         void build_axes(const Configuration& config) override;
 
         // Config detector, for devices which are not auxiliary
-        // Different in Pixel/Strip Detector
         void configure_detector(Configuration& config) const override;
 
         // Config position, orientation, mode of detector
-        // Different in Pixel/Strip Detector
         void configure_pos_and_orientation(Configuration& config) const override;
 
         // Functions to set and check channel masking
@@ -257,23 +237,16 @@ namespace corryvreckan {
 
         // For planar detector
         XYVector m_pitch{};
-        XYVector m_spatial_resolution{};
         TMatrixD m_spatial_resolution_matrix_global{3, 3};
         std::vector<std::vector<int>> m_roi{};
-
-        // Displacement and rotation in x,y,z
-        ROOT::Math::XYZPoint m_displacement;
-        ROOT::Math::XYZVector m_orientation;
-        std::string m_orientation_mode;
 
         // For polar detectors
         std::vector<unsigned int> number_of_strips{};
         std::vector<double> row_radius{};
-        std::vector<double> angular_pitch{};
         std::vector<double> strip_length{};
+        std::vector<double> angular_pitch{};
         double stereo_angle{};
         double center_radius{};
-        PositionVector3D<Cartesian3D<double>> focus_translation;
     };
 } // namespace corryvreckan
 
