@@ -49,6 +49,16 @@ namespace corryvreckan {
         PASSIVE = (1 << 3),   ///< Passive device which only acts as scatterer. This is ignored for detector modules
     };
 
+    /**
+     * @brief Detector coordinate system
+     */
+    enum class Coordinates {
+        CARTESIAN = 1,    ///< Cartesian coordinates
+        HEXAGONAL,        ///< Hexagonal pixel coordinates, axial coordinate system
+        CARTESIAN_MODULE, ///< Cartesian coordinates for detector modules
+        POLAR,            ///< Polar coordinates
+    };
+
     inline constexpr DetectorRole operator&(DetectorRole x, DetectorRole y) {
         return static_cast<DetectorRole>(static_cast<int>(x) & static_cast<int>(y));
     }
@@ -96,9 +106,6 @@ namespace corryvreckan {
 
             void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
 
-            // Set the additional origin transformation for specialized detector models
-            void setOriginTransform(Transform3D& trf) { origin_trf_ = trf; }
-
             bool isVariable() const { return needs_update_; };
 
         private:
@@ -120,8 +127,6 @@ namespace corryvreckan {
             ROOT::Math::XYZVector normal_;
             ROOT::Math::Transform3D local2global_;
             ROOT::Math::Transform3D global2local_;
-            // Additional transformation for specialized detector models
-            ROOT::Math::Transform3D origin_trf_{};
 
             // The formulae
             std::array<std::shared_ptr<TFormula>, 3> formulae_pos_;
