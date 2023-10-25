@@ -448,42 +448,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     double distanceY = interceptY - newCluster->local().y();
                     double distance = sqrt(distanceX * distanceX + distanceY * distanceY);
 
-                    /*// Recalculate for polar detectors
-                    auto polar_det = dynamic_pointer_cast<PolarDetector>(detector);
-                    if(polar_det != nullptr) {
-
-                        auto cluster_polar = polar_det->getPositionPolar(newCluster->local());
-                        auto intercept_polar = polar_det->getPositionPolar(interceptPoint);
-                        LOG(TRACE) << "Positions for polar: ";
-                        LOG(TRACE) << "--> Cluster: ";
-                        LOG(TRACE) << "----> Global: " << newCluster->global();
-                        LOG(TRACE) << "----> Local: " << newCluster->local();
-                        LOG(TRACE) << "----> Polar: "
-                                   << "(" << cluster_polar.phi() << ", " << cluster_polar.r() << ")";
-                        LOG(TRACE) << "----> Error: "
-                                   << "(" << newCluster->errorX() << ", " << newCluster->errorY() << ")";
-                        LOG(TRACE) << "--> Intercept: ";
-                        LOG(TRACE) << "----> Global: " << polar_det->localToGlobal(interceptPoint);
-                        LOG(TRACE) << "----> Local: " << interceptPoint;
-                        LOG(TRACE) << "----> Polar: "
-                                   << "(" << intercept_polar.phi() << ", " << intercept_polar.r() << ")";
-
-                        // Interpreting (X,Y) as (Phi,R)
-                        distanceX = intercept_polar.phi() - cluster_polar.phi();
-                        distanceY = intercept_polar.r() - cluster_polar.r();
-                        // spatial_cuts_[detector] = polar_det->getSpatialResolution();
-                        LOG(TRACE) << "Recalculate for polar:";
-                        LOG(TRACE) << "--> Intercept : [" << intercept_polar.phi() << ", " << intercept_polar.r() << "]";
-                        LOG(TRACE) << "--> Cluster   : [" << cluster_polar.phi() << ", " << cluster_polar.r() << "]";
-                        LOG(TRACE) << "--> Distance X (=phi) : " << distanceX
-                                   << " (spatial cut: " << spatial_cuts_[detector].x() << ")";
-                        LOG(TRACE) << "--> Distance Y:  (=r) : " << distanceY
-                                   << " (spatial cut: " << spatial_cuts_[detector].y() << ")";
-                        LOG(TRACE) << "--> Spatial res X (=phi) : "
-                                   << polar_det->getSpatialResolution(newCluster->column(), newCluster->row()).x();
-                        LOG(TRACE) << "--> Spatial res Y (  =r) : "
-                                   << polar_det->getSpatialResolution(newCluster->column(), newCluster->row()).y();
-                    }*/
                     // Check if newCluster lies within ellipse defined by spatial cuts around intercept,
                     // following this example:
                     // https://www.geeksforgeeks.org/check-if-a-point-is-inside-outside-or-on-the-ellipse/
@@ -593,6 +557,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
     };
     // Save the tracks on the clipboard
     if(tracks.size() > 0) {
+
         // if requested ensure unique usage of clusters
         if(unique_cluster_usage_ && tracks.size() > 1) {
             // sort by chi2:
@@ -685,12 +650,11 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             residualsZ_global[detectorID]->Fill(globalRes.Z());
         }
 
-        /**for(auto& detector : get_regular_detectors(true)) {
+        for(auto& detector : get_regular_detectors(true)) {
             auto det = detector->getName();
-            LOG(TRACE) << "Working on detector" << det;
+
             auto local = detector->getLocalIntercept(track.get());
             auto row = detector->getRow(local);
-            LOG(TRACE) << "Trying to getColumn" << local;
             auto col = detector->getColumn(local);
             LOG(TRACE) << "Local col/row intersect of track: " << col << "\t" << row;
             local_intersects_[det]->Fill(col, row);
@@ -706,7 +670,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             XYPoint kink = track->getKinkAt(det);
             kinkX.at(det)->Fill(kink.x());
             kinkY.at(det)->Fill(kink.y());
-        }*/
+        }
     }
     tracksPerEvent->Fill(static_cast<double>(tracks.size()));
 
