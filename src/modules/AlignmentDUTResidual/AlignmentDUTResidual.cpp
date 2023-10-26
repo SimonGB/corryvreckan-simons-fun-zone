@@ -171,8 +171,8 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
             if(polar_det != nullptr) {
                 // Convert cluster and intercept positions to polar coordinates
-                auto cluster_polar = polar_det->getLocalPolarPosition(column, row);
-                auto intercept_polar = polar_det->getPositionPolar(intercept);
+                auto cluster_polar = polar_det->getPolarPosition(column, row);
+                auto intercept_polar = polar_det->getPolarPosition(intercept);
 
                 // Calculate polar residuals
                 auto residualPhi = intercept_polar.phi() - cluster_polar.phi();
@@ -270,8 +270,8 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
             auto polar_det = std::dynamic_pointer_cast<PolarDetector>(AlignmentDUTResidual::globalDetector);
             if(polar_det != nullptr) {
                 // Convert cluster and intercept positions to polar coordinates
-                auto cluster_polar = polar_det->getLocalPolarPosition(associatedCluster->column(), associatedCluster->row());
-                auto intercept_polar = polar_det->getPositionPolar(intercept);
+                auto cluster_polar = polar_det->getPolarPosition(associatedCluster->column(), associatedCluster->row());
+                auto intercept_polar = polar_det->getPolarPosition(intercept);
 
                 // Interpreting (Phi,R) as (X,Y)
                 residualX = intercept_polar.phi() - cluster_polar.phi();

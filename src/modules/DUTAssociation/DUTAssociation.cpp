@@ -193,9 +193,9 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
                 // Recalculate distances for polar detectors
                 if(polar_det != nullptr) {
                     // Get polar coordinates of cluster, intercept and strip
-                    auto cluster_polar = polar_det->getPositionPolar(cluster->local());
-                    auto intercept_polar = polar_det->getPositionPolar(interceptLocal);
-                    auto strip_polar = polar_det->getPositionPolar(pixelPositionLocal);
+                    auto cluster_polar = polar_det->getPolarPosition(cluster->local());
+                    auto intercept_polar = polar_det->getPolarPosition(interceptLocal);
+                    auto strip_polar = polar_det->getPolarPosition(pixelPositionLocal);
 
                     // Recalculate distance to cluster centre
                     xdistance_centre = intercept_polar.phi() - cluster_polar.phi();

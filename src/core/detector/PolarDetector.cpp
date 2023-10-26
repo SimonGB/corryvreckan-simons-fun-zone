@@ -43,23 +43,21 @@ PolarDetector::PolarDetector(const Configuration& config) : Detector(config) {
     // Print detector parameters
     LOG(DEBUG) << "Polar detector \"" << m_detectorName << "\" parameters:";
     LOG(DEBUG) << "  Number of strips:";
-    for(const auto val : number_of_strips) {
+    for(const auto val : number_of_strips)
         LOG(DEBUG) << "    " << val;
-    }
+
     LOG(DEBUG) << "  Row radii:";
-    for(const auto val : row_radius) {
+    for(const auto val : row_radius)
         LOG(DEBUG) << "    " << Units::display(val, "mm");
-    }
 
     LOG(DEBUG) << "  Strip lengths:";
-    for(const auto val : strip_length) {
+    for(const auto val : strip_length)
         LOG(DEBUG) << "    " << Units::display(val, "mm");
-    }
 
     LOG(DEBUG) << "  Angular pitch:";
-    for(const auto val : angular_pitch) {
+    for(const auto val : angular_pitch)
         LOG(DEBUG) << "    " << Units::display(val, "urad");
-    }
+
     LOG(DEBUG) << "  Spatial resolution: " << Units::display(getSpatialResolution(), {"urad", "mm"});
     LOG(DEBUG) << "  Stereo angle: " << Units::display(stereo_angle, "mrad");
     LOG(DEBUG) << "  Center radius: " << Units::display(center_radius, "mm");
@@ -85,9 +83,6 @@ void PolarDetector::build_axes(const Configuration& config) {
         LOG(WARNING) << "Center radius not provided, calculating as radius average.";
         center_radius = (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2;
     }
-
-    // Set reasonable pixel pitch placeholders - length of the strip edge and strip length
-    m_pitch = {row_radius.at(1) * angular_pitch.at(0), row_radius.at(1) - row_radius.at(0)};
 
     // Calculate strip lengths from row radii
     for(unsigned int i = 1; i < row_radius.size(); i++) {
@@ -152,18 +147,6 @@ void PolarDetector::process_mask_file() {
     }
 }
 
-void PolarDetector::maskChannel(int chX, int chY) {
-    int channelID = chX + chY;
-    m_masked[channelID] = true;
-}
-
-bool PolarDetector::masked(int chX, int chY) const {
-    int channelID = chX + chY;
-    if(m_masked.count(channelID) > 0)
-        return true;
-    return false;
-}
-
 // Only if detector is not auxiliary
 void PolarDetector::configure_detector(Configuration& config) const {
 
@@ -197,7 +180,42 @@ void PolarDetector::configure_pos_and_orientation(Configuration& config) const {
     config.set("coordinates", "polar");
 }
 
-// Function to get global intercept with a track
+void PolarDetector::maskChannel(int chX, int chY) {
+    int channelID = chX + chY;
+    m_masked[channelID] = true;
+}
+
+bool PolarDetector::masked(int chX, int chY) const {
+    int channelID = chX + chY;
+    if(m_masked.count(channelID) > 0)
+        return true;
+    return false;
+}
+
+bool PolarDetector::hitMasked(const Track* track, int tolerance) const {
+    // First, get the track intercept in global coordinates with the plane
+    PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
+
+    // Convert to local coordinates
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
+
+    // Get the row and column numbers
+    int row = static_cast<int>(floor(this->getRow(localIntercept) + 0.5));
+    int column = static_cast<int>(floor(this->getColumn(localIntercept) + 0.5));
+
+    // Check if the strips around this strip are masked
+    bool hitmasked = false;
+    for(int r = (row - tolerance); r <= (row + tolerance); r++) {
+        for(int c = (column - tolerance); c <= (column + tolerance); c++) {
+            if(this->masked(c, r)) {
+                hitmasked = true;
+            }
+        }
+    }
+
+    return hitmasked;
+}
+
 PositionVector3D<Cartesian3D<double>> PolarDetector::getIntercept(const Track* track) const {
     return track->getState(getName());
 }
@@ -206,8 +224,7 @@ PositionVector3D<Cartesian3D<double>> PolarDetector::getLocalIntercept(const Tra
     return globalToLocal(getIntercept(track));
 }
 
-// Function to check if a track intercepts with a plane
-bool PolarDetector::hasIntercept(const Track* track, double pixelTolerance) const {
+bool PolarDetector::hasIntercept(const Track* track, double stripTolerance) const {
 
     // First, get the track intercept in global coordinates with the plane
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
@@ -221,45 +238,18 @@ bool PolarDetector::hasIntercept(const Track* track, double pixelTolerance) cons
     // Check if the row and column are outside of the chip
     // Chip reaches from -0.5 to nPixels-0.5
     bool intercept = true;
-    if(row < pixelTolerance - 0.5 || row > (static_cast<double>(number_of_strips.size()) - pixelTolerance - 0.5) ||
-       column < pixelTolerance - 0.5 ||
-       column > (number_of_strips.at(static_cast<unsigned int>(floor(row + 0.5))) - pixelTolerance - 0.5)) {
+    if(row < stripTolerance - 0.5 || row > (static_cast<double>(number_of_strips.size()) - stripTolerance - 0.5) ||
+       column < stripTolerance - 0.5 ||
+       column > (number_of_strips.at(static_cast<unsigned int>(floor(row + 0.5))) - stripTolerance - 0.5)) {
         intercept = false;
     }
 
     return intercept;
 }
 
-// Function to check if a track goes through/near a masked pixel
-bool PolarDetector::hitMasked(const Track* track, int tolerance) const {
-
-    // First, get the track intercept in global coordinates with the plane
-    PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
-
-    // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
-
-    // Get the row and column numbers
-    int row = static_cast<int>(floor(this->getRow(localIntercept) + 0.5));
-    int column = static_cast<int>(floor(this->getColumn(localIntercept) + 0.5));
-
-    // Check if the pixels around this pixel are masked
-    bool hitmasked = false;
-    for(int r = (row - tolerance); r <= (row + tolerance); r++) {
-        for(int c = (column - tolerance); c <= (column + tolerance); c++) {
-            if(this->masked(c, r)) {
-                hitmasked = true;
-            }
-        }
-    }
-
-    return hitmasked;
-}
-
-// Functions to get row and column from local position
 double PolarDetector::getRow(const PositionVector3D<Cartesian3D<double>> localPosition) const {
     // Convert local position to polar coordinates
-    auto polar_pos = getPositionPolar(localPosition);
+    auto polar_pos = getPolarPosition(localPosition);
 
     // Assign to a strip row
     unsigned int strip_y{};
@@ -279,7 +269,7 @@ double PolarDetector::getRow(const PositionVector3D<Cartesian3D<double>> localPo
 
 double PolarDetector::getColumn(const PositionVector3D<Cartesian3D<double>> localPosition) const {
     // Convert local position to polar coordinates
-    auto polar_pos = getPositionPolar(localPosition);
+    auto polar_pos = getPolarPosition(localPosition);
 
     // Assign to a strip row
     auto strip_y = static_cast<unsigned int>(getRow(localPosition));
@@ -291,40 +281,27 @@ double PolarDetector::getColumn(const PositionVector3D<Cartesian3D<double>> loca
     return (number_of_strips.at(strip_y) - 1) / 2 - polar_pos.phi() / pitch;
 }
 
-PositionVector3D<Polar3D<double>>
-PolarDetector::getPositionPolar(const PositionVector3D<Cartesian3D<double>> localPosition) const {
-    // Calculate polar angle
-    auto phi = (atan2(center_radius * sin(stereo_angle) + localPosition.X(),
-                      center_radius * cos(stereo_angle) + localPosition.Y()) -
-                stereo_angle);
+PositionVector3D<Cartesian3D<double>> PolarDetector::getLocalPosition(double column, double row) const {
+    // Get position in polar coordinates
+    auto local_polar = getPolarPosition(column, row);
 
-    // Calculate radius
-    auto r = (center_radius * cos(stereo_angle) + localPosition.Y()) / cos(stereo_angle + phi);
-
-    return {r, 0, phi};
+    // Convert from local polar to local cartesian coordinates
+    return getLocalPosition(local_polar);
 }
 
 PositionVector3D<Cartesian3D<double>>
-PolarDetector::getPositionCartesian(const PositionVector3D<Polar3D<double>> localPosition) const {
-    auto local_x = localPosition.R() * sin(localPosition.Phi() + stereo_angle) - center_radius * sin(stereo_angle);
-    auto local_y = localPosition.R() * cos(localPosition.Phi() + stereo_angle) - center_radius * cos(stereo_angle);
+PolarDetector::getLocalPosition(const PositionVector3D<Polar3D<double>> polarPosition) const {
+    auto local_x = polarPosition.R() * sin(polarPosition.Phi() + stereo_angle) - center_radius * sin(stereo_angle);
+    auto local_y = polarPosition.R() * cos(polarPosition.Phi() + stereo_angle) - center_radius * cos(stereo_angle);
 
     return {local_x, local_y, 0};
 }
 
-// Function to get local position from row and column
-PositionVector3D<Cartesian3D<double>> PolarDetector::getLocalPosition(double column, double row) const {
-    //
-    auto local_polar = getLocalPolarPosition(column, row);
-
-    return getPositionCartesian(local_polar);
-}
-
-PositionVector3D<Polar3D<double>> PolarDetector::getLocalPolarPosition(double column, double row) const {
+PositionVector3D<Polar3D<double>> PolarDetector::getPolarPosition(double column, double row) const {
     // Assign to a strip row
-    auto strip_y = (row < 0) ? 0 : static_cast<unsigned int>(row);
+    unsigned int strip_y = (row < 0) ? 0 : static_cast<unsigned int>(row);
 
-    // Get the strip pitch and number of strips in the correct strip row
+    // Get the strip pitch and number of strips in the strip row
     auto pitch = angular_pitch.at(strip_y);
     auto n_strips = number_of_strips.at(strip_y);
 
@@ -335,7 +312,7 @@ PositionVector3D<Polar3D<double>> PolarDetector::getLocalPolarPosition(double co
     unsigned int row_int = (row < 0) ? 0 : static_cast<unsigned int>(floor(row));
     auto row_fract = row - row_int + 0.5;
 
-    // Get inner and outer row radius
+    // Get inner and outer row radii
     auto r1 = row_radius.at(row_int);
     auto r2 = row_radius.at(row_int + 1);
     // Calculate radius
@@ -350,11 +327,23 @@ PositionVector3D<Polar3D<double>> PolarDetector::getLocalPolarPosition(double co
     return {r_conv, 0, phi};
 }
 
-// Function to get in-pixel position
+PositionVector3D<Polar3D<double>>
+PolarDetector::getPolarPosition(const PositionVector3D<Cartesian3D<double>> localPosition) const {
+    // Calculate polar angle
+    auto phi = (atan2(center_radius * sin(stereo_angle) + localPosition.X(),
+                      center_radius * cos(stereo_angle) + localPosition.Y()) -
+                stereo_angle);
+
+    // Calculate radius
+    auto r = (center_radius * cos(stereo_angle) + localPosition.Y()) / cos(stereo_angle + phi);
+
+    return {r, 0, phi};
+}
+
 ROOT::Math::XYVector PolarDetector::inPixel(const double column, const double row) const {
     // Transform received position to polar coordinates and get the coordinates of the strip center
-    auto local_polar = getPositionPolar(getLocalPosition(column, row));
-    auto strip_polar = getPositionPolar(getLocalPosition(floor(column + 0.5), floor(row + 0.5)));
+    auto local_polar = getPolarPosition(getLocalPosition(column, row));
+    auto strip_polar = getPolarPosition(getLocalPosition(floor(column + 0.5), floor(row + 0.5)));
 
     auto delta_phi = local_polar.phi() - strip_polar.phi();
 
@@ -367,7 +356,6 @@ ROOT::Math::XYVector PolarDetector::inPixel(const PositionVector3D<Cartesian3D<d
     return inPixel(column, row);
 }
 
-// Check if track position is within ROI:
 bool PolarDetector::isWithinROI(const Track* track) const {
 
     // Empty region of interest:
@@ -386,9 +374,7 @@ bool PolarDetector::isWithinROI(const Track* track) const {
     return false;
 }
 
-// Check if cluster is within ROI and/or touches ROI border:
 bool PolarDetector::isWithinROI(Cluster* cluster) const {
-
     // Empty region of interest:
     if(m_roi.empty()) {
         return true;
@@ -404,9 +390,121 @@ bool PolarDetector::isWithinROI(Cluster* cluster) const {
 }
 
 XYVector PolarDetector::getSize() const {
-    auto max_row = number_of_strips.size() - 1;
-    return {angular_pitch.at(max_row) * number_of_strips.at(max_row) * row_radius.at(max_row),
-            row_radius.at(max_row) - row_radius.at(0)};
+    /* The size of a polar detector is approximated as:
+     * - X direction: Length of the arc defining the final (longest)
+     *                strip row, as [number of strips]*[angular pitch]*[radius]
+     * - Y direction: Sum of strip lengths + 20%, to account for the radial shape
+     */
+
+    // Final strip row
+    auto max_row = number_of_strips.size();
+
+    // Calculate approximate sizes
+    auto size_x = number_of_strips.at(max_row) * angular_pitch.at(max_row) * row_radius.at(max_row + 1);
+    auto size_y = (row_radius.at(max_row + 1) - row_radius.at(0)) * 1.2;
+
+    return {size_x, size_y};
+}
+
+XYVector PolarDetector::getPitch() const {
+    /* The strip pitch is approximated as:
+     * - X direction: Length of the arc defining the longer edge of the biggest
+     *                possible strip, as [max angular pitch] * [max radius]
+     * - Y direction: Length of the longest strip
+     */
+
+    auto max_pitch = *std::max_element(angular_pitch.begin(), angular_pitch.end());
+    auto pitch_x = max_pitch * row_radius.at(number_of_strips.size() + 1);
+
+    auto pitch_y = *std::max_element(strip_length.begin(), strip_length.end());
+
+    return {pitch_x, pitch_y};
+}
+
+XYVector PolarDetector::getSpatialResolution(double, double row) const {
+    // Get integer row
+    auto row_int = static_cast<unsigned int>(floor(row + 0.5));
+
+    // Get strip length and pitch for the given row
+    auto strip_r = strip_length.at(row_int);
+    auto strip_phi = angular_pitch.at(row_int);
+
+    // Resolution is angular pitch and strip length / sqrt(12)
+    return {strip_phi / sqrt(12), strip_r / sqrt(12)};
+}
+
+bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
+                               const std::shared_ptr<Cluster>& cluster,
+                               const int neighbor_radius_row,
+                               const int neighbor_radius_col) const {
+    for(const auto* pixel : cluster->pixels()) {
+        int row_distance = abs(pixel->row() - neighbor->row());
+        int col_distance = abs(pixel->column() - neighbor->column());
+
+        if(row_distance <= neighbor_radius_row && col_distance <= neighbor_radius_col) {
+            if(row_distance > 1 || col_distance > 1) {
+                cluster->setSplit(true);
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+std::set<std::pair<int, int>>
+PolarDetector::getNeighbors(const int col, const int row, const size_t distance, const bool) const {
+    // Vector to hold the neighbor indices
+    std::set<std::pair<int, int>> neighbors;
+
+    // Position of the global seed in polar coordinates
+    auto seed_pol = getPolarPosition(col, row);
+
+    // Iterate over eligible strip rows
+    for(int y = static_cast<int>(-distance); y <= static_cast<int>(distance); y++) {
+        // Skip row if outside of strip matrix
+        if(!isWithinMatrix(0, row + y)) {
+            continue;
+        }
+
+        // Set starting position of a row seed to the global seed position
+        auto row_seed_r = seed_pol.r();
+
+        // Move row seed position to the center of a requested row
+        for(unsigned int shift_y = 1; shift_y <= std::labs(y); shift_y++) {
+            // Add or subtract position based on whether given row is below or above global seed
+            row_seed_r += (y < 0) ? -strip_length.at(static_cast<unsigned int>(row) - shift_y + 1) / 2 -
+                                        strip_length.at(static_cast<unsigned int>(row) - shift_y) / 2
+                                  : strip_length.at(static_cast<unsigned int>(row) + shift_y - 1) / 2 +
+                                        strip_length.at(static_cast<unsigned int>(row) + shift_y) / 2;
+        }
+
+        // Get cartesian position and pixel indices of the row seed
+        auto row_seed = getLocalPosition({row_seed_r, 0, seed_pol.phi()});
+        auto row_seed_x = static_cast<int>(getColumn(row_seed));
+        auto row_seed_y = static_cast<int>(getRow(row_seed));
+
+        // Iterate over potential neighbors of the row seed
+        for(int j = static_cast<int>(-distance); j <= static_cast<int>(distance); j++) {
+            // Add to final neighbors if strip is within the pixel matrix
+            if(isWithinMatrix(row_seed_x + j, row_seed_y)) {
+                neighbors.insert({row_seed_x + j, row_seed_y});
+            }
+        }
+    }
+
+    return {neighbors.begin(), neighbors.end()};
+}
+
+/* isLeft(): tests if a point is Left|On|Right of an infinite line.
+ * via: http://geomalgorithms.com/a03-_inclusion.html
+ *    Input:  three points P0, P1, and P2
+ *    Return: >0 for P2 left of the line through P0 and P1
+ *            =0 for P2  on the line
+ *            <0 for P2  right of the line
+ *    See: Algorithm 1 "Area of Triangles and Polygons"
+ */
+int PolarDetector::isLeft(std::pair<int, int> pt0, std::pair<int, int> pt1, std::pair<int, int> pt2) {
+    return ((pt1.first - pt0.first) * (pt2.second - pt0.second) - (pt2.first - pt0.first) * (pt1.second - pt0.second));
 }
 
 /* Winding number test for a point in a polygon
@@ -456,95 +554,4 @@ int PolarDetector::winding_number(std::pair<int, int> probe, std::vector<std::ve
         }
     }
     return wn;
-}
-/* isLeft(): tests if a point is Left|On|Right of an infinite line.
- * via: http://geomalgorithms.com/a03-_inclusion.html
- *    Input:  three points P0, P1, and P2
- *    Return: >0 for P2 left of the line through P0 and P1
- *            =0 for P2  on the line
- *            <0 for P2  right of the line
- *    See: Algorithm 1 "Area of Triangles and Polygons"
- */
-int PolarDetector::isLeft(std::pair<int, int> pt0, std::pair<int, int> pt1, std::pair<int, int> pt2) {
-    return ((pt1.first - pt0.first) * (pt2.second - pt0.second) - (pt2.first - pt0.first) * (pt1.second - pt0.second));
-}
-
-// Check if a pixel touches any of the pixels in a cluster
-bool PolarDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
-                               const std::shared_ptr<Cluster>& cluster,
-                               const int neighbor_radius_row,
-                               const int neighbor_radius_col) const {
-    for(const auto* pixel : cluster->pixels()) {
-        int row_distance = abs(pixel->row() - neighbor->row());
-        int col_distance = abs(pixel->column() - neighbor->column());
-
-        if(row_distance <= neighbor_radius_row && col_distance <= neighbor_radius_col) {
-            if(row_distance > 1 || col_distance > 1) {
-                cluster->setSplit(true);
-            }
-            return true;
-        }
-    }
-    return false;
-}
-
-XYVector PolarDetector::getSpatialResolution(double, double row) const {
-    // Get integer row
-    auto row_int = static_cast<unsigned int>(floor(row + 0.5));
-
-    // Get strip length and pitch for the given row
-    auto strip_r = strip_length.at(row_int);
-    auto strip_phi = angular_pitch.at(row_int);
-
-    // Resolution is angular pitch and strip length / sqrt(12)
-    return {strip_phi / sqrt(12), strip_r / sqrt(12)};
-}
-
-// Function to get row and column of pixel
-std::pair<int, int> PolarDetector::getInterceptPixel(PositionVector3D<Cartesian3D<double>> localPosition) const {
-    return {floor(getColumn(localPosition)), floor(getRow(localPosition))};
-}
-
-std::set<std::pair<int, int>>
-PolarDetector::getNeighbors(const int col, const int row, const size_t distance, const bool) const {
-    // Vector to hold the neighbor indices
-    std::set<std::pair<int, int>> neighbors;
-
-    // Position of the global seed in polar coordinates
-    auto seed_pol = getPositionPolar(getLocalPosition(col, row));
-
-    // Iterate over eligible strip rows
-    for(int y = static_cast<int>(-distance); y <= static_cast<int>(distance); y++) {
-        // Skip row if outside of strip matrix
-        if(!isWithinMatrix(0, row + y)) {
-            continue;
-        }
-
-        // Set starting position of a row seed to the global seed position
-        auto row_seed_r = seed_pol.r();
-
-        // Move row seed position to the center of a requested row
-        for(unsigned int shift_y = 1; shift_y <= std::labs(y); shift_y++) {
-            // Add or subtract position based on whether given row is below or above global seed
-            row_seed_r += (y < 0) ? -strip_length.at(static_cast<unsigned int>(row) - shift_y + 1) / 2 -
-                                        strip_length.at(static_cast<unsigned int>(row) - shift_y) / 2
-                                  : strip_length.at(static_cast<unsigned int>(row) + shift_y - 1) / 2 +
-                                        strip_length.at(static_cast<unsigned int>(row) + shift_y) / 2;
-        }
-
-        // Get cartesian position and pixel indices of the row seed
-        auto row_seed = getPositionCartesian({row_seed_r, 0, seed_pol.phi()});
-        auto row_seed_x = static_cast<int>(getColumn(row_seed));
-        auto row_seed_y = static_cast<int>(getRow(row_seed));
-
-        // Iterate over potential neighbors of the row seed
-        for(int j = static_cast<int>(-distance); j <= static_cast<int>(distance); j++) {
-            // Add to final neighbors if strip is within the pixel matrix
-            if(isWithinMatrix(row_seed_x + j, row_seed_y)) {
-                neighbors.insert({row_seed_x + j, row_seed_y});
-            }
-        }
-    }
-
-    return {neighbors.begin(), neighbors.end()};
 }
