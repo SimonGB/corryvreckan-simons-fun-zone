@@ -397,7 +397,7 @@ XYVector PolarDetector::getSize() const {
      */
 
     // Final strip row
-    auto max_row = number_of_strips.size();
+    auto max_row = number_of_strips.size() - 1;
 
     // Calculate approximate sizes
     auto size_x = number_of_strips.at(max_row) * angular_pitch.at(max_row) * row_radius.at(max_row + 1);
@@ -414,7 +414,7 @@ XYVector PolarDetector::getPitch() const {
      */
 
     auto max_pitch = *std::max_element(angular_pitch.begin(), angular_pitch.end());
-    auto pitch_x = max_pitch * row_radius.at(number_of_strips.size() + 1);
+    auto pitch_x = max_pitch * row_radius.at(number_of_strips.size());
 
     auto pitch_y = *std::max_element(strip_length.begin(), strip_length.end());
 
