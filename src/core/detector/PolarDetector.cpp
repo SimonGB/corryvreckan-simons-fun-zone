@@ -89,7 +89,8 @@ void PolarDetector::build_axes(const Configuration& config) {
         strip_length = config.getArray<double>("strip_length");
     } else {
         LOG(WARNING) << "Strip lengths not provided, calculating from row radii. "
-                     << "This yields approximate results and is inaccurate for larger stereo angles.";
+                     << "This yields approximate results and is inaccurate for larger stereo angles." << std::endl
+                     << "Consider defining the lengths using the 'strip_length' parameter.";
         for(unsigned int i = 1; i < row_radius.size(); i++) {
             strip_length.push_back(row_radius.at(i) - row_radius.at(i - 1));
         }
