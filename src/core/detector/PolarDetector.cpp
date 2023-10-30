@@ -76,7 +76,7 @@ void PolarDetector::build_axes(const Configuration& config) {
     // Get stereo angle
     stereo_angle = config.get<double>("stereo_angle", 0.0);
 
-    // If central radius wasn't provided, calculate as average radius
+    // If central radius was not provided, calculate as average radius
     if(config.has("center_radius")) {
         center_radius = config.get<double>("center_radius");
     } else {
@@ -84,9 +84,15 @@ void PolarDetector::build_axes(const Configuration& config) {
         center_radius = (row_radius.at(0) + row_radius.at(number_of_strips.size())) / 2;
     }
 
-    // Calculate strip lengths from row radii
-    for(unsigned int i = 1; i < row_radius.size(); i++) {
-        strip_length.push_back(row_radius.at(i) - row_radius.at(i - 1));
+    // If strip lengths were not provided, calculate from row radii
+    if(config.has("strip_length")) {
+        strip_length = config.getArray<double>("strip_length");
+    } else {
+        LOG(WARNING) << "Strip lengths not provided, calculating from row radii. "
+                     << "This yields approximate results and is inaccurate for larger stereo angles.";
+        for(unsigned int i = 1; i < row_radius.size(); i++) {
+            strip_length.push_back(row_radius.at(i) - row_radius.at(i - 1));
+        }
     }
 
     LOG(TRACE) << "Initialized \"" << m_detectorType << "\"";
