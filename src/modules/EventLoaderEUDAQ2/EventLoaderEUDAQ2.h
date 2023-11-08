@@ -116,7 +116,7 @@ namespace corryvreckan {
         bool veto_triggers_{};
         bool inclusive_{};
         bool sync_by_trigger_{};
-        bool use_as_monitor_{};
+        bool wait_on_eof_{};
         double skip_time_{};
         Matrix<std::string> adjust_event_times_;
         std::vector<std::string> discard_raw_events_;

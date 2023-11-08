@@ -35,7 +35,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     config_.setDefault<int>("shift_triggers", 0);
     config_.setDefault<bool>("inclusive", true);
     config_.setDefault<std::string>("eudaq_loglevel", "ERROR");
-    config_.setDefault<bool>("use_as_monitor", false);
+    config_.setDefault<bool>("wait_on_eof", false);
 
     filename_ = config_.getPath("file_name", true);
     get_time_residuals_ = config_.get<bool>("get_time_residuals");
@@ -51,7 +51,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     shift_triggers_ = config_.get<int>("shift_triggers");
     inclusive_ = config_.get<bool>("inclusive");
     sync_by_trigger_ = config_.get<bool>("sync_by_trigger");
-    use_as_monitor_ = config_.get<bool>("use_as_monitor");
+    wait_on_eof_ = config_.get<bool>("wait_on_eof");
     time_of_last_log_for_monitoring_ = std::chrono::steady_clock::now();
 
     // Set EUDAQ log level to desired value:
@@ -236,10 +236,10 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
         if(events_raw_.empty()) {
             LOG(TRACE) << "Reading new EUDAQ event from file";
             auto new_event = reader_->GetNextEvent();
-            if(!new_event && !use_as_monitor_) {
+            if(!new_event && !wait_on_eof_) {
                 LOG(DEBUG) << "Reached EOF";
                 throw EndOfFile();
-            } else if(!new_event && use_as_monitor_) {
+            } else if(!new_event && wait_on_eof_) {
                 // LOG(DEBUG) << "End of file reach, but keeping monitoring open";
                 // only want to log every 10 seconds but cannot use sleep(10) because then GUI becomes unresponsive for 10
                 // seconds
