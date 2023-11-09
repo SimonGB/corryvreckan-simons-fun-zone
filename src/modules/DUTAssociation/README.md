@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # DUTAssociation
-**Maintainer**: Simon Spannagel (<simon.spannagel@cern.ch>)
-**Module Type**: *DUT*
-**Detector Type**: *all*
+**Maintainer**: Simon Spannagel (<simon.spannagel@cern.ch>)  
+**Module Type**: *DUT*  
+**Detector Type**: *all*  
 **Status**: Functional
 
 ### Description
