@@ -20,6 +20,8 @@ stages:
 
 .centos7:
     image: gitlab-registry.cern.ch/sft/docker/centos7:latest
+    tags:
+        - cvmfs
     variables:
         COMPILER_TYPE: "gcc"
     before_script:
@@ -28,6 +30,8 @@ stages:
 
 .centos8:
     image: gitlab-registry.cern.ch/sft/docker/centos8:latest
+    tags:
+        - cvmfs
     variables:
         COMPILER_TYPE: "gcc"
     before_script:
@@ -41,6 +45,8 @@ stages:
 
 .lxplus:
     image: gitlab-registry.cern.ch/sft/docker/centos7:latest
+    tags:
+        - cvmfs
     variables:
         COMPILER_TYPE: "gcc"
     before_script:
@@ -252,6 +258,8 @@ fmt:reuse:
 cmp:doxygen:
     extends: .doc
     image: gitlab-registry.cern.ch/sft/docker/centos7:latest
+    tags:
+        - cvmfs
     script:
         - source ../.ci/init_x86_64.sh
         - cmake -GNinja -DBUILD_DOCS_ONLY=ON ..
