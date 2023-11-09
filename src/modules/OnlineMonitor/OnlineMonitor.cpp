@@ -122,10 +122,6 @@ void OnlineMonitor::initialize() {
         }
     }
 
-    UInt_t w = gui->buttonGroups["Tracking"]->GetWidth();
-    UInt_t h = gui->buttonGroups["Tracking"]->GetHeight();
-
-    LOG(WARNING) << "DUT Button group of size (w,h) = (" << w << ", " << h << ")";
     gui->buttonGroups["DUTs"]->SetWidth(55);
     gui->buttonGroups["DUTs"]->SetHeight(8);
     // Set up the main frame before drawing
