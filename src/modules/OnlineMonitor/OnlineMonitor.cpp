@@ -11,6 +11,7 @@
 
 #include "OnlineMonitor.h"
 #include <TGButtonGroup.h>
+#include <TGScrollBar.h>
 #include <TVirtualPadEditor.h>
 #include <regex>
 
@@ -115,12 +116,14 @@ void OnlineMonitor::initialize() {
     AddCanvas("2D Y", "Correlations 2D", canvas_cy2d);
 
     if(!get_duts().empty()) {
-        AddCanvasGroup("DUTs");
+        AddDUTGroup();
         for(auto& detector : get_duts()) {
             AddCanvas(detector->getName(), "DUTs", canvas_dutplots, false, detector->getName());
         }
     }
 
+    gui->buttonGroups["DUTs"]->SetWidth(55);
+    gui->buttonGroups["DUTs"]->SetHeight(8);
     // Set up the main frame before drawing
     AddCanvasGroup("Controls");
     ULong_t color;
@@ -179,6 +182,30 @@ StatusCode OnlineMonitor::run(const std::shared_ptr<Clipboard>&) {
 void OnlineMonitor::AddCanvasGroup(std::string group_title) {
     gui->buttonGroups[group_title] = new TGVButtonGroup(gui->buttonMenu, group_title.c_str());
     gui->buttonMenu->AddFrame(gui->buttonGroups[group_title], new TGLayoutHints(kLHintsLeft | kLHintsTop, 10, 10, 10, 10));
+    gui->buttonGroups[group_title]->Show();
+}
+
+// Need special function to get scroll bar working
+void OnlineMonitor::AddDUTGroup() {
+    std::string group_title = "DUTs";
+
+    // Adding an outer frame to place canvas inside
+    gui->dutFrame = new TGMainFrame(gui->buttonMenu, 150, 150, kVerticalFrame | kFixedSize);
+    gui->dutFrame->SetCleanup(kDeepCleanup);
+    gui->buttonMenu->AddFrame(gui->dutFrame, new TGLayoutHints(kLHintsLeft, 10, 10, 10, 10));
+
+    // Create canvas to attach to scrollbar
+    gui->dutCanvas = new TGCanvas(gui->dutFrame, 71, 28, kFixedSize);
+    gui->dutFrame->AddFrame(gui->dutCanvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+
+    // Creat Inner Frame
+    gui->dutInnerFrame = new TGVerticalFrame(gui->dutCanvas->GetViewPort(), 71, 28);
+    gui->dutCanvas->SetContainer(gui->dutInnerFrame);
+
+    // Create ButtonGroup
+    gui->buttonGroups[group_title] = new TGVButtonGroup(gui->dutInnerFrame, group_title.c_str());
+    gui->dutInnerFrame->AddFrame(gui->buttonGroups[group_title], new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+
     gui->buttonGroups[group_title]->Show();
 }
 
