@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 ![](doc/logo_small.png)
 
 # Corryvreckan
@@ -5,7 +10,8 @@
 
 For more details about the project please have a look at the website at https://cern.ch/corryvreckan.
 
-[![build status](https://gitlab.cern.ch/simonspa/corryvreckan/badges/master/build.svg)](https://gitlab.cern.ch/simonspa/corryvreckan/commits/master)
+[![build status](https://gitlab.cern.ch/corryvreckan/corryvreckan/badges/master/pipeline.svg)](https://gitlab.cern.ch/corryvreckan/corryvreckan/commits/master)
+[![REUSE status](https://api.reuse.software/badge/gitlab.cern.ch/corryvreckan/corryvreckan)](https://api.reuse.software/info/gitlab.cern.ch/corryvreckan/corryvreckan)
 
 ## Dependencies
 * [ROOT](https://root.cern.ch/building-root) (required, with the GenVector component)
@@ -52,57 +58,7 @@ The main page of the reference can then be found at `reference/html/index.html` 
 
 ## Development of Corryvreckan
 
-Corryvreckan is developed and maintained by
-
-* Lennart Huth, DESY, @lhuth
-* Paul Schütze, DESY, @pschutze
-* Simon Spannagel, DESY, @simonspa
-
-The following authors, in alphabetical order, have developed or contributed to Corryvreckan:
-
-* David Bacher, ETH Zürich, @dabacher
-* Pascal Becht, University of Heidelberg, @pbecht
-* Bogdan-Mihail Blidaru, University of Heidelberg, @mblidaru
-* Matthew Daniel Buckland, University of Liverpool, @mbucklan
-* Carsten Daniel Burgard, DESY, @cburgard
-* Eric Buschmann, CERN, @ebuschma
-* Maximilian Felix Caspar, DESY, @mcaspar
-* Chun Cheng, DESY, @chengc
-* Joshua Clercx, DESY, @jclercx
-* Manuel Colocci, CERN, @mcolocci
-* Dominik Dannheim, CERN, @dannheim
-* Jens Dopke, STFC RAL, @jdopke
-* Katharina Dort, University of Giessen/CERN, @kdort
-* Jordi Duarte-Campderros, IFCA, @duarte
-* Finn Feindt, DESY, @ffeindt
-* Alexander Ferk, CERN, @aferk
-* Adrian Fiergolski, CERN, @afiergol
-* Sejla Hadzic, MPP, @sehadzic
-* Jan Hammerich,University of Liverpool, @jhammeri
-* Adrian Herkert, DESY, @adherker
-* Daniel Hynds, Nikhef, @dhynds
-* Nicolò Jacazio, CERN, @njacazio
-* Callan Jessiman, Carleton University, @cjessima
-* Jens Kroeger, University of Heidelberg/CERN, @jekroege
-* Fabian Lex, University of Freiburg, @lex
-* Magnus Mager, CERN, @mmager
-* Keerthi Nakkalil, University Bonn/DESY, @nakkalil
-* Andreas Matthias Nürnberg, KIT, @nurnberg
-* Ryunosuke O'Neil, University of Edinburgh, @roneil
-* Younes Otarid, DESY, @yotarid
-* Klaas Padeken, Bonn, HISKP, @padeken
-* Florian Pitters, HEPHY, @fpipper
-* Miljenko Suljic, CERN, @msuljic
-* Peter Svihra, CERN, @psvihra
-* Tomas Vanat, CERN, @tvanat
-* Annika Vauth, University of Hamburg/DESY, @anvauth
-* Mateus Vicente Barreto Pinto, University Geneva, @mvicente
-* Gianpiero Vignola, DESY, @gvignola
-* Morag Williams, University of Glasgow/CERN, @williamm
-* Philipp Windischhofer, University of Chicago, @phwindis
-* Yitao Wu, University of Science and Technology of China, @yitao
-* Jin Zhang, DESY, @jinz
-* Bong-Hwi Lim, University of Turin, @blim
+See [AUTHORS.md](./AUTHORS.md)
 
 ## Citations
 The reference paper of Corryvreckan describing the framework and providing an example for a test beam data reconstruction has been published in the *Journal of Instrumentation*.

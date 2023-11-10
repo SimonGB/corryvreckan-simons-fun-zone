@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "AnalysisTelescope.h"
@@ -180,12 +181,10 @@ StatusCode AnalysisTelescope::run(const std::shared_ptr<Clipboard>& clipboard) {
             }
 
             ROOT::Math::XYZPoint particlePosition = closestApproach(cluster->local(), mcParticles);
-            telescopeMCresidualsLocalX[name]->Fill(cluster->local().x() + detector->getSize().X() / 2 -
-                                                   particlePosition.X());
-            telescopeMCresidualsLocalY[name]->Fill(cluster->local().y() + detector->getSize().Y() / 2 -
-                                                   particlePosition.Y());
-            telescopeMCresidualsX[name]->Fill(interceptLocal.X() + detector->getSize().X() / 2 - particlePosition.X());
-            telescopeMCresidualsY[name]->Fill(interceptLocal.Y() + detector->getSize().Y() / 2 - particlePosition.Y());
+            telescopeMCresidualsLocalX[name]->Fill(cluster->local().x() - particlePosition.X());
+            telescopeMCresidualsLocalY[name]->Fill(cluster->local().y() - particlePosition.Y());
+            telescopeMCresidualsX[name]->Fill(interceptLocal.X() - particlePosition.X());
+            telescopeMCresidualsY[name]->Fill(interceptLocal.Y() - particlePosition.Y());
         }
 
         // Calculate telescope resolution at DUTs
@@ -200,10 +199,8 @@ StatusCode AnalysisTelescope::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto interceptLocal = detector->globalToLocal(intercept);
             auto particlePosition = closestApproach(interceptLocal, mcParticles);
 
-            telescopeResolutionX[detector->getName()]->Fill(interceptLocal.X() + detector->getSize().X() / 2 -
-                                                            particlePosition.X());
-            telescopeResolutionY[detector->getName()]->Fill(interceptLocal.Y() + detector->getSize().Y() / 2 -
-                                                            particlePosition.Y());
+            telescopeResolutionX[detector->getName()]->Fill(interceptLocal.X() - particlePosition.X());
+            telescopeResolutionY[detector->getName()]->Fill(interceptLocal.Y() - particlePosition.Y());
         }
     }
 

@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # Clustering4D
 **Maintainer**: Daniel Hynds (<daniel.hynds@cern.ch>)  
 **Module Type**: *DETECTOR*  
@@ -31,6 +35,7 @@ For each detector the following plots are produced:
 * 2D cluster positions in global coordinates
 * Cluster times
 * Cluster multiplicity
+* Cluster uncertainty
 * Time difference between seed pixel and other pixels in a cluster for different cluster sizes and vs. the pixel charge
 
 ### Usage

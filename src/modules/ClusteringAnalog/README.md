@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # ClusteringAnalog
 **Maintainer**: Miljenko Suljic (<miljenko.suljic@cern.ch>), Yitao WU (<yitao.wu@cern.ch>)  
 **Module Type**: *DETECTOR*  
@@ -13,9 +17,9 @@ This module also provides a cluster shape analysis. To characterize the cluster 
 
 ### Parameters
 * `reject_by_roi`: ROI rejection with the local position of the cluster. (Default: false)
-* `method`: Clustering method to reconstruct cluster position and charge. `cluster` (default): includes all adjecent pixels with signal above thresholds (see later) and calculates charge-weighted center-of-gravity as the cluster position. `seed`: equivalent to `cluster` but the cluster position and charge is given only by the seed pixel. `binary`: equivalent to `cluster` but calculates center-of-gravity of all pixels above threshold without charge weighting (as is done in binary sensors). `window`: includes all pixels in a window centered on the seed and defined by `window_size` and calculates charge-weighted center-of-gravity as the cluster position.
+* `method`: Clustering method to reconstruct cluster position and charge. `cluster` (default): includes all adjacent pixels with signal above thresholds (see later) and calculates charge-weighted center-of-gravity as the cluster position. `seed`: equivalent to `cluster` but the cluster position and charge is given only by the seed pixel. `binary`: equivalent to `cluster` but calculates center-of-gravity of all pixels above threshold without charge weighting (as is done in binary sensors). `window`: includes all pixels in a window centered on the seed and defined by `window_size` and calculates charge-weighted center-of-gravity as the cluster position.
 * `seeding_method`: Method to select seed pixels. Option `multi`  (default) selects all pixels above the seed threshold for clustering and allows multiple clusters/hits in the same event. Option `max` keeps only the single seed with the maximum charge (if above seed threshold) as seed candidate.
-* `include_corners`: Consider only corner touching pixels as neighbours. (Default: `false`)
+* `include_corners`: Consider also corner touching pixels as neighbours. (Default: `false`)
 * `window_size`: Size, in pixels, of the window that defines the neighbors around the seed in `window` method. It also used to define central pixels in histograms (see later). E.g. `window_size=1` is seed plus first neighbors (aka "crown") i.e. a `3x3` matrix in case of rectanguar pixels and `window_size=2` is seed plus 2 crowns i.e. a `5x5` matrix. (Default: 1)
 * `threshold_type`: `fix`, `snr`, or `mix`, use fixed threshold, signal-to-noise-ratio, or both of them to clusterize. (Default: `fix`)
 * `threshold_seed`: Cut on pixel charge to find seeds. Used if `threshold_type=fix or mix`.
@@ -28,6 +32,7 @@ This module also provides a cluster shape analysis. To characterize the cluster 
 * `calibration_pedestal`: Histogram name of pedestal map in calibration file. Read as ROOT::TH2F.
 * `calibration_noise`: Histogram name of noise map in calibration file. Read as ROOT::TH2F.
 * `analysis_shape`: Produce more elaborate histograms for cluster shape analysis. (Default: `false`)
+* `use_trigger_timestamp`: If true, the first trigger timestamp of the Corryvreckan event is set as the cluster timestamp. Caution when using this method for very long events containing multiple triggers. If false, the seed pixel defines the timestamp. Default value is `false`.
 
 ### Plots produced
 For each detector, the following plots are produced:

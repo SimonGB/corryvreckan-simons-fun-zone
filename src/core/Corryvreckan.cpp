@@ -1,9 +1,12 @@
-/** @file
- *  @brief Implementation of interface to the core framework
- *  @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
+/**
+ * @file
+ * @brief Implementation of interface to the core framework
+ *
+ * @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Corryvreckan.hpp"
@@ -249,4 +252,5 @@ void Corryvreckan::add_units() {
     Units::add("deg", 3.14159265358979323846 / 180.0);
     Units::add("rad", 1);
     Units::add("mrad", 1e-3);
+    Units::add("urad", 1e-6);
 }

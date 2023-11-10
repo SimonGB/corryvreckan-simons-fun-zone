@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_GUIDISPLAY_H
@@ -28,10 +29,12 @@
 #include "TGDockableFrame.h"
 #include "TGFrame.h"
 #include "TGMenu.h"
+#include "TGScrollBar.h"
 #include "TGTextEntry.h"
 #include "TROOT.h"
 #include "TRootEmbeddedCanvas.h"
 #include "TSystem.h"
+#include "TVirtualX.h"
 
 namespace corryvreckan {
     /**
@@ -54,6 +57,9 @@ namespace corryvreckan {
         std::map<std::string, TGButtonGroup*> buttonGroups;
         std::map<TRootEmbeddedCanvas*, bool> stackedCanvas;
         TGHorizontalFrame* buttonMenu;
+        TGMainFrame* dutFrame;
+        TGCanvas* dutCanvas;
+        TGVerticalFrame* dutInnerFrame;
 
         bool running_ = true;
 

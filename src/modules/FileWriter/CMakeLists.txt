@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2022 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # Define module
 CORRYVRECKAN_GLOBAL_MODULE(MODULE_NAME)
 

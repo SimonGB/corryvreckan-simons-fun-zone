@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "AnalysisTracks.h"
@@ -68,7 +69,7 @@ StatusCode AnalysisTracks::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto j = i + 1;
             while(j < val.size()) {
                 auto p = val.at(i) - val.at(j);
-                _distance_between_tracks_.at(key)->Fill((p.Mag2()));
+                _distance_between_tracks_.at(key)->Fill(sqrt(p.Mag2()));
                 j++;
             }
         }

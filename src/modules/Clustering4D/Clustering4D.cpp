@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Clustering4D.h"
@@ -84,6 +85,31 @@ void Clustering4D::initialize() {
     clusterTimes = new TH1F("clusterTimes", title.c_str(), 3e6, 0, 3e9);
     title = m_detector->getName() + " Cluster multiplicity;clusters;events";
     clusterMultiplicity = new TH1F("clusterMultiplicity", title.c_str(), 50, -0.5, 49.5);
+    title = m_detector->getName() + " Cluster Uncertainty x;cluster uncertainty x [um];events";
+    clusterUncertaintyX = new TH1F(
+        "clusterUncertaintyX", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().X(), "um")));
+    title = m_detector->getName() + " Cluster Uncertainty y;cluster uncertainty y [um];events";
+    clusterUncertaintyY = new TH1F(
+        "clusterUncertaintyY", title.c_str(), 100, 0, static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um")));
+    title = m_detector->getName() + " Cluster Uncertainty x vs position;column [px];row [px];<cluster uncertainty x> [um]";
+    clusterUncertaintyXvsXY = new TProfile2D("clusterUncertaintyXvsXY",
+                                             title.c_str(),
+                                             m_detector->nPixels().X(),
+                                             -0.5,
+                                             m_detector->nPixels().X() - 0.5,
+                                             m_detector->nPixels().Y(),
+                                             -0.5,
+                                             m_detector->nPixels().Y() - 0.5);
+    title = m_detector->getName() + " Cluster Uncertainty Y vs position;column [px];row [px];<cluster uncertainty y> [um]";
+    clusterUncertaintyYvsXY = new TProfile2D("clusterUncertaintyYvsXY",
+                                             title.c_str(),
+                                             m_detector->nPixels().X(),
+                                             -0.5,
+                                             m_detector->nPixels().X() - 0.5,
+                                             m_detector->nPixels().Y(),
+                                             -0.5,
+                                             m_detector->nPixels().Y() - 0.5);
+
     title =
         m_detector->getName() + " pixel - seed pixel timestamp (all pixels w/o seed);ts_{pixel} - ts_ {seed} [ns];events";
     pxTimeMinusSeedTime = new TH1F("pxTimeMinusSeedTime", title.c_str(), 1000, -99.5 * 1.5625, 900.5 * 1.5625);
@@ -206,6 +232,12 @@ StatusCode Clustering4D::run(const std::shared_ptr<Clipboard>& clipboard) {
         clusterPositionGlobal->Fill(cluster->global().x(), cluster->global().y());
         clusterPositionLocal->Fill(cluster->column(), cluster->row());
         clusterTimes->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "ns")));
+        clusterUncertaintyX->Fill(static_cast<double>(Units::convert(cluster->errorX(), "um")));
+        clusterUncertaintyY->Fill(static_cast<double>(Units::convert(cluster->errorY(), "um")));
+        clusterUncertaintyXvsXY->Fill(
+            cluster->column(), cluster->row(), static_cast<double>(Units::convert(cluster->errorX(), "um")));
+        clusterUncertaintyYvsXY->Fill(
+            cluster->column(), cluster->row(), static_cast<double>(Units::convert(cluster->errorY(), "um")));
 
         // to check that cluster timestamp = earliest pixel timestamp
         if(cluster->size() > 1) {
@@ -332,9 +364,9 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
     cluster->setRow(row);
     cluster->setCharge(charge);
 
-    // Set uncertainty on position from intrinstic detector spatial resolution:
-    cluster->setError(m_detector->getSpatialResolution());
-    cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal());
+    // Set uncertainty on position from intrinsic detector spatial resolution:
+    cluster->setError(m_detector->getSpatialResolution(column, row));
+    cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal(column, row));
 
     cluster->setTimestamp(timestamp);
     cluster->setDetectorID(detectorID);

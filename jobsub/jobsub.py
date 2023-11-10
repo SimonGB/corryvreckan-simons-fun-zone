@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2022-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 """
 jobsub: a tool for Corryvreckan job submission
 
@@ -12,15 +16,16 @@ python jobsub.py --help
 to see the list of command line options.
 
 """
+import argparse
 import sys
 import logging
 import misc
-import time, multiprocessing
+import os
+import multiprocessing
+import hashlib
 
 def runCorryvreckanLocally(filename, jobtask, silent):
     """ Runs Corryvreckan and stores log of output """
-    import os
-    from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
     log = logging.getLogger('jobsub.' + jobtask)
 
     rcode = None # the return code that will be set by a later subprocess method
@@ -53,14 +58,12 @@ def runCorryvreckanLocally(filename, jobtask, silent):
         return 2
     return rcode
 
-def runCorryvreckanCondor(filename, subfile, runnr):
+def runCorryvreckanCondor(filename, subfile, jobtask):
     """ Submits the Corryvreckan job to HTCondor """
-    import os
-    from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
-    log = logging.getLogger('jobsub.' + runnr)
+    log = logging.getLogger('jobsub.' + jobtask)
     # We are running on HTCondor.
 
-    rcode = None 
+    rcode = None
 
     # check for qsub executable
     cmd = misc.checkProgram("condor_submit")
@@ -71,7 +74,7 @@ def runCorryvreckanCondor(filename, subfile, runnr):
         return 1
 
     # Add condor_submit parameters:
-    cmd = cmd+" -batch-name \"Corry"+runnr+"\" "
+    cmd = cmd+" -batch-name \"Corry"+jobtask+"\" "
 
     # check for Corryvreckan executable
     corry = misc.checkProgram("corry")
@@ -138,25 +141,6 @@ def main(argv=None):
             return self.method(*args,**kwargs)
     log.error=callcounted(log.error)
 
-    import os.path
-    import configparser
-    try:
-        import argparse
-    except ImportError:
-        log.debug("No locally installed argparse module found; trying the package provided with jobsub.")
-        # argparse is not installed; use (old) version provided with jobsub
-        # determine path to subdirectory
-        libdir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))),"pymodules","argparse")
-        if libdir not in sys.path:
-            sys.path.append(libdir)
-        # try again loading the module
-        try:
-            import argparse
-        except ImportError:
-            # nothing we can do now
-            log.critical("Could not load argparse module. For python versions prior to 2.7, please install it from http://code.google.com/p/argparse")
-            return 1
-
     if argv is None:
         argv = sys.argv
         progName = os.path.basename(argv.pop(0))
@@ -206,7 +190,7 @@ def main(argv=None):
         handler_file.setFormatter(formatter)
         handler_file.setLevel(numeric_level)
         log.addHandler(handler_file)
-    
+
     # check existence of htcondor file
     if args.htcondor_file:
         args.htcondor_file = os.path.abspath(args.htcondor_file)
@@ -235,7 +219,7 @@ def main(argv=None):
 
     # dictionary keeping our parameters
     # here you can set some minimal default config values that will (possibly) be overwritten by the config file
-    parameters = {"conf_file":"analysis.conf", "logpath":"."}
+    parameters = {"logpath":"."}
 
     # Parse option part of the  argument here -> overwriting config options
     if args.option is None:
@@ -330,16 +314,16 @@ def main(argv=None):
             except KeyError:
                 log.error("Could not change RunNumber in the config file")
                 continue
-        
+
         # ----------------------------------------------------------------
         # Job submission based on selected method - local/condor
         for suffix, steering_string in zip(suffixes, steering_strings):
             try:
-                #submission_settings.append((args, misc.createSteeringFile(log, args, steering_string, suffix), parameters))
-                steering_filename = misc.createSteeringFile(log, args, steering_string, suffix)
+                suffix_hash = f'{run}_' + hashlib.shake_128(suffix.encode()).hexdigest(16)
+                steering_filename = misc.createSteeringFile(log, args, steering_string, suffix_hash)
                 results.append(submitJobs(log, pool, args, steering_filename, parameters))
-            except:
-                log.warning(f"Could not create submission file {steering_string} with suffix {suffix}")
+            except Exception as e:
+                log.error(f"Could not create submission file with suffix {suffix_hash} due to {e}")
 
         # Return to old directory:
         if args.subdir:

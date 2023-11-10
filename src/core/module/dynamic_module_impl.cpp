@@ -1,7 +1,6 @@
 /**
  * @file
- * @brief Special file automatically included in the module for the dynamic
- * loading
+ * @brief Special file automatically included in the module for the dynamic loading
  *
  * Needs the following names to be defined by the build system
  * - CORRYVRECKAN_MODULE_NAME: name of the module
@@ -12,6 +11,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_MODULE_NAME
@@ -53,6 +53,13 @@ namespace corryvreckan {
      * Used by the ModuleManager to determine if it should instantiate a modules for AUX detectors
      */
     bool corryvreckan_module_exclude_aux();
+
+    /**
+     * @brief Returns if the linked module should be included for PASSIVE detectors
+     *
+     * Used by the ModuleManager to determine if it should instantiate a modules for passive detectors
+     */
+    bool corryvreckan_module_include_passive();
 
     /**
      * @brief Returns a list of detector types this module can run on
@@ -140,6 +147,14 @@ namespace corryvreckan {
 #else
     // Return that this module should not exclude aux detectors
     bool corryvreckan_module_exclude_aux() { return false; }
+#endif
+
+#if(!CORRYVRECKAN_MODULE_GLOBAL && defined(CORRYVRECKAN_INCLUDE_PASSIVE)) || defined(DOXYGEN)
+    // Return that this module should be instantiated for passive detectors
+    bool corryvreckan_module_include_passive() { return true; }
+#else
+    // Return that this module should exclude passive detectors
+    bool corryvreckan_module_include_passive() { return false; }
 #endif
     }
 } // namespace corryvreckan

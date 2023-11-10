@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # ClusteringSpatial
 **Maintainer**: Daniel Hynds (<daniel.hynds@cern.ch>)  
 **Module Type**: *DETECTOR*  
@@ -24,6 +28,7 @@ For each detector the following plots are produced:
 * 2D cluster positions in global and local coordinates
 * Cluster times
 * Cluster multiplicity
+* Cluster uncertainty
 
 ### Usage
 ```toml

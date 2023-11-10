@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Prealignment.h"
@@ -38,6 +39,7 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     range_abs = config_.get<double>("range_abs");
     method = config_.get<PrealignMethod>("method");
     fit_range_rel = config_.get<int>("fit_range_rel");
+    fixed_planes_ = config_.getArray<std::string>("fixed_planes", {});
 
     LOG(DEBUG) << "Setting max_correlation_rms to : " << max_correlation_rms;
     LOG(DEBUG) << "Setting damping_factor to : " << damping_factor;
@@ -127,9 +129,11 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         LOG(ERROR) << "Detector " << m_detector->getName() << ": RMS X = " << Units::display(rmsX, {"mm", "um"})
                    << " , RMS Y = " << Units::display(rmsY, {"mm", "um"});
     }
+    bool is_fixed = std::find(fixed_planes_.begin(), fixed_planes_.end(), m_detector->getName()) != fixed_planes_.end();
 
-    // Move all but the reference:
-    if(!m_detector->isReference()) {
+    // Move all but the reference and user-defined plane:
+    if(!m_detector->isReference() && !is_fixed) {
+        LOG(INFO) << "Running detector " << m_detector->getName();
 
         double shift_X = 0.;
         double shift_Y = 0.;
@@ -176,8 +180,9 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
                   << Units::display(m_detector->displacement().X() + damping_factor * shift_X, {"mm", "um"})
                   << " , and in y = "
                   << Units::display(m_detector->displacement().Y() + damping_factor * shift_Y, {"mm", "um"});
-        m_detector->displacement(XYZPoint(m_detector->displacement().X() + damping_factor * shift_X,
-                                          m_detector->displacement().Y() + damping_factor * shift_Y,
-                                          m_detector->displacement().Z()));
+        m_detector->update(XYZPoint(m_detector->displacement().X() + damping_factor * shift_X,
+                                    m_detector->displacement().Y() + damping_factor * shift_Y,
+                                    m_detector->displacement().Z()),
+                           m_detector->rotation());
     }
 }

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # For every module, build a separate library to be loaded by corryvreckan core
 MACRO(corryvreckan_enable_default val)
     # Get the name of the module
@@ -81,6 +84,11 @@ ENDMACRO()
 # Select whether to exclude AUX detectors or not
 MACRO(corryvreckan_exclude_aux name)
     TARGET_COMPILE_DEFINITIONS(${name} PRIVATE CORRYVRECKAN_EXCLUDE_AUX=1)
+ENDMACRO()
+
+# Select whether to include passive detectors or not
+MACRO(corryvreckan_include_passive name)
+    TARGET_COMPILE_DEFINITIONS(${name} PRIVATE CORRYVRECKAN_INCLUDE_PASSIVE=0)
 ENDMACRO()
 
 # Append list of possible detector types as compile definition

@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "FilterEvents.h"
@@ -22,7 +23,21 @@ void FilterEvents::initialize() {
     config_.setDefault<bool>("only_tracks_on_dut", false);
     config_.setDefault<unsigned>("min_clusters_per_plane", 0);
     config_.setDefault<unsigned>("max_clusters_per_plane", 100);
-    config_.setDefaultMap<std::string, std::string>("filter_tags", std::map<std::string, std::string>{});
+
+    // Get trigger windows as matrix from config, copy to vec<arr<2>> if requirements fulfilled
+    auto exclude_trigger_windows_matrix = config_.getMatrix("exclude_trigger_windows", Matrix<uint32_t>{});
+    for(auto& trigger_window : exclude_trigger_windows_matrix) {
+        if(trigger_window.size() != 2) {
+            throw InvalidValueError(config_,
+                                    "exclude_trigger_windows",
+                                    "Trigger windows may only contain two values, a lower and an upper bound");
+        }
+        if(trigger_window[0] > trigger_window[1]) {
+            throw InvalidValueError(
+                config_, "exclude_trigger_windows", "Lower bound of trigger window may not be larger than upper bound");
+        }
+        exclude_trigger_windows_.push_back({trigger_window[0], trigger_window[1]});
+    }
 
     min_number_tracks_ = config_.get<unsigned>("min_tracks");
     max_number_tracks_ = config_.get<unsigned>("max_tracks");
@@ -38,33 +53,49 @@ void FilterEvents::initialize() {
     auto tag_filters = config_.getMap<std::string, std::string>("filter_tags", std::map<std::string, std::string>{});
     load_tag_filters(tag_filters);
 
-    hFilter_ = new TH1F("FilteredEvents", "Events filtered;events", 6, 0.5, 6.5);
+    hFilter_ = new TH1F("FilteredEvents", "Events filtered;events", 8, 0.5, 8.5);
     hFilter_->GetXaxis()->SetBinLabel(1, "Events");
+    hFilter_->GetXaxis()->SetBinLabel(2, "Excluded trigger");
     std::string label = (only_tracks_on_dut_ ? "Too few tracks on dut " : "Too few tracks");
-    hFilter_->GetXaxis()->SetBinLabel(2, label.c_str());
-    label = (only_tracks_on_dut_ ? "Too many tracks on dut " : "Too many tracks");
     hFilter_->GetXaxis()->SetBinLabel(3, label.c_str());
-    hFilter_->GetXaxis()->SetBinLabel(4, "Too few clusters");
-    hFilter_->GetXaxis()->SetBinLabel(5, "Too many clusters");
-    hFilter_->GetXaxis()->SetBinLabel(6, "Events passed ");
+    label = (only_tracks_on_dut_ ? "Too many tracks on dut " : "Too many tracks");
+    hFilter_->GetXaxis()->SetBinLabel(4, label.c_str());
+    hFilter_->GetXaxis()->SetBinLabel(5, "Too few clusters");
+    hFilter_->GetXaxis()->SetBinLabel(6, "Too many clusters");
+    hFilter_->GetXaxis()->SetBinLabel(7, "Rejected by tag filter");
+    hFilter_->GetXaxis()->SetBinLabel(8, "Events passed ");
 }
 
 StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     hFilter_->Fill(1); // number of events
-    auto status = filter_tracks(clipboard) ? StatusCode::DeadTime : StatusCode::Success;
+    auto status = filter_trigger_windows(clipboard) ? StatusCode::DeadTime : StatusCode::Success;
+    status = filter_tracks(clipboard) ? StatusCode::DeadTime : status;
     status = filter_cluster(clipboard) ? StatusCode::DeadTime : status;
     status = filter_tags(clipboard) ? StatusCode::DeadTime : status;
 
     if(status == StatusCode::Success) {
-        hFilter_->Fill(6);
+        hFilter_->Fill(8);
     }
     return status;
 }
 
 void FilterEvents::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
+    LOG(STATUS) << hFilter_->GetBinContent(8) << " out of " << hFilter_->GetBinContent(1) << " events passed.";
+}
 
-    LOG(STATUS) << "Skipped " << hFilter_->GetBinContent(1) << " events. Events passed " << hFilter_->GetBinContent(6);
+bool FilterEvents::filter_trigger_windows(const std::shared_ptr<Clipboard>& clipboard) {
+    const auto trigger_list = clipboard->getEvent()->triggerList();
+    for(auto& [trigger_window_low, trigger_window_high] : exclude_trigger_windows_) {
+        for(auto& [trigger_id, trigger_ts] : trigger_list) {
+            if(trigger_id >= trigger_window_low && trigger_id <= trigger_window_high) {
+                hFilter_->Fill(2);
+                LOG(TRACE) << "Excluding event within trigger window";
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool FilterEvents::filter_tracks(const std::shared_ptr<Clipboard>& clipboard) {
@@ -81,7 +112,7 @@ bool FilterEvents::filter_tracks(const std::shared_ptr<Clipboard>& clipboard) {
     }
 
     if(num_tracks > max_number_tracks_) {
-        hFilter_->Fill(2); // too many tracks
+        hFilter_->Fill(4); // too many tracks
         LOG(TRACE) << "Number of tracks above maximum";
         return true;
     } else if(num_tracks < min_number_tracks_) {
@@ -99,7 +130,7 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
         // Check if number of Clusters on plane is within acceptance
         auto num_clusters = clipboard->getData<Cluster>(det).size();
         if(num_clusters > max_clusters_per_reference_) {
-            hFilter_->Fill(4); //  too many clusters
+            hFilter_->Fill(6); //  too many clusters
             LOG(TRACE) << "Number of Clusters on above maximum";
             return true;
         }
@@ -152,12 +183,17 @@ bool FilterEvents::filter_tags(const std::shared_ptr<Clipboard>& clipboard) {
         try {
             auto tag_value = event->getTag(tag_name);
             if(tag_value.empty()) {
+                hFilter_->Fill(7);
                 return true;
             } else {
                 bool is_tag_filter_passed = filter_func(tag_value);
                 LOG(TRACE) << "Event with tag : " << tag_name << " -- value : " << tag_value << " -- "
                            << (is_tag_filter_passed ? "PASSED" : "REJETED");
-                return !is_tag_filter_passed;
+                // If filter not passed, then reject (i.e. return true), otherwise check other filters
+                if(!is_tag_filter_passed) {
+                    hFilter_->Fill(7);
+                    return true;
+                }
             }
         } catch(std::out_of_range& e) {
             throw MissingKeyError(tag_name, config_.getName());

@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "AnalysisDUT.h"
@@ -30,7 +31,7 @@ AnalysisDUT::AnalysisDUT(Configuration& config, std::shared_ptr<Detector> detect
     config_.setDefault<double>("charge_histo_range", 1000.0);
     config_.setDefault<int>("n_raw_bins", 1000);
     config_.setDefault<double>("raw_histo_range", 1000.0);
-    config_.setDefault<double>("inpixel_bin_size", Units::get<double>(0.5, "um"));
+    config_.setDefault<ROOT::Math::XYPoint>("inpixel_bin_size", {Units::get(0.5, "um"), Units::get(0.5, "um")});
 
     time_cut_frameedge_ = config_.get<double>("time_cut_frameedge");
     spatial_cut_sensoredge_ = config_.get<double>("spatial_cut_sensoredge");
@@ -41,7 +42,12 @@ AnalysisDUT::AnalysisDUT(Configuration& config, std::shared_ptr<Detector> detect
     correlations_ = config_.get<bool>("correlations");
     n_chargebins_ = config_.get<int>("n_charge_bins");
     charge_histo_range_ = config_.get<double>("charge_histo_range");
-    inpixelBinSize_ = config_.get<double>("inpixel_bin_size");
+    if(config_.getArray<double>("inpixel_bin_size").size() == 2) {
+        inpixelBinSize_ = config_.get<ROOT::Math::XYPoint>("inpixel_bin_size");
+    } else {
+        auto binsize = config_.get<double>("inpixel_bin_size");
+        inpixelBinSize_ = ROOT::Math::XYPoint(binsize, binsize);
+    }
 
     // if no separate raw histo bin settings are given, use the ones specified for the charge
     if(config_.has("n_charge_bins") & !config_.has("n_raw_bins")) {
@@ -316,11 +322,6 @@ void AnalysisDUT::initialize() {
                                     -0.5,
                                     29.5);
 
-    // In-pixel studies:
-    auto pitch_x = m_detector->getPitch().X() * 1000.; // convert mm -> um
-    auto pitch_y = m_detector->getPitch().Y() * 1000.; // convert mm -> um
-    std::string mod_axes = "in-pixel x_{track} [#mum];in-pixel y_{track} [#mum];";
-
     // cut flow histogram
     title = m_detector->getName() + ": number of tracks discarded by different cuts;cut type;tracks";
     hCutHisto = new TH1F("hCutHisto", title.c_str(), ETrackSelection::kNSelection, 0, ETrackSelection::kNSelection);
@@ -333,43 +334,35 @@ void AnalysisDUT::initialize() {
     hCutHisto->GetXaxis()->SetBinLabel(ETrackSelection::kPass + 1, "Pass all cuts");
     hCutHisto->GetXaxis()->SetBinLabel(ETrackSelection::kAssociated + 1, "Associated cluster");
 
+    // In-pixel studies:
+    auto pitch_x = m_detector->getPitch().X() * 1000.; // convert mm -> um
+    auto pitch_y = m_detector->getPitch().Y() * 1000.; // convert mm -> um
+    auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / inpixelBinSize_.x()));
+    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / inpixelBinSize_.y()));
+    if(nbins_x > 1e4 || nbins_y > 1e4) {
+        throw InvalidValueError(config_, "inpixel_bin_size", "Too many bins for in-pixel histograms.");
+    }
+    std::string mod_axes = "in-pixel x_{track} [#mum];in-pixel y_{track} [#mum];";
+
     title = "Resolution in X;" + mod_axes + "MAD(#Deltax) [#mum]";
-    rmsxvsxmym = new TProfile2D("rmsxvsxmym",
-                                title.c_str(),
-                                static_cast<int>(pitch_x),
-                                -pitch_x / 2.,
-                                pitch_x / 2.,
-                                static_cast<int>(pitch_y),
-                                -pitch_y / 2.,
-                                pitch_y / 2.);
+    rmsxvsxmym = new TProfile2D(
+        "rmsxvsxmym", title.c_str(), nbins_x, -pitch_x / 2., pitch_x / 2., nbins_y, -pitch_y / 2., pitch_y / 2.);
 
     title = "Resolution in Y;" + mod_axes + "MAD(#Deltay) [#mum]";
-    rmsyvsxmym = new TProfile2D("rmsyvsxmym",
-                                title.c_str(),
-                                static_cast<int>(pitch_x),
-                                -pitch_x / 2.,
-                                pitch_x / 2.,
-                                static_cast<int>(pitch_y),
-                                -pitch_y / 2.,
-                                pitch_y / 2.);
+    rmsyvsxmym = new TProfile2D(
+        "rmsyvsxmym", title.c_str(), nbins_x, -pitch_x / 2., pitch_x / 2., nbins_y, -pitch_y / 2., pitch_y / 2.);
 
     title = "Resolution;" + mod_axes + "MAD(#sqrt{#Deltax^{2}+#Deltay^{2}}) [#mum]";
-    rmsxyvsxmym = new TProfile2D("rmsxyvsxmym",
-                                 title.c_str(),
-                                 static_cast<int>(pitch_x),
-                                 -pitch_x / 2.,
-                                 pitch_x / 2.,
-                                 static_cast<int>(pitch_y),
-                                 -pitch_y / 2.,
-                                 pitch_y / 2.);
+    rmsxyvsxmym = new TProfile2D(
+        "rmsxyvsxmym", title.c_str(), nbins_x, -pitch_x / 2., pitch_x / 2., nbins_y, -pitch_y / 2., pitch_y / 2.);
 
     title = "Mean cluster charge map;" + mod_axes + "<cluster charge> [a.u.]";
     qvsxmym = new TProfile2D("qvsxmym",
                              title.c_str(),
-                             static_cast<int>(pitch_x),
+                             nbins_x,
                              -pitch_x / 2.,
                              pitch_x / 2.,
-                             static_cast<int>(pitch_y),
+                             nbins_y,
                              -pitch_y / 2.,
                              pitch_y / 2.,
                              0.0,
@@ -378,10 +371,10 @@ void AnalysisDUT::initialize() {
     title = "Most probable cluster charge map, Moyal approx.;" + mod_axes + "cluster charge MPV [a.u.]";
     qMoyalvsxmym = new TProfile2D("qMoyalvsxmym",
                                   title.c_str(),
-                                  static_cast<int>(pitch_x),
+                                  nbins_x,
                                   -pitch_x / 2.,
                                   pitch_x / 2.,
-                                  static_cast<int>(pitch_y),
+                                  nbins_y,
                                   -pitch_y / 2.,
                                   pitch_y / 2.,
                                   0.0,
@@ -390,74 +383,42 @@ void AnalysisDUT::initialize() {
     title = "Seed pixel charge map;" + mod_axes + "<seed pixel charge> [a.u.]";
     pxqvsxmym = new TProfile2D("pxqvsxmym",
                                title.c_str(),
-                               static_cast<int>(pitch_x),
+                               nbins_x,
                                -pitch_x / 2.,
                                pitch_x / 2.,
-                               static_cast<int>(pitch_y),
+                               nbins_y,
                                -pitch_y / 2.,
                                pitch_y / 2.,
                                0.0,
                                charge_histo_range_);
 
     title = "Mean cluster size map;" + mod_axes + "<pixels/cluster>";
-    npxvsxmym = new TProfile2D("npxvsxmym",
-                               title.c_str(),
-                               static_cast<int>(pitch_x),
-                               -pitch_x / 2.,
-                               pitch_x / 2.,
-                               static_cast<int>(pitch_y),
-                               -pitch_y / 2.,
-                               pitch_y / 2.,
-                               0,
-                               4.5);
+    npxvsxmym = new TProfile2D(
+        "npxvsxmym", title.c_str(), nbins_x, -pitch_x / 2., pitch_x / 2., nbins_y, -pitch_y / 2., pitch_y / 2., 0, 4.5);
 
     title = "1-pixel cluster map;" + mod_axes + "clusters";
-    npx1vsxmym = new TH2F("npx1vsxmym",
-                          title.c_str(),
-                          static_cast<int>(pitch_x),
-                          -pitch_x / 2.,
-                          pitch_x / 2.,
-                          static_cast<int>(pitch_y),
-                          -pitch_y / 2.,
-                          pitch_y / 2.);
+    npx1vsxmym =
+        new TH2F("npx1vsxmym", title.c_str(), nbins_x, -pitch_x / 2., pitch_x / 2., nbins_y, -pitch_y / 2., pitch_y / 2.);
 
     title = "2-pixel cluster map;" + mod_axes + "clusters";
-    npx2vsxmym = new TH2F("npx2vsxmym",
-                          title.c_str(),
-                          static_cast<int>(pitch_x),
-                          -pitch_x / 2.,
-                          pitch_x / 2.,
-                          static_cast<int>(pitch_y),
-                          -pitch_y / 2.,
-                          pitch_y / 2.);
+    npx2vsxmym =
+        new TH2F("npx2vsxmym", title.c_str(), nbins_x, -pitch_x / 2., pitch_x / 2., nbins_y, -pitch_y / 2., pitch_y / 2.);
 
     title = "3-pixel cluster map;" + mod_axes + "clusters";
-    npx3vsxmym = new TH2F("npx3vsxmym",
-                          title.c_str(),
-                          static_cast<int>(pitch_x),
-                          -pitch_x / 2.,
-                          pitch_x / 2.,
-                          static_cast<int>(pitch_y),
-                          -pitch_y / 2.,
-                          pitch_y / 2.);
+    npx3vsxmym =
+        new TH2F("npx3vsxmym", title.c_str(), nbins_x, -pitch_x / 2., pitch_x / 2., nbins_y, -pitch_y / 2., pitch_y / 2.);
 
     title = "4-pixel cluster map;" + mod_axes + "clusters";
-    npx4vsxmym = new TH2F("npx4vsxmym",
-                          title.c_str(),
-                          static_cast<int>(pitch_x),
-                          -pitch_x / 2.,
-                          pitch_x / 2.,
-                          static_cast<int>(pitch_y),
-                          -pitch_y / 2.,
-                          pitch_y / 2.);
+    npx4vsxmym =
+        new TH2F("npx4vsxmym", title.c_str(), nbins_x, -pitch_x / 2., pitch_x / 2., nbins_y, -pitch_y / 2., pitch_y / 2.);
 
     title = "Mean cluster charge map (1-pixel);" + mod_axes + "<cluster charge> [a.u.]";
     qvsxmym_1px = new TProfile2D("qvsxmym_1px",
                                  title.c_str(),
-                                 static_cast<int>(pitch_x),
+                                 nbins_x,
                                  -pitch_x / 2.,
                                  pitch_x / 2.,
-                                 static_cast<int>(pitch_y),
+                                 nbins_y,
                                  -pitch_y / 2.,
                                  pitch_y / 2.,
                                  0.0,
@@ -466,10 +427,10 @@ void AnalysisDUT::initialize() {
     title = "Mean cluster charge map (2-pixel);" + mod_axes + "<cluster charge> [a.u.]";
     qvsxmym_2px = new TProfile2D("qvsxmym_2px",
                                  title.c_str(),
-                                 static_cast<int>(pitch_x),
+                                 nbins_x,
                                  -pitch_x / 2.,
                                  pitch_x / 2.,
-                                 static_cast<int>(pitch_y),
+                                 nbins_y,
                                  -pitch_y / 2.,
                                  pitch_y / 2.,
                                  0.0,
@@ -478,10 +439,10 @@ void AnalysisDUT::initialize() {
     title = "Mean cluster charge map (3-pixel);" + mod_axes + "<cluster charge> [a.u.]";
     qvsxmym_3px = new TProfile2D("qvsxmym_3px",
                                  title.c_str(),
-                                 static_cast<int>(pitch_x),
+                                 nbins_x,
                                  -pitch_x / 2.,
                                  pitch_x / 2.,
-                                 static_cast<int>(pitch_y),
+                                 nbins_y,
                                  -pitch_y / 2.,
                                  pitch_y / 2.,
                                  0.0,
@@ -490,15 +451,52 @@ void AnalysisDUT::initialize() {
     title = "Mean cluster charge map (4-pixel);" + mod_axes + "<cluster charge> [a.u.]";
     qvsxmym_4px = new TProfile2D("qvsxmym_4px",
                                  title.c_str(),
-                                 static_cast<int>(pitch_x),
+                                 nbins_x,
                                  -pitch_x / 2.,
                                  pitch_x / 2.,
-                                 static_cast<int>(pitch_y),
+                                 nbins_y,
                                  -pitch_y / 2.,
                                  pitch_y / 2.,
                                  0.0,
                                  charge_histo_range_);
 
+    title = m_detector->getName() + " in-pixel cluster size map;" + mod_axes + "cluster size";
+    hclusterSize_trackPos_TProfile = new TProfile2D("clusterSize_trackPos_TProfile",
+                                                    title.c_str(),
+                                                    nbins_x,
+                                                    -pitch_x / 2.,
+                                                    pitch_x / 2.,
+                                                    nbins_y,
+                                                    -pitch_y / 2.,
+                                                    pitch_y / 2.,
+                                                    -500,
+                                                    500);
+
+    title = m_detector->getName() + " in-pixel time resolution map;" + mod_axes + "#sigma time difference [ns]";
+    htimeRes_trackPos_TProfile = new TH2D("timeRes_trackPos_TProfile",
+                                          title.c_str(),
+                                          nbins_x,
+                                          -pitch_x / 2.,
+                                          pitch_x / 2.,
+                                          nbins_y,
+                                          -pitch_y / 2.,
+                                          pitch_y / 2.);
+
+    title = m_detector->getName() + " in-pixel time difference map;" + mod_axes + "time difference: track - cluster [ns]";
+    htimeDelay_trackPos_TProfile =
+        new TProfile2D("timeDelay_trackPos_TProfile",
+                       title.c_str(),
+                       nbins_x,
+                       -pitch_x / 2.,
+                       pitch_x / 2.,
+                       nbins_y,
+                       -pitch_y / 2.,
+                       pitch_y / 2.,
+                       -500,
+                       500,
+                       "s"); // standard deviation as the error on a bin, convenient for time resolution
+
+    // Time residual plots
     residualsTime = new TH1F("residualsTime",
                              "Time residual;time_{track}-time_{hit} [ns];# entries",
                              n_timebins_,
@@ -552,6 +550,7 @@ void AnalysisDUT::initialize() {
                  0.0,
                  charge_histo_range_);
 
+    // (Un-)Associated track histograms
     hAssociatedTracksGlobalPosition =
         new TH2F("hAssociatedTracksGlobalPosition",
                  "Map of associated track positions (global);global intercept x [mm];global intercept y [mm]",
@@ -589,6 +588,7 @@ void AnalysisDUT::initialize() {
                  -10,
                  10);
 
+    // Pixel time histograms
     pxTimeMinusSeedTime =
         new TH1F("pxTimeMinusSeedTime",
                  "pixel - seed pixel timestamp (all pixels w/o seed);ts_{pixel} - ts_{seed} [ns];# entries",
@@ -632,6 +632,7 @@ void AnalysisDUT::initialize() {
         0.0,
         charge_histo_range_);
 
+    // Track to track distance
     track_trackDistance = new TH2F("track_to_track_distance",
                                    "Local track to track distance;#Delta_x [#mum]; #Delta_y [#mum]",
                                    800,
@@ -640,49 +641,6 @@ void AnalysisDUT::initialize() {
                                    800,
                                    -1000,
                                    1000);
-
-    auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / inpixelBinSize_));
-    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / inpixelBinSize_));
-    if(nbins_x > 1e4 || nbins_y > 1e4) {
-        throw InvalidValueError(config_, "inpixel_bin_size", "Too many bins for in-pixel histograms.");
-    }
-
-    title =
-        m_detector->getName() + "in pixel cluster size map;in-pixel x_{track} [#mum];in-pixel y_{track} #mum;cluster size";
-    hclusterSize_trackPos_TProfile = new TProfile2D("clusterSize_trackPos_TProfile",
-                                                    title.c_str(),
-                                                    nbins_x,
-                                                    -pitch_x / 2.,
-                                                    pitch_x / 2.,
-                                                    nbins_y,
-                                                    -pitch_y / 2.,
-                                                    pitch_y / 2.,
-                                                    -500,
-                                                    500);
-    title = m_detector->getName() +
-            "in pixel time resolution map;in-pixel x_{track} [#mum];in-pixel y_{track} #mum;#sigma time difference [ns]";
-    htimeRes_trackPos_TProfile = new TH2D("timeRes_trackPos_TProfile",
-                                          title.c_str(),
-                                          nbins_x,
-                                          -pitch_x / 2.,
-                                          pitch_x / 2.,
-                                          nbins_y,
-                                          -pitch_y / 2.,
-                                          pitch_y / 2.);
-    title = m_detector->getName() + "in pixel time difference map;in-pixel x_{track} [#mum];in-pixel y_{track} #mum;time "
-                                    "difference: track - cluster [ns]";
-    htimeDelay_trackPos_TProfile =
-        new TProfile2D("timeDelay_trackPos_TProfile",
-                       title.c_str(),
-                       nbins_x,
-                       -pitch_x / 2.,
-                       pitch_x / 2.,
-                       nbins_y,
-                       -pitch_y / 2.,
-                       pitch_y / 2.,
-                       -500,
-                       500,
-                       "s"); // standard deviation as the error on a bin, convenient for time resolution
 }
 
 // Associated cluster histograms
@@ -860,7 +818,7 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             associatedTracksVersusTime->Fill(track->timestamp() / 1e9); // convert ns -> s
 
             // Check distance between track and cluster in local coordinates
-            ROOT::Math::XYZPoint intercept = m_detector->getLocalIntercept(track.get());
+            auto intercept = m_detector->getLocalIntercept(track.get());
             double local_x_distance = intercept.X() - assoc_cluster->local().x();
             double local_y_distance = intercept.Y() - assoc_cluster->local().y();
             double local_x_distance_um = local_x_distance * 1000.;
@@ -869,13 +827,20 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             double local_x_absdistance = fabs(local_x_distance);
             double local_y_absdistance = fabs(local_y_distance);
             double time_distance = track->timestamp() - assoc_cluster->timestamp();
-            double local_pos_diff = sqrt(local_x_distance * local_x_absdistance + local_y_absdistance * local_y_absdistance);
+            double local_pos_diff =
+                sqrt(local_x_absdistance * local_x_absdistance + local_y_absdistance * local_y_absdistance);
             double local_pos_diff_um = local_pos_diff * 1000.;
 
             resX_vs_col->Fill(assoc_cluster->column(), local_x_distance_um);
             resY_vs_col->Fill(assoc_cluster->column(), local_y_distance_um);
             resX_vs_row->Fill(assoc_cluster->row(), local_x_distance_um);
             resY_vs_row->Fill(assoc_cluster->row(), local_y_distance_um);
+
+            profile_dY_X_local->Fill(assoc_cluster->column(), local_y_distance_um, 1);
+            profile_dY_Y_local->Fill(assoc_cluster->row(), local_y_distance_um, 1);
+            profile_dX_X_local->Fill(assoc_cluster->column(), local_x_distance_um, 1);
+            profile_dX_Y_local->Fill(assoc_cluster->row(), local_x_distance_um, 1);
+
             // Cluster charge normalized to path length in sensor:
             double norm = 1; // FIXME fabs(cos( turn*wt )) * fabs(cos( tilt*wt ));
             // FIXME: what does this mean? To my understanding we have the correct charge here already...
@@ -888,6 +853,10 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             residualsY_local->Fill(local_y_distance_um);
             residualsPos_local->Fill(local_pos_diff_um);
             residualsPosVsresidualsTime_local->Fill(time_distance, local_pos_diff_um);
+            residualsRVsTime_local->Fill(
+                track->timestamp(), std::sqrt(local_y_distance * local_y_distance + local_x_distance * local_x_distance));
+            residualsXVsTime_local->Fill(track->timestamp(), local_x_distance);
+            residualsYVsTime_local->Fill(track->timestamp(), local_y_distance);
 
             // fill resolution depending on cluster size (max 4, everything higher in last plot)
             (assoc_cluster->columnWidth() < residualsXclusterColLocal.size())
@@ -1104,6 +1073,16 @@ void AnalysisDUT::createLocalResidualPlots() {
         new TH1F("residualsX", "Residual in local X;x_{track}-x_{hit}  [#mum];# entries", 4000, -500.5, 499.5);
     residualsY_local =
         new TH1F("residualsY", "Residual in local Y;y_{track}-y_{hit}  [#mum];# entries", 4000, -500.5, 499.5);
+    residualsRVsTime_local =
+        new TProfile("residualsRVsTime",
+                     "sqrt(#Deltax^{2}+#Deltay^{2}) vs time; time [ns]; sqrt(#Deltax^{2}+#Deltay^{2}) [mm]",
+                     3000000,
+                     0,
+                     3e12);
+    residualsXVsTime_local =
+        new TProfile("residualsXVsEventTime", "#Deltax vs time; time [ns]; #Deltax [mm]", 3000000, 0, 3e12);
+    residualsYVsTime_local =
+        new TProfile("residualsYVsEventTime", "#Deltay vs time; time [ns]; #Deltay [mm]", 3000000, 0, 3e12);
     residualsPos_local =
         new TH1F("residualsPos",
                  "Absolute distance between track and hit in local coordinates;|pos_{track}-pos_{hit}|  [#mum];# entries",
@@ -1135,6 +1114,20 @@ void AnalysisDUT::createLocalResidualPlots() {
                      -500.5,
                      499.5));
     }
+    auto detname = m_detector->getName();
+    std::string title = detname + " Residuals X;x_{track}-x [#mum];events";
+    title = detname + " Residual profile dY/X;column;y_{track}-y [#mum]";
+    profile_dY_X_local =
+        new TProfile("profile_dY_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
+    title = detname + " Residual profile dY/Y;row;y_{track}-y [#mum]";
+    profile_dY_Y_local =
+        new TProfile("profile_dY_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
+    title = detname + " Residual profile dX/X;column;x_{track}-x [#mum]";
+    profile_dX_X_local =
+        new TProfile("profile_dX_X", title.c_str(), m_detector->nPixels().x(), -0.5, m_detector->nPixels().x() - 0.5);
+    title = detname + " Residual profile dX/y;row;x_{track}-x [#mum]";
+    profile_dX_Y_local =
+        new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
 
     directory->cd();
 }

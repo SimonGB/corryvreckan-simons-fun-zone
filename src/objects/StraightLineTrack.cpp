@@ -6,11 +6,13 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "StraightLineTrack.hpp"
 #include "Eigen/Dense"
 #include "Track.hpp"
+#include "core/utils/log.h"
 #include "exceptions.h"
 
 using namespace corryvreckan;
@@ -33,10 +35,13 @@ ROOT::Math::XYPoint StraightLineTrack::getKinkAt(const std::string&) const {
 }
 
 ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string& detectorID) const {
-    if(get_plane(detectorID) == nullptr) {
+    LOG(TRACE) << "Requesting state at: " << detectorID;
+    auto plane =
+        std::find_if(planes_.begin(), planes_.end(), [&detectorID](Plane const& p) { return p.getName() == detectorID; });
+    if(plane == planes_.end()) {
         throw MissingReferenceException(typeid(*this), typeid(Plane));
     }
-    auto toGlobal = get_plane(detectorID)->getToGlobal();
+    auto toGlobal = plane->getToGlobal();
     ROOT::Math::XYZVector planeU, planeV, planeN;
     toGlobal.Rotation().GetComponents(planeU, planeV, planeN);
     ROOT::Math::XYZPoint origin = toGlobal.Translation() * ROOT::Math::XYZPoint(0, 0, 0);

@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef ClusteringAnalog_H
@@ -130,7 +131,8 @@ namespace corryvreckan {
         float thresholdIterationSNR;
         // Calibration file
         std::vector<std::vector<double>> noisemap;
-
+        // Configure associated cluster time
+        bool useTriggerTimestamp;
         // Analysis functionality
         TH1F* hCutHisto;
         bool flagAnalysisSNR;   // Enable SNR estimation and histograms for analysis

@@ -1,9 +1,12 @@
-/** @file
- *  @brief Detector model class
- *  @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
+/**
+ * @file
+ * @brief Detector model class
+ *
+ * @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_DETECTOR_H
@@ -16,11 +19,15 @@
 #include <string>
 
 #include <Math/DisplacementVector2D.h>
+#include <Math/RotationX.h>
+#include <Math/RotationY.h>
+#include <Math/RotationZ.h>
+#include <Math/RotationZYX.h>
+#include <Math/Transform3D.h>
 #include <Math/Vector2D.h>
 #include <Math/Vector3D.h>
+#include <TFormula.h>
 #include <TMatrixD.h>
-#include "Math/Transform3D.h"
-#include "Math/Vector3D.h"
 
 #include "core/config/Configuration.hpp"
 #include "core/utils/ROOT.h"
@@ -40,6 +47,16 @@ namespace corryvreckan {
         AUXILIARY = (1 << 2), ///< Auxiliary device which should not participate in regular reconstruction but might provide
                               /// additional information
         PASSIVE = (1 << 3),   ///< Passive device which only acts as scatterer. This is ignored for detector modules
+    };
+
+    /**
+     * @brief Detector coordinate system
+     */
+    enum class Coordinates {
+        CARTESIAN = 1,    ///< Cartesian coordinates
+        HEXAGONAL,        ///< Hexagonal pixel coordinates, axial coordinate system
+        CARTESIAN_MODULE, ///< Cartesian coordinates for detector modules
+        POLAR,            ///< Polar coordinates
     };
 
     inline constexpr DetectorRole operator&(DetectorRole x, DetectorRole y) {
@@ -67,6 +84,57 @@ namespace corryvreckan {
      * etc.
      */
     class Detector {
+        class Alignment {
+        public:
+            explicit Alignment(const Configuration& config);
+
+            // Transforms from local to global and back
+            const Transform3D& local2global() const { return local2global_; };
+
+            const Transform3D& global2local() const { return global2local_; };
+
+            // Normal to the detector surface and point on the surface
+            const ROOT::Math::XYZVector& normal() const { return normal_; };
+
+            const ROOT::Math::XYZPoint& origin() const { return origin_; };
+
+            const ROOT::Math::XYZPoint& displacement() const { return displacement_; };
+
+            const ROOT::Math::XYZVector& orientation() const { return orientation_; };
+
+            void update(double time, bool force = false);
+
+            void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
+
+            bool isVariable() const { return needs_update_; };
+
+        private:
+            void recalculate();
+
+            std::array<std::shared_ptr<TFormula>, 3> parse_formulae(const Configuration& config, const std::string& key);
+
+            // Cache for last time the transformations were renewed, in ns:
+            double last_time_{};
+            double granularity_{};
+            bool needs_update_{false};
+
+            // Cached position and orientation
+            ROOT::Math::XYZPoint displacement_;
+            ROOT::Math::XYZVector orientation_;
+
+            // Cache for calculated transformations
+            ROOT::Math::XYZPoint origin_;
+            ROOT::Math::XYZVector normal_;
+            ROOT::Math::Transform3D local2global_;
+            ROOT::Math::Transform3D global2local_;
+
+            // The formulae
+            std::array<std::shared_ptr<TFormula>, 3> formulae_pos_;
+
+            // Function to generate rotation matrix, depending on mode
+            std::function<ROOT::Math::Rotation3D(const ROOT::Math::XYZVector& rot)> rotation_fct_;
+        };
+
     public:
         /**
          * Delete default constructor
@@ -142,7 +210,7 @@ namespace corryvreckan {
          * @brief Retrieve configuration object from detector, containing all (potentially updated) parameters
          * @return Configuration object for this detector
          */
-        Configuration getConfiguration() const;
+        virtual Configuration getConfiguration() const;
 
         /**
          * @brief Get the total size of the active matrix, i.e. pitch * number of pixels in both dimensions
@@ -166,16 +234,20 @@ namespace corryvreckan {
 
         /**
          * @brief Get intrinsic spatial resolution of the detector
+         * @param column Column (x-) index of the pixel to calculate the spatial resolution from
+         * @param row Row (y-) index of the pixel to calculate the spatial resolution from
          * @return Intrinsic spatial resolution in X and Y
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
          */
-        virtual XYVector getSpatialResolution() const = 0;
+        virtual XYVector getSpatialResolution(double column = 0, double row = 0) const = 0;
 
         /**
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @param column Column (x-) index of the pixel to calculate the spatial resolution from
+         * @param row Row (y-) index of the pixel to calculate the spatial resolution from
          * @return Intrinsic spatial resolution in global X and Y
          */
-        virtual TMatrixD getSpatialResolutionMatrixGlobal() const = 0;
+        virtual TMatrixD getSpatialResolutionMatrixGlobal(double column = 0, double row = 0) const = 0;
 
         /**
          * @brief Get number of pixels in x and y
@@ -197,40 +269,28 @@ namespace corryvreckan {
         double getTimeResolution() const;
 
         /**
-         * @brief Update detector position in the world
-         * @param displacement Vector with three position coordinates
-         */
-        virtual void displacement(XYZPoint displacement) = 0;
-
-        /**
          * @brief Get position in the world
          * @return Global position in Cartesian coordinates
          */
-        virtual XYZPoint displacement() const = 0;
+        XYZPoint displacement() const { return alignment_->displacement(); }
 
         /**
          * @brief Get orientation in the world
          * @return Vector with three rotation angles
          */
-        virtual XYZVector rotation() const = 0;
-
-        /**
-         * @brief Update detector orientation in the world
-         * @param rotation Vector with three rotation angles
-         */
-        virtual void rotation(XYZVector rotation) = 0;
+        XYZVector rotation() const { return alignment_->orientation(); };
 
         /**
          * @brief Get normal vector to sensor surface
          * @return Normal vector to sensor surface
          */
-        PositionVector3D<Cartesian3D<double>> normal() const { return m_normal; }
+        ROOT::Math::XYZVector normal() const { return alignment_->normal(); }
 
         /**
          * @brief Get origin vector to sensor surface
          * @return Origin vector to sensor surface
          */
-        PositionVector3D<Cartesian3D<double>> origin() const { return m_origin; }
+        ROOT::Math::XYZPoint origin() const { return alignment_->origin(); }
 
         /**
          * @brief Get path of the file with calibration information
@@ -271,9 +331,23 @@ namespace corryvreckan {
         virtual bool masked(int chX, int chY) const = 0;
 
         /**
-         * @brief Update coordinate transformations based on currently configured position and orientation values
+         * @brief Update coordinate transformations based on position and orientation values at the given time
+         * @param time Time for which the alignment should be calculated
          */
-        void update();
+        void update(double time);
+
+        /**
+         * @brief Update coordinate transformations based on the provided displacement and orientation
+         * @param displacement  New displacement of the detector
+         * @param orientation   New orientation of the detector
+         */
+        void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
+
+        /**
+         * @brief Check whether this detector has a variable alignment configured
+         * @return true if alignment changes over time, false otherwise
+         */
+        bool hasVariableAlignment() const { return alignment_->isVariable(); }
 
         // Function to get global intercept with a track
         virtual PositionVector3D<Cartesian3D<double>> getIntercept(const Track* track) const = 0;
@@ -316,14 +390,14 @@ namespace corryvreckan {
          * @param  local Local coordinates in the reference frame of this detector
          * @return       Global coordinates
          */
-        XYZPoint localToGlobal(const XYZPoint& local) const { return m_localToGlobal * local; };
+        XYZPoint localToGlobal(const XYZPoint& local) const { return alignment_->local2global() * local; };
 
         /**
          * @brief Transform global coordinates into detector-local coordinates
          * @param  global Global coordinates
          * @return        Local coordinates in the reference frame of this detector
          */
-        XYZPoint globalToLocal(const XYZPoint& global) const { return m_globalToLocal * global; };
+        XYZPoint globalToLocal(const XYZPoint& global) const { return alignment_->global2local() * global; };
 
         /**
          * @brief Check whether given track is within the detector's region-of-interest
@@ -349,13 +423,13 @@ namespace corryvreckan {
          * @brief toGlobal Get the transformation from local to global coordinates
          * @return Transform3D local to global
          */
-        Transform3D toGlobal() const { return m_localToGlobal; }
+        Transform3D toGlobal() const { return alignment_->local2global(); }
 
         /**
          * @brief toLocal Get the transformation from global to local coordinates
          * @return Transform3D global to local
          */
-        Transform3D toLocal() const { return m_globalToLocal; }
+        Transform3D toLocal() const { return alignment_->global2local(); }
 
         /**
          * @brief Test whether one pixel touches the cluster
@@ -396,12 +470,17 @@ namespace corryvreckan {
         virtual std::set<std::pair<int, int>>
         getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const = 0;
 
+        /**
+         * @brief Helper method to determine if this detector is of a given type
+         * The template parameter needs to be specified specifically, i.e.
+         *     if(model->is<PolarDetector>()) { }
+         * @return Boolean indication whether this detector is of the given type or not
+         */
+        template <class T> bool is() { return dynamic_cast<T*>(this) != nullptr; }
+
     protected:
         // Roles of the detector
         DetectorRole m_role;
-
-        // Initialize coordinate transformations
-        virtual void initialise() = 0;
 
         // Build axis, for devices which are not auxiliary
         // Different in Pixel/Strip Detector
@@ -425,13 +504,8 @@ namespace corryvreckan {
         double m_timeResolution;
         double m_materialBudget;
 
-        // Transforms from local to global and back
-        Transform3D m_localToGlobal;
-        Transform3D m_globalToLocal;
-
-        // Normal to the detector surface and point on the surface
-        PositionVector3D<Cartesian3D<double>> m_normal;
-        PositionVector3D<Cartesian3D<double>> m_origin;
+        // Alignment and coordinate transformation information:
+        std::shared_ptr<Alignment> alignment_;
 
         // Path of calibration file
         std::optional<std::filesystem::path> m_calibrationfile;
@@ -444,4 +518,5 @@ namespace corryvreckan {
 
 #include "PixelDetector.hpp"
 //#include "HexagonalPixelDetector.hpp"
+#include "PolarDetector.hpp"
 #endif // CORRYVRECKAN_DETECTOR_H

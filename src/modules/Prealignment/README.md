@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # Prealignment
 **Maintainer**: Morag Williams (<morag.williams@cern.ch>)   
 **Module Type**: *DETECTOR*  
@@ -22,6 +26,7 @@ However, for the prealignment this is a an acceptable estimation which works wit
 * `method`: Specifies which method should be used to compute the translational shifts. With the option `mean` the mean of the 1D correlation histogram is used. The option `maximum` uses the maximum value of the histogram. With `method` set to `gauss_fit` a Gaussian is fitted and the mean of the fit is used for the translational shift. Default is to `mean`. 
 * `fit_range_rel`: Parameter to set the fit range of the Gaussian fit if `method` is set to `gauss_fit`. The absolute fit range is given by `fit_range_rel` times the spatial resolution of the corresponding detector around the maximum of the 1D correlation histogram. The default of the relative fit range is `fit_range_rel` = 500.
 * `range_abs`: Parameter to allow setting up the range in which residuals get plotted (mm, +- around 0). Default is `10mm`. This needs to be increased for large sensors, where the alignment might be out by well more than 10mm and thus residual plots might be empty in the range +- 10.
+* `fixed_planes`: Optional user-defined fixed planes in addition to reference plane. When `fixed_planes = detector_name`, the geometry of the selected detector will not be modified.
 
 ### Plots Created
 

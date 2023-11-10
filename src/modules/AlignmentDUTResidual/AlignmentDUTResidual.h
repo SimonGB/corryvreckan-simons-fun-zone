@@ -6,9 +6,11 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include <TCanvas.h>
+#include <TFormula.h>
 #include <TGraph.h>
 #include <TH1F.h>
 #include <TH2F.h>
@@ -53,6 +55,7 @@ namespace corryvreckan {
 
     private:
         static void MinimiseResiduals(Int_t& npar, Double_t* grad, Double_t& result, Double_t* par, Int_t flag);
+        void SetResidualsFunctions();
 
         std::shared_ptr<Detector> m_detector;
         int m_discardedtracks{};
@@ -71,9 +74,14 @@ namespace corryvreckan {
         std::string m_alignOrientation_axes;
         size_t m_maxAssocClusters;
         double m_maxTrackChi2;
-
+        double m_spatial_cut_sensoredge;
         TH1F* residualsXPlot;
         TH1F* residualsYPlot;
+        TH1F* residualsRPlot{};
+        TH1F* residualsPhiPlot{};
+
+        static std::shared_ptr<TFormula> formula_residual_x;
+        static std::shared_ptr<TFormula> formula_residual_y;
 
         TProfile* profile_dY_X;
         TProfile* profile_dY_Y;

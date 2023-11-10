@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "ClusteringAnalog.h"
@@ -35,6 +36,7 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
         throw InvalidValueError(config_, "window_size", "Invalid window size - value should be >= 1.");
     }
     includeCorners = config_.get<bool>("include_corners", false);
+    useTriggerTimestamp = config_.get<bool>("use_trigger_timestamp", false);
     flagAnalysisShape = config_.get<bool>("analysis_shape", false);
     flagAnalysisSNR = thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX;
 
@@ -512,7 +514,22 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
         cluster->addPixel(&*seed);
         used[seed] = true;
 
-        cluster->setTimestamp(seed->timestamp());
+        if(useTriggerTimestamp) {
+            if(!clipboard->getEvent()->triggerList().empty()) {
+                double trigger_ts = clipboard->getEvent()->triggerList().begin()->second;
+                LOG(DEBUG) << "Using trigger timestamp " << Units::display(trigger_ts, "us") << " as cluster timestamp.";
+                cluster->setTimestamp(trigger_ts);
+            } else {
+                LOG(WARNING) << "No trigger available. Use pixel timestamp " << Units::display(seed->timestamp(), "us")
+                             << " as cluster timestamp.";
+                cluster->setTimestamp(seed->timestamp());
+            }
+        } else {
+            // assign pixel timestamp
+            LOG(DEBUG) << "Pixel has timestamp " << Units::display(seed->timestamp(), "us")
+                       << ", set as cluster timestamp. ";
+            cluster->setTimestamp(seed->timestamp());
+        }
 
         // Search neighbors around seed
         PixelVector neighbors;
@@ -620,7 +637,8 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
                    << cluster->charge();
 
         // Set uncertainty on position from intrinsic detector spatial resolution:
-        cluster->setError(m_detector->getSpatialResolution());
+        cluster->setError(m_detector->getSpatialResolution(cluster->column(), cluster->row()));
+        cluster->setErrorMatrixGlobal(m_detector->getSpatialResolutionMatrixGlobal(cluster->column(), cluster->row()));
 
         // Create object with local cluster position
         auto positionLocal = m_detector->getLocalPosition(cluster->column(), cluster->row());

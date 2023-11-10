@@ -31,6 +31,7 @@ void _A_got_intr(int);
 void _A_got_intr(int) {
     _A_do_run = false;
 }
+std::string DataFileRoot::_idf;
 
 DataFileRoot::DataFileRoot(const char*, const char* pedfile, const char*)
     : _nchan(MAX_NCHAN), _seedcut(5.), _neighcut(3.), _average_gain(1.), _version(2), _polarity(1), _t1(0.0), _t2(99999.),
@@ -141,12 +142,24 @@ void DataFileRoot::compute_cmmd_alternative() {
     double pedestal_average[MAX_NCHAN];
     double pedestal_stdev[MAX_NCHAN];
 
+    double temp_sum = 0;
+    double temperature;
+
     if(!valid())
         return;
 
     for(ievt = 0; read_data() == 1 && ievt < mxevts; ievt++) {
         nEvents++;
         double event_sum = 0;
+
+        // Get temp
+        if(_idf == "HDF") {
+            temperature = _data.temp;
+        } else {
+            temperature = 0.12 * _data.temp - 39.8;
+        }
+        temp_sum += temperature;
+
         for(unsigned int i : _roi) {
             event_sum += (_data.data[i] - _ped[i]);
         }
@@ -158,6 +171,7 @@ void DataFileRoot::compute_cmmd_alternative() {
     }
 
     _cmmd[0] = cmn / nEvents;
+    _mean_temp_pedestal = temp_sum / nEvents;
 
     for(unsigned int i : _roi) {
 
@@ -282,9 +296,9 @@ DataFileRoot* DataFileRoot::OpenFile(const char* nam, const char* pedfile, const
     char buf[5] = {'\0'};
     ifile.read(buf, 4);
     ifile.close();
-    std::string idf(buf + 1);
+    _idf = std::string(buf + 1);
 
-    if(idf == "HDF")
+    if(_idf == "HDF")
         return new HDFRoot(nam, pedfile, gainfile);
     else
         return new AsciiRoot(nam, pedfile, gainfile);

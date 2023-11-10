@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef OnlineMonitor_H
@@ -56,6 +57,8 @@ namespace corryvreckan {
                        Matrix<std::string> canvas_plots,
                        bool ignoreDut = false,
                        std::string detector_name = "");
+        // Function specifically for adding "DUT" ButtonGroup to enable scroll bar for large number of DUTs
+        void AddDUTGroup();
         void AddPlots(std::string canvas_name,
                       Matrix<std::string> canvas_plots,
                       bool ignoreDut = false,

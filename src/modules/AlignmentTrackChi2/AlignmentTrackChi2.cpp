@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "AlignmentTrackChi2.h"
@@ -46,8 +47,17 @@ AlignmentTrackChi2::AlignmentTrackChi2(Configuration& config, std::vector<std::s
         LOG(INFO) << "Aligning orientations";
     }
 
+    // Check that we're not in a variable-alignment situation:
+    for(auto& detector : get_regular_detectors(false)) {
+        if(detector->hasVariableAlignment()) {
+            throw ModuleError("Cannot perform alignment procedure with variable alignment of detector \"" +
+                              detector->getName() + "\"");
+        }
+    }
+
     m_maxAssocClusters = config_.get<size_t>("max_associated_clusters");
     m_maxTrackChi2 = config_.get<double>("max_track_chi2ndof");
+    fixed_planes_ = config_.getArray<std::string>("fixed_planes", {});
     LOG(INFO) << "Aligning telescope";
 }
 
@@ -101,13 +111,10 @@ void AlignmentTrackChi2::MinimiseTrackChi2(Int_t&, Double_t*, Double_t& result, 
     static size_t fitIterations = 0;
     static string detName = "";
     LOG(DEBUG) << AlignmentTrackChi2::globalDetector->displacement() << "' " << globalDetector->rotation();
-    // Pick up new alignment conditions
-    AlignmentTrackChi2::globalDetector->displacement(
-        XYZPoint(par[detNum * 6 + 0], par[detNum * 6 + 1], par[detNum * 6 + 2]));
-    AlignmentTrackChi2::globalDetector->rotation(XYZVector(par[detNum * 6 + 3], par[detNum * 6 + 4], par[detNum * 6 + 5]));
 
     // Apply new alignment conditions
-    AlignmentTrackChi2::globalDetector->update();
+    AlignmentTrackChi2::globalDetector->update(XYZPoint(par[detNum * 6 + 0], par[detNum * 6 + 1], par[detNum * 6 + 2]),
+                                               XYZVector(par[detNum * 6 + 3], par[detNum * 6 + 4], par[detNum * 6 + 5]));
 
     // The chi2 value to be returned
     result = 0.;
@@ -127,26 +134,31 @@ void AlignmentTrackChi2::MinimiseTrackChi2(Int_t&, Double_t*, Double_t& result, 
             auto positionLocal = trackCluster->local();
             auto positionGlobal = AlignmentTrackChi2::globalDetector->localToGlobal(positionLocal);
             trackCluster->setClusterCentre(positionGlobal);
-            trackCluster->setErrorMatrixGlobal(AlignmentTrackChi2::globalDetector->getSpatialResolutionMatrixGlobal());
+            trackCluster->setErrorMatrixGlobal(AlignmentTrackChi2::globalDetector->getSpatialResolutionMatrixGlobal(
+                trackCluster->column(), trackCluster->row()));
             LOG(DEBUG) << "Updating cluster with corrected global position for detector "
                        << AlignmentTrackChi2::globalDetector->getName();
         }
 
-        // Refit the track
-        track->registerPlane(AlignmentTrackChi2::globalDetector->getName(),
-                             AlignmentTrackChi2::globalDetector->displacement().z(),
-                             AlignmentTrackChi2::globalDetector->materialBudget(),
-                             AlignmentTrackChi2::globalDetector->toLocal());
+        // Update plane and refit the track
+        track->updatePlane(AlignmentTrackChi2::globalDetector->getName(),
+                           AlignmentTrackChi2::globalDetector->displacement().z(),
+                           AlignmentTrackChi2::globalDetector->materialBudget(),
+                           AlignmentTrackChi2::globalDetector->toLocal());
         LOG(DEBUG) << "Updated transformations for detector " << AlignmentTrackChi2::globalDetector->getName();
         if(detName != AlignmentTrackChi2::globalDetector->getName()) {
             detName = AlignmentTrackChi2::globalDetector->getName();
             fitIterations = 0;
         }
 
-        track->fit();
-
-        // Add the new chi2
-        return track->getChi2();
+        // check if the fit has failed
+        if(!track->isFitted()) {
+            LOG(WARNING) << "Refit failed - track will be discarded for this alignment step ";
+            return 0.0;
+        } else {
+            // add the new chi2
+            return track->getChi2();
+        }
     };
 
     // Loop over all tracks
@@ -217,9 +229,10 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
         int det = 0;
         for(auto& detector : get_regular_detectors(false)) {
             string detectorID = detector->getName();
+            // Do not align fixed planes and the reference plane
+            bool is_fixed = std::find(fixed_planes_.begin(), fixed_planes_.end(), detectorID) != fixed_planes_.end();
 
-            // Do not align the reference plane
-            if(detector->isReference()) {
+            if(detector->isReference() || is_fixed) {
                 LOG(DEBUG) << "Skipping detector " << detector->getName();
                 continue;
             }
@@ -299,11 +312,9 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
             residualFitter->SetParameter(det * 6 + 4, (detectorID + "_rotationY").c_str(), rotationY, 0, -6.30, 6.30);
             residualFitter->SetParameter(det * 6 + 5, (detectorID + "_rotationZ").c_str(), rotationZ, 0, -6.30, 6.30);
 
-            // Set the alignment parameters of this plane to be the optimised values
-            // from the alignment
-            detector->displacement(XYZPoint(displacementX, displacementY, displacementZ));
-            detector->rotation(XYZVector(rotationX, rotationY, rotationZ));
-            detector->update();
+            // Set the alignment parameters of this plane to be the optimised values from the alignment
+            detector->update(XYZPoint(displacementX, displacementY, displacementZ),
+                             XYZVector(rotationX, rotationY, rotationZ));
             det++;
         }
     }
@@ -312,8 +323,11 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
 
     // Now list the new alignment parameters
     for(auto& detector : get_regular_detectors(false)) {
-        // Do not align the reference plane
-        if(detector->isReference()) {
+
+        // Do not align fixed planes and the reference plane
+        bool is_fixed = std::find(fixed_planes_.begin(), fixed_planes_.end(), detector->getName()) != fixed_planes_.end();
+
+        if(detector->isReference() || is_fixed) {
             continue;
         }
 

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 Corryvreckan_version="@CORRYVRECKAN_VERSION@"
 
 # Dependencies

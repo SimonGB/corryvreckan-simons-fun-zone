@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "EventLoaderEUDAQ2.h"
@@ -44,6 +45,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     veto_triggers_ = config_.get<bool>("veto_triggers");
     skip_time_ = config_.get<double>("skip_time");
     adjust_event_times_ = config_.getMatrix<std::string>("adjust_event_times", {});
+    discard_raw_events_ = config_.getArray<std::string>("discard_raw_events", {});
     buffer_depth_ = config_.get<int>("buffer_depth");
     shift_triggers_ = config_.get<int>("shift_triggers");
     inclusive_ = config_.get<bool>("inclusive");
@@ -243,6 +245,13 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
         auto event = events_raw_.front();
         events_raw_.pop();
 
+        // Check if this should be dropped according to the raw event description
+        if(std::find(discard_raw_events_.begin(), discard_raw_events_.end(), event->GetDescription()) !=
+           discard_raw_events_.end()) {
+            LOG(DEBUG) << "Discarding undecoded raw event of type " << event->GetDescription();
+            continue;
+        }
+
         // If this is a Begin-of-Run event and we should ignore it, please do so:
         if(event->IsBORE() && ignore_bore_) {
             LOG(DEBUG) << "Found EUDAQ2 BORE event, ignoring it";
@@ -266,7 +275,7 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
                 events_decoded_.push(std::const_pointer_cast<eudaq::StandardEvent>(decoded_subevent));
             }
             events_decoded_.push(decoded_event);
-            LOG(DEBUG) << event->GetDescription() << ": decoding succeeded";
+            LOG(DEBUG) << event->GetDescription() << ": decoding succeeded, event ID " << decoded_event->GetEventN();
         } else {
             LOG(DEBUG) << event->GetDescription() << ": decoding failed";
         }
@@ -333,7 +342,11 @@ Event::Position EventLoaderEUDAQ2::is_within_event(const std::shared_ptr<Clipboa
 
     // Check if this event has timestamps available:
     if((evt->GetTimeBegin() == 0 && evt->GetTimeEnd() == 0) || sync_by_trigger_) {
-        LOG(DEBUG) << evt->GetDescription() << ": Event has no timestamp, comparing trigger IDs";
+        if(sync_by_trigger_) {
+            LOG(DEBUG) << evt->GetDescription() << ": Forced synchronization by comparing trigger IDs";
+        } else {
+            LOG(DEBUG) << evt->GetDescription() << ": Event has no timestamp, comparing trigger IDs";
+        }
 
         // If there is no event defined yet, there is little we can do:
         if(!clipboard->isEventDefined()) {
@@ -557,7 +570,7 @@ bool EventLoaderEUDAQ2::filter_detectors(std::shared_ptr<eudaq::StandardEvent> e
             LOG(DEBUG) << "Found matching plane in event for detector " << detector_->getName();
             return true;
         } else {
-            LOG(DEBUG) << "plane " << plane_name << "does not match " << detector_name;
+            LOG(DEBUG) << "plane " << plane_name << " does not match " << detector_name;
         }
     }
 

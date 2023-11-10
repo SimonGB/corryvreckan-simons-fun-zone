@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # FileReader
 **Maintainer**: Simon Spannagel (<simon.spannagel@cern.ch>)  
 **Status**: Functional  

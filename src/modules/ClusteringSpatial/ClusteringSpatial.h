@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef ClusteringSpatial_H
@@ -47,6 +48,8 @@ namespace corryvreckan {
         TH2F* clusterPositionGlobal;
         TH2F* clusterPositionLocal;
         TH1F* clusterTimes;
+        TH1F* clusterUncertaintyX;
+        TH1F* clusterUncertaintyY;
 
         bool useTriggerTimestamp;
         bool chargeWeighting;

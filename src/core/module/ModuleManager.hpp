@@ -1,9 +1,12 @@
-/** @file
- *  @brief Interface to the core framework
- *  @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
+/**
+ * @file
+ * @brief Interface to the core framework
+ *
+ * @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_MODULE_MANAGER_H
@@ -117,11 +120,16 @@ namespace corryvreckan {
          * @param config Configuration of the module
          * @param dut_only Boolean signaling whether should be instantiated only for DUT detectors
          * @param exclude_aux Boolean to exclude instantiations for auxliary detectors
+         * @param include_pass Boolean to include instantiations for passive detectors
          * @param types List of detector type restrictions imposed by the module itself
          * @return A list of all created detector modules and their identifiers
          */
-        std::vector<std::pair<ModuleIdentifier, Module*>> create_detector_modules(
-            void* library, Configuration& config, bool dut_only, bool exclude_aux, std::vector<std::string> types);
+        std::vector<std::pair<ModuleIdentifier, Module*>> create_detector_modules(void* library,
+                                                                                  Configuration& config,
+                                                                                  bool dut_only,
+                                                                                  bool exclude_aux,
+                                                                                  bool include_pass,
+                                                                                  std::vector<std::string> types);
 
         using IdentifierToModuleMap = std::map<ModuleIdentifier, ModuleList::iterator>;
 

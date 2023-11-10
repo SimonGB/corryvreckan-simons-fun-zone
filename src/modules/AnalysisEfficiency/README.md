@@ -1,7 +1,11 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # AnalysisEfficiency
-**Maintainer**: Simon Spannagel (<simon.spannagel@cern.ch>), Jens Kroeger (<jens.kroeger@cern.ch>)  
-**Module Type**: *DUT*  
-**Detector Type**: *all*  
+**Maintainer**: Simon Spannagel (<simon.spannagel@cern.ch>), Jens Kroeger (<jens.kroeger@cern.ch>)
+**Module Type**: *DUT*
+**Detector Type**: *all*
 **Status**: Functional
 
 ### Description
@@ -18,11 +22,15 @@ More information can be found in the ROOT `TEfficiency` class reference, section
 ### Parameters
 * `time_cut_frameedge`: Parameter to discard telescope tracks at the frame edges (start and end of the current event window). Defaults to `20ns`.
 * `chi2ndof_cut`: Acceptance criterion for telescope tracks, defaults to a value of `3`.
-* `inpixel_bin_size`: Parameter to set the bin size of the in-pixel 2D efficiency histogram. This should be given in units of distance and the same value is used in both axes. Defaults to `1.0um`.
-* `inpixel_cut_edge`: Parameter to exclude tracks going within a cut-distance to the pixel edge. Effectively defines an in-pixel ROI. Defaults to `5um`.
+* `inpixel_bin_size`: Parameter to set the bin size of the in-pixel 2D efficiency histogram. This should be given in units of distance. Different bin sizes can be set for the x and y axis. Defaults to `1.0um`, `1.0um`.
+* `inpixel_cut_edge`: Parameter to exclude tracks going within a cut-distance to the pixel edge. Effectively defines an in-pixel ROI. Different cuts can be set for the x and y axis. Defaults to `5um`, `5um`.
 * `masked_pixel_distance_cut`: Distance (in pixels) to exclude tracks passing close to masked pixel. Defaults to `1`.
 * `require_associated_cluster_on`: Names of detectors which are required to have an associated cluster to the telescope tracks. Detectors listed here must be marked as `role = DUT` in the detector configuration file. Only tracks satisfying this requirement are accepted for the efficiency measurement. If empty, no detector is required. Default is empty.
 * `spatial_cut_sensoredge`: Parameter to discard telescope tracks at the sensor edges in fractions of pixel pitch. Defaults to `1`.
+* `fake_rate_distance`: Distance cut used in the fake rate estimate. Given in units of the pixel pitch. Defaults to `2`.
+* `fake_rate_method`: Method used in the fake rate estimate. The main idea is to look for clusters and hits that are far away from reconstructed tracks. Those are defined as fake, which neglects effects of tracking in-efficiency. There are two slightly different methods. The `RADIUS` method considers DUT clusters without reconstructed track in a radius of `fake_rate_distance` pixel pitches around them as fake. The `EDGE` method looks for events without tracks intercepting the DUT within its active area plus `fake_rate_distance` pixel pitches in each direction, and considers all DUT activity in these events as fake. The former method is intended for large DUTs, the latter for small ones. Defaults to `RADIUS`.
+* `n_charge_bins`: Number of bins for pixel and cluster charge distributions. Defaults to `1000`.
+* `charge_histo_range`: Maximum value for pixel and cluster charge distributions. Defaults to `1000`.
 
 ### Plots produced
 
@@ -41,6 +49,12 @@ For the DUT, the following plots are produced:
   * Histograms of the row and column difference of the matched and non-matched track time to the previous track
   * Histograms of the time difference of a matched (non-matched) cluster to a previous hit (not matter if noise or track)
   * Distribution of cluster-track distances
+
+* Fake rate plots (if enabled):
+  * Number of fake pixels per event as histogram, map, and as function of time.
+  * Number of fake clusters per event as histogram.
+  * Pixel and cluster charge distributions for fake pixels and clusters.
+  * Cluster size of fake clusters as histogram.
 
 * Other:
   * Value of total efficiency as `TEfficiency` including (asymmetric) error bars (total and restricted to in-pixel ROI)

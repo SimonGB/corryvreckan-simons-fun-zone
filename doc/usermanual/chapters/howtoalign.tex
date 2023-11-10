@@ -277,3 +277,11 @@ iterations = 4
 align_orientation=false #<-- disable rotational alignment
 align_position=true
 \end{minted}
+
+For long runs it can occur that the DUT position drifts with respect to the beam telescope, e.g. due to a mismatch of thermal expansion coefficients. For such cases it is possible to add functions describing the drift to the detector configuration file, as disussed in section~\ref{sec:alignTimeDep}. The following procedure is suggested to perform time-dependent alignment:
+\begin{enumerate}
+\item Run the alignment modules on a small number of events, such that statistics is sufficient for alignment but the relative drifts are negligible.
+\item Process the full run without using alignment modules.
+\item Check \command{residualsXVsEventTime} and \command{residualsYVsEventTime} in the \command{[AnalysisDUT]} module and fit an arbitrary function describing the profile, choosing an appropriate binning (so as not to artificially improve the residual width).
+\item Pass the fitted functions to corry, as discussed in section~\ref{sec:alignTimeDep}, and re-process the run.
+\end{enumerate}

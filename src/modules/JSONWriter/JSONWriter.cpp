@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "JSONWriter.h"
@@ -78,6 +79,8 @@ StatusCode JSONWriter::run(const std::shared_ptr<Clipboard>& clipboard) {
 
                 auto objects = std::static_pointer_cast<ObjectVector>(detector_block.second);
                 for(auto& object : *objects) {
+                    // Generate TRef history:
+                    object->petrifyHistory();
                     *output_file_ << TBufferJSON::ToJSON(object.get());
                     // add delimiter for all but the last element
                     if(object == objects->back() && detector_block == *(--block.second.end()) && block == *(--data.end())) {

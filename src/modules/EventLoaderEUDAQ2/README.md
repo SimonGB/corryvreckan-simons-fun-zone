@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # EventLoaderEUDAQ2
 **Maintainer**: Jens Kroeger (<jens.kroeger@cern.ch>), Simon Spannagel (<simon.spannagel@cern.ch>)  
 **Module Type**: *DETECTOR*  
@@ -93,6 +97,7 @@ In addition, the calibration file of the detector specified in the geometry conf
 * `ignore_bore`: Boolean to completely ignore the Begin-of-Run event (BORE) from EUDAQ2. Default value is `true`.
 * `veto_triggers`: Flag to signal that no further triggers should be added to events that already have one or more triggers defined. Defaults to `false`.
 * `adjust_event_times`: Matrix that allows the user to shift the event start/end of all different types of EUDAQ events before comparison to any other Corryvreckan data. The first entry of each row specifies the data type, the second is the offset which is added to the event start and the third entry is the offset added to the event end. A usage example is shown below, double brackets are required if only one entry is provided.
+* `discard_raw_events`: Array which contains valid EUDAQ2 raw event descriptions which should be filtered out. If left empty, all raw events contained in the file will be decoded and the detector information is checked as described above. All event types listed in this parameter are discarded already prior to decoding.
 * `buffer_depth`: Depth of buffer in which EUDAQ2 `StandardEvents` are timesorted. This algorithm only works for `StandardEvents` with well-defined timestamps. Setting it to `0` disables timesorting. Default is `0`.
 * `shift_triggers`: Shift trigger ID of this device with respect to the IDs stored in the Corryrveckan Event. This allows to correct trigger ID offsets between different devices such as the TLU and MIMOSA26. Note that if using the module `EventDefinitionM26` the same value for `shift_triggers` needs to be passed in both cases. Defaults to `0`.
 * `eudaq_loglevel`: Verbosity level of the EUDAQ logger instance of the converter module. Possible options are, in decreasing severity, `USER`, `ERROR`, `WARN`, `INFO`, `EXTRA` and `DEBUG`. The default level is `ERROR`. Please note that the verbosity can only be changed globally, i.e. when using multiple instances of `EventLoaderEUDAQ2`, the last occurrence will determine the (global) value of this parameter.

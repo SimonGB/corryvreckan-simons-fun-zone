@@ -1,4 +1,5 @@
 // It contains LUT for lfsr13 counter
+
 #include "clicpix2_frameDecoder.hpp"
 
 using namespace caribou;

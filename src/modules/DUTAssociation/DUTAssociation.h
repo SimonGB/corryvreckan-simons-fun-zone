@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef DUTAssociation_H
@@ -39,6 +40,7 @@ namespace corryvreckan {
         std::shared_ptr<Detector> m_detector;
         double time_cut_;
         ROOT::Math::XYVector spatial_cut_;
+        bool elliptic_cut_;
         bool use_cluster_centre_;
 
         TH1F* hCutHisto;
@@ -56,6 +58,12 @@ namespace corryvreckan {
         TH1D* hDistY_2px;
         TH1D* hDistX_3px;
         TH1D* hDistY_3px;
+        TH2D* hDist2D;
+        // Plots in polar coordinates
+        TH1D* hDistR{};
+        TH1D* hDistPhi{};
+        TH1D* hAssocDistR{};
+        TH1D* hAssocDistPhi{};
     };
 } // namespace corryvreckan
 #endif // DUTAssociation_H

@@ -6,10 +6,13 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "AlignmentDUTResidual.h"
 
+#include <TFormula.h>
+#include <TMath.h>
 #include <TProfile.h>
 #include <TVirtualFitter.h>
 
@@ -19,6 +22,8 @@ using namespace corryvreckan;
 TrackVector AlignmentDUTResidual::globalTracks;
 std::shared_ptr<Detector> AlignmentDUTResidual::globalDetector;
 ThreadPool* AlignmentDUTResidual::thread_pool;
+std::shared_ptr<TFormula> AlignmentDUTResidual::formula_residual_x;
+std::shared_ptr<TFormula> AlignmentDUTResidual::formula_residual_y;
 
 AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector) {
@@ -31,11 +36,14 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     config_.setDefault<std::string>("align_orientation_axes", "xyz");
     config_.setDefault<size_t>("max_associated_clusters", 1);
     config_.setDefault<double>("max_track_chi2ndof", 10.);
+    config_.setDefault<double>("spatial_cut_sensoredge", 0.);
     config_.setDefault<unsigned int>("workers", std::max(std::thread::hardware_concurrency() - 1, 1u));
+    config_.setDefaultArray<std::string>("residuals", {"x - y", "x - y"});
 
     m_workers = config.get<unsigned int>("workers");
     nIterations = config_.get<size_t>("iterations");
     m_pruneTracks = config_.get<bool>("prune_tracks");
+    m_spatial_cut_sensoredge = config_.get<bool>("spatial_cut_sensoredge");
 
     m_alignPosition = config_.get<bool>("align_position");
     m_alignOrientation = config_.get<bool>("align_orientation");
@@ -56,6 +64,12 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
 
     m_maxAssocClusters = config_.get<size_t>("max_associated_clusters");
     m_maxTrackChi2 = config_.get<double>("max_track_chi2ndof");
+
+    // Check that we're not in a variable-alignment situation:
+    if(m_detector->hasVariableAlignment()) {
+        throw ModuleError("Cannot perform alignment procedure with variable alignment of detector \"" +
+                          m_detector->getName() + "\"");
+    }
 
     LOG(INFO) << "Aligning detector \"" << m_detector->getName() << "\"";
 }
@@ -79,6 +93,16 @@ void AlignmentDUTResidual::initialize() {
     title = detname + " Residual profile dX/y;row;x_{track}-x [#mum]";
     profile_dX_Y =
         new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
+
+    // Add residuals in R and Phi if detector is polar
+    if(m_detector->is<PolarDetector>()) {
+        title = detname + " Residuals r;r_{track}-r [um];events";
+        residualsRPlot = new TH1F("residualsR", title.c_str(), 1000, -50000, 50000);
+        title = detname + " Residuals #phi;#phi_{track}-#phi [#murad];events";
+        residualsPhiPlot = new TH1F("residualsPhi", title.c_str(), 800, -2000, 2000);
+    }
+
+    SetResidualsFunctions();
 }
 
 StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -87,7 +111,7 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
     auto tracks = clipboard->getData<Track>();
 
     TrackVector alignmenttracks;
-    std::vector<Cluster*> alignmentclusters;
+    std::map<std::string, std::vector<Cluster*>> alignmentclusters;
 
     // Make a local copy and store it
     for(auto& track : tracks) {
@@ -95,6 +119,10 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
         // Do not put tracks without clusters on the DUT to the persistent storage
         if(associated_clusters.empty()) {
             LOG(TRACE) << "Discarding track for DUT alignment since no cluster associated";
+            continue;
+        }
+        // remove tracks at the sensor edge
+        if(!m_detector->hasIntercept(track.get(), m_spatial_cut_sensoredge)) {
             continue;
         }
 
@@ -119,7 +147,9 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
         // Keep this track on persistent storage for alignment:
         alignmenttracks.push_back(track);
         // Append associated clusters to the list we want to keep:
-        alignmentclusters.insert(alignmentclusters.end(), associated_clusters.begin(), associated_clusters.end());
+        for(const auto& cluster : associated_clusters) {
+            alignmentclusters[m_detector->getName()].push_back(cluster);
+        }
 
         // Find the cluster that needs to have its position recalculated
         for(auto& associated_cluster : associated_clusters) {
@@ -133,8 +163,24 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             auto intercept = m_detector->globalToLocal(trackIntercept);
 
             // Calculate the local residuals
-            double residualX = intercept.X() - position.X();
-            double residualY = intercept.Y() - position.Y();
+            double residualX = formula_residual_x->Eval(intercept.X(), position.X());
+            double residualY = formula_residual_y->Eval(intercept.Y(), position.Y());
+
+            // Recalculate residuals for polar detectors
+            if(m_detector->is<PolarDetector>()) {
+                auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
+                // Convert cluster and intercept positions to polar coordinates
+                auto cluster_polar = polar_det->getPolarPosition(column, row);
+                auto intercept_polar = polar_det->getPolarPosition(intercept);
+
+                // Calculate polar residuals
+                auto residualPhi = intercept_polar.phi() - cluster_polar.phi();
+                auto residualR = intercept_polar.r() - cluster_polar.r();
+
+                // Fill polar residual histograms
+                residualsRPlot->Fill(static_cast<double>(Units::convert(residualR, "um")));
+                residualsPhiPlot->Fill(static_cast<double>(Units::convert(residualPhi, "urad")));
+            }
 
             // Fill the alignment residual profile plots
             residualsXPlot->Fill(static_cast<double>(Units::convert(residualX, "um")));
@@ -144,12 +190,20 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             profile_dX_X->Fill(column, static_cast<double>(Units::convert(residualX, "um")), 1);
             profile_dX_Y->Fill(row, static_cast<double>(Units::convert(residualX, "um")), 1);
         }
+
+        // Since we need to refit the full track, also store the track clusters:
+        for(const auto& cluster : track->getClusters()) {
+            alignmentclusters[cluster->detectorID()].push_back(cluster);
+        }
     }
 
     // Store all tracks we want for alignment on the permanent storage:
     clipboard->putPersistentData(alignmenttracks, m_detector->getName());
-    // Copy the objects of all associated clusters on the clipboard to persistent storage:
-    clipboard->copyToPersistentData(alignmentclusters, m_detector->getName());
+
+    // Copy the objects of all track clusters on the clipboard to persistent storage:
+    for(auto& clusters : alignmentclusters) {
+        clipboard->copyToPersistentData(clusters.second, clusters.first);
+    }
 
     // Otherwise keep going
     return StatusCode::Success;
@@ -163,12 +217,8 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 
     static size_t fitIterations = 0;
 
-    // Pick up new alignment conditions
-    AlignmentDUTResidual::globalDetector->displacement(XYZPoint(par[0], par[1], par[2]));
-    AlignmentDUTResidual::globalDetector->rotation(XYZVector(par[3], par[4], par[5]));
-
     // Apply new alignment conditions
-    AlignmentDUTResidual::globalDetector->update();
+    AlignmentDUTResidual::globalDetector->update(XYZPoint(par[0], par[1], par[2]), XYZVector(par[3], par[4], par[5]));
     LOG(DEBUG) << "Updated parameters for " << AlignmentDUTResidual::globalDetector->getName();
 
     // The chi2 value to be returned
@@ -179,12 +229,25 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
     std::vector<std::shared_future<double>> result_futures;
     auto track_refit = [&](auto& track) {
         LOG(TRACE) << "track has chi2 " << track->getChi2();
-
-        // Update geometry of plane with new detector geometry
-        track->registerPlane(AlignmentDUTResidual::globalDetector->getName(),
-                             AlignmentDUTResidual::globalDetector->origin().z(),
-                             AlignmentDUTResidual::globalDetector->materialBudget(),
-                             AlignmentDUTResidual::globalDetector->toLocal());
+        // Update geometry of plane with new detector geometry and refit to obtain new track state, need to check if the fit
+        // has failed in previous iteration
+        if(track->isFitted()) {
+            track->updatePlane(AlignmentDUTResidual::globalDetector->getName(),
+                               AlignmentDUTResidual::globalDetector->origin().z(),
+                               AlignmentDUTResidual::globalDetector->materialBudget(),
+                               AlignmentDUTResidual::globalDetector->toLocal());
+        } else {
+            track->registerPlane(AlignmentDUTResidual::globalDetector->getName(),
+                                 AlignmentDUTResidual::globalDetector->origin().z(),
+                                 AlignmentDUTResidual::globalDetector->materialBudget(),
+                                 AlignmentDUTResidual::globalDetector->toLocal());
+            // and fit again
+            track->fit();
+        }
+        if(!track->isFitted()) {
+            LOG(WARNING) << "Refit failed - track will be discarded for this alignment step ";
+            return 0.0;
+        }
 
         double track_result = 0.;
 
@@ -193,24 +256,27 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 
             // Get the track intercept with the detector
             auto position = associatedCluster->local();
-            auto trackIntercept = AlignmentDUTResidual::globalDetector->getIntercept(track.get());
-            auto intercept = AlignmentDUTResidual::globalDetector->globalToLocal(trackIntercept);
+            auto intercept = AlignmentDUTResidual::globalDetector->getLocalIntercept(track.get());
 
-            /*
-            // Recalculate the global position from the local
-            auto positionLocal = associatedCluster->local();
-            auto position = AlignmentDUTResidual::globalDetector->localToGlobal(positionLocal);
-
-            // Get the track intercept with the detector
-            ROOT::Math::XYZPoint intercept = track->intercept(position.Z());
-            */
-
-            // Calculate the residuals
-            double residualX = intercept.X() - position.X();
-            double residualY = intercept.Y() - position.Y();
+            // Calculate the residuals in local coordinates
+            double residualX = formula_residual_x->Eval(intercept.X(), position.X());
+            double residualY = formula_residual_y->Eval(intercept.Y(), position.Y());
 
             double errorX = associatedCluster->errorX();
             double errorY = associatedCluster->errorY();
+
+            // Recalculate for polar detectors
+            if(AlignmentDUTResidual::globalDetector->is<PolarDetector>()) {
+                auto polar_det = std::dynamic_pointer_cast<PolarDetector>(AlignmentDUTResidual::globalDetector);
+                // Convert cluster and intercept positions to polar coordinates
+                auto cluster_polar = polar_det->getPolarPosition(associatedCluster->column(), associatedCluster->row());
+                auto intercept_polar = polar_det->getPolarPosition(intercept);
+
+                // Interpreting (Phi,R) as (X,Y)
+                residualX = intercept_polar.phi() - cluster_polar.phi();
+                residualY = intercept_polar.r() - cluster_polar.r();
+            }
+
             LOG(TRACE) << "- track has intercept (" << intercept.X() << "," << intercept.Y() << ")";
             LOG(DEBUG) << "- cluster has position (" << position.X() << "," << position.Y() << ")";
 
@@ -235,6 +301,50 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
     LOG_PROGRESS(INFO, "t") << "Refit of " << result_futures.size() << " track, MINUIT iteration " << fitIterations;
     fitIterations++;
     AlignmentDUTResidual::thread_pool->wait();
+}
+
+void AlignmentDUTResidual::SetResidualsFunctions() {
+    // Get definition of residuals, default x-y
+    auto m_residuals = config_.getArray<std::string>("residuals");
+    // Check size of array
+    if(m_residuals.size() != 2) {
+        throw InvalidValueError(
+            config_, "residuals", "Both and only the residual_x and residual_y functions must be defined");
+    }
+    LOG(DEBUG) << "Definition of residual_x: " << m_residuals.at(0).c_str()
+               << ", definition of residual_y: " << m_residuals.at(1).c_str()
+               << " [x = track intercept, y = cluster position]";
+    // Get parameters for the new definition of residuals
+    auto m_parameters_residuals = config_.getArray<double>("parameters_residuals", {});
+    // Define residual
+    AlignmentDUTResidual::formula_residual_x =
+        std::make_shared<TFormula>("formula_residual_x", m_residuals.at(0).c_str(), false);
+    AlignmentDUTResidual::formula_residual_y =
+        std::make_shared<TFormula>("formula_residual_y", m_residuals.at(1).c_str(), false);
+    // Check formulas
+    if(!formula_residual_x->IsValid() || !formula_residual_y->IsValid()) {
+        throw InvalidValueError(config_, "residuals", "Expression is not a valid function");
+    }
+    // Check number of parameters
+    const auto N_params_x = formula_residual_x->GetNpar();
+    const auto N_params_y = formula_residual_y->GetNpar();
+    if(static_cast<size_t>(N_params_x + N_params_y) != m_parameters_residuals.size()) {
+        throw InvalidValueError(
+            config_,
+            "parameters_residuals",
+            "The number of function parameters does not line up with the amount of parameters in the functions.");
+    }
+
+    // Apply parameters to the functions
+    for(auto n = 0; n < N_params_x; ++n) {
+        formula_residual_x->SetParameter(n, m_parameters_residuals.at(static_cast<size_t>(n)));
+        LOG(DEBUG) << "residual_x: Parameter [" << n << "] = " << m_parameters_residuals.at(static_cast<size_t>(n));
+    }
+    for(auto n = 0; n < N_params_y; ++n) {
+        formula_residual_y->SetParameter(n, m_parameters_residuals.at(static_cast<size_t>(n + N_params_x)));
+        LOG(DEBUG) << "residual_y: Parameter [" << n
+                   << "] = " << m_parameters_residuals.at(static_cast<size_t>(n + N_params_x));
+    }
 }
 
 void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) {
@@ -349,11 +459,9 @@ void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& cl
         residualFitter->ExecuteCommand("MIGRAD", arglist, 2);
 
         // Set the alignment parameters of this plane to be the optimised values from the alignment
-        m_detector->displacement(
-            XYZPoint(residualFitter->GetParameter(0), residualFitter->GetParameter(1), residualFitter->GetParameter(2)));
-        m_detector->rotation(
+        m_detector->update(
+            XYZPoint(residualFitter->GetParameter(0), residualFitter->GetParameter(1), residualFitter->GetParameter(2)),
             XYZVector(residualFitter->GetParameter(3), residualFitter->GetParameter(4), residualFitter->GetParameter(5)));
-        m_detector->update();
 
         // Store corrections:
         shiftsX.push_back(static_cast<double>(Units::convert(m_detector->displacement().X() - old_position.X(), "um")));

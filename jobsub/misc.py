@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2022-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 import logging
 
 def parseIntegerString(inputstr=""):
@@ -119,7 +122,7 @@ def createSteeringFile(log, args, steering_string, suffix):
     # Get "jobtask" as basename of the configuration file:
     jobtask = os.path.splitext(os.path.basename(args.conf_file))[0]
     # Write the steering file:
-    filename = jobtask + "_run" + suffix
+    filename = jobtask + "_" + suffix
     log.info("filename = " + filename)
     steering_file = open(filename+".conf", "w")
 
@@ -127,7 +130,7 @@ def createSteeringFile(log, args, steering_string, suffix):
         steering_file.write(steering_string)
     finally:
         steering_file.close()
-    
+
     return filename
 
 def zipLogs(path, filename):
@@ -160,7 +163,9 @@ def poolChecker(results, heartbeat = 1):
     """  checks the status of parallel pool """
     import time
     log = logging.getLogger('jobsub')
-    if None not in results:
+    if results == []:
+        log.warning("There were problems with the submission")
+    elif None not in results:
         # parallel loop checker from https://stackoverflow.com/a/70666333
         while True:
             log.debug("Heartbeat")

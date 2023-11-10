@@ -1,4 +1,4 @@
-// Implementation of the CLICpix2 frame decoder
+// Implementation of the CLICpix2 frame decoer
 
 #include "clicpix2_frameDecoder.hpp"
 #include <cmath>

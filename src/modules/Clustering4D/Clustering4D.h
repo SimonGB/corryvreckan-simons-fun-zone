@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CLUSTERING4D_H
@@ -14,6 +15,7 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TProfile2D.h>
 #include <iostream>
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
@@ -52,6 +54,11 @@ namespace corryvreckan {
         TH2F* clusterPositionLocal;
         TH1F* clusterTimes;
         TH1F* clusterMultiplicity;
+
+        TH1F* clusterUncertaintyX;
+        TH1F* clusterUncertaintyY;
+        TProfile2D* clusterUncertaintyXvsXY;
+        TProfile2D* clusterUncertaintyYvsXY;
         TH1F* pxTimeMinusSeedTime;
         TH2F* pxTimeMinusSeedTime_vs_pxCharge;
         TH2F* pxTimeMinusSeedTime_vs_pxCharge_2px;

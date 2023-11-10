@@ -6,9 +6,11 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Track.hpp"
+#include "core/utils/log.h"
 #include "exceptions.h"
 
 #include "core/utils/type.h"
@@ -124,6 +126,14 @@ void Track::print(std::ostream& out) const {
 
 void Track::setParticleMomentum(double p) {
     momentum_ = p;
+}
+
+void Track::setParticleCharge(int q) {
+    charge_ = q;
+}
+
+void Track::setParticleBetaFactor(double b) {
+    beta_ = b;
 }
 
 double Track::getChi2() const {
@@ -243,6 +253,28 @@ double Track::getMaterialBudget(const std::string& detectorID) const {
 }
 
 void Track::registerPlane(const std::string& name, double z, double x0, Transform3D g2l) {
+    if(isFitted_) {
+        throw TrackError(typeid(Track),
+                         " cannot register plane after track has been fitted. Use updatePlane to trigger track refit");
+    }
+
+    Plane p(name, z, x0, g2l);
+    auto pl =
+        std::find_if(planes_.begin(), planes_.end(), [&p](const Plane& plane) { return plane.getName() == p.getName(); });
+    if(pl == planes_.end()) {
+        planes_.push_back(std::move(p));
+        LOG(TRACE) << "Register new plane " << planes_.back().getName();
+    } else {
+        *pl = std::move(p);
+        LOG(TRACE) << "Plane " << p.getName() << " was already registered for this track";
+    }
+}
+
+void Track::updatePlane(const std::string& name, double z, double x0, Transform3D g2l) {
+    if(!isFitted_) {
+        throw TrackError(typeid(Track), " cannot update plane before track has been fitted.");
+    }
+
     Plane p(name, z, x0, g2l);
     auto pl =
         std::find_if(planes_.begin(), planes_.end(), [&p](const Plane& plane) { return plane.getName() == p.getName(); });
@@ -251,6 +283,12 @@ void Track::registerPlane(const std::string& name, double z, double x0, Transfor
     } else {
         *pl = std::move(p);
     }
+
+    this->fit();
+}
+
+std::vector<Track::Plane> Track::getPlanes() {
+    return planes_;
 }
 
 const Track::Plane* Track::get_plane(const std::string& detetorID) const {

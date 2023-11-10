@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # AlignmentTrackChi2
 **Maintainer**: Daniel Hynds (<daniel.hynds@cern.ch>), Simon Spannagel (<simon.spannagel@cern.ch>)  
 **Module Type**: *GLOBAL*  
@@ -17,6 +21,8 @@ For each telescope detector except the reference plane, this method moves the de
 * `max_associated_clusters`: Maximum number of associated clusters per track allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `1`.
 * `max_track_chi2ndof`: Maximum track chi^2 value allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `10.0`.
 * `workers`: Specify the number of workers to use in total, should be strictly larger than zero. Defaults to the number of native threads available on the system minus one, if this can be determined, otherwise one thread is used.
+* `fixed_planes`: Optional user-defined fixed planes in addition to reference plane. When `fixed_planes = detector_name`, the geometry of the selected detector will not be modified.
+
 
 ### Plots produced
 For each detector, the following plots are produced:

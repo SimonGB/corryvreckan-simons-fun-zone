@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_TRACK_H
@@ -19,6 +20,7 @@
 #include <TRef.h>
 
 #include "Cluster.hpp"
+#include "exceptions.h"
 
 namespace corryvreckan {
 
@@ -104,6 +106,18 @@ namespace corryvreckan {
          * @param momentum Momentum of the particle
          */
         void setParticleMomentum(double momentum);
+
+        /**
+         * @brief Set the charge number of the particle
+         * @param charge Charge number of the particle
+         */
+        void setParticleCharge(int charge);
+
+        /**
+         * @brief Set the Lorentz beta factor of the particle
+         * @param beta Lorentz beta factor of the particle
+         */
+        void setParticleBetaFactor(double beta);
 
         /**
          * @brief Get the chi2 of the track fit
@@ -248,6 +262,7 @@ namespace corryvreckan {
         virtual void setVolumeScatter(double length) = 0;
 
         void registerPlane(const std::string& name, double z, double x0, Transform3D g2l);
+        void updatePlane(const std::string& name, double z, double x0, Transform3D g2l);
 
         class Plane {
         public:
@@ -306,6 +321,7 @@ namespace corryvreckan {
         void loadHistory() override;
         void petrifyHistory() override;
 
+        std::vector<Plane> getPlanes();
         const Plane* get_plane(const std::string& detetorID) const;
         std::vector<PointerWrapper<Cluster>> track_clusters_;
         std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;
@@ -320,6 +336,8 @@ namespace corryvreckan {
         double chi2ndof_;
         bool isFitted_{};
         double momentum_{-1};
+        double beta_{1};
+        int charge_{1};
 
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(Track, 12)

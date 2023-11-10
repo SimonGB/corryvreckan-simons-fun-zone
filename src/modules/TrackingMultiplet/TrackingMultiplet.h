@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_TRACKINGMULTIPLET_H
@@ -29,6 +30,8 @@ namespace corryvreckan {
 
     // enum to differentiate between up- and downstream arm in functions
     enum streams { upstream, downstream };
+    // enum to differentiate between all and chosen tracks in functions
+    enum selection { all, chosen };
 
     class TrackingMultiplet : public Module {
 
@@ -51,7 +54,7 @@ namespace corryvreckan {
         /**
          * @brief Fill histograms for upstream or downstream tracklets
          */
-        void fill_tracklet_histograms(const streams& stream, TrackVector);
+        void fill_tracklet_histograms(const streams& stream, const selection& selected, TrackVector tracklets);
 
     private:
         // Configuration members
@@ -60,25 +63,33 @@ namespace corryvreckan {
 
         std::vector<std::shared_ptr<Detector>> m_upstream_detectors;
         std::vector<std::shared_ptr<Detector>> m_downstream_detectors;
+        std::vector<std::shared_ptr<Detector>> m_require_detectors;
 
         double scatterer_position_;
         double scatterer_matching_cut_;
         double isolation_cut_;
         double momentum_;
+        double beta_;
+        int charge_;
         size_t min_hits_upstream_;
         size_t min_hits_downstream_;
+        bool refit_gbl_{};
+        bool unique_cluster_usage_{};
 
         // track model for up/downstream fit
         std::string track_model_;
+        std::string timestamp_from_;
+        std::vector<std::string> require_detectors_;
+        std::vector<std::string> exclude_from_seed_;
 
         // Member histograms
-        std::map<streams, TH1F*> trackletMultiplicity;
-        std::map<streams, TH1F*> clustersPerTracklet;
+        std::map<std::string, TH1F*> trackletMultiplicity;
+        std::map<std::string, TH1F*> clustersPerTracklet;
 
-        std::map<streams, TH1F*> trackletAngleX;
-        std::map<streams, TH1F*> trackletAngleY;
-        std::map<streams, TH1F*> trackletPositionAtScattererX;
-        std::map<streams, TH1F*> trackletPositionAtScattererY;
+        std::map<std::string, TH1F*> trackletAngleX;
+        std::map<std::string, TH1F*> trackletAngleY;
+        std::map<std::string, TH1F*> trackletPositionAtScattererX;
+        std::map<std::string, TH1F*> trackletPositionAtScattererY;
 
         std::map<std::string, TH1F*> residualsX_local;
         std::map<std::string, TH1F*> residualsY_local;
@@ -88,6 +99,8 @@ namespace corryvreckan {
         TH1F* multipletMultiplicity;
         TH1F* trackChi2;
         TH1F* trackChi2ndof;
+        TH1F* trackChi2_refit;
+        TH1F* trackChi2ndof_refit;
 
         TH1F* matchingDistanceAtScattererX;
         TH1F* matchingDistanceAtScattererY;
@@ -100,6 +113,11 @@ namespace corryvreckan {
 
         // Function to calculate the weighted average timestamp from the clusters of a track
         double calculate_average_timestamp(const Track* track);
+        // Function to refit the multiplet tracks at the end, using GBL
+        TrackVector refit(MultipletVector multiplets);
+
+        bool duplicated_hit(const Track* a, const Track* b);
+        template <class T> T remove_duplicate(T tracks);
     };
 
 } // namespace corryvreckan

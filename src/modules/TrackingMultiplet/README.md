@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # TrackingMultiplet
 **Maintainer**: Paul Schuetze (paul.schuetze@desy.de)
 **Module Type**: *GLOBAL*  
@@ -28,13 +32,19 @@ For each upstream tracklet, the downstream tracklet with the lowest matching dis
 * `time_cut_abs`: Specifies an absolute value for the maximum time difference allowed between clusters and an upstream or downstream tracklet for association to the tracklet. Absolute and relative time cuts are mutually exclusive. No default value.
 * `spatial_cut_rel`: Factor by which the `spatial_resolution` in x and y of each detector plane will be multiplied. These calculated value are defining an ellipse which is then used as the maximum distance in the XY plane allowed between clusters and an upstream or downstream tracklet for association to the tracklet. This allows the spatial cuts between different planes to be detector appropriate. By default, a relative spatial cut is applied. Absolute and relative spatial cuts are mutually exclusive. Defaults to `3.0`.
 * `spatial_cut_abs`: Specifies a set of absolute value (x and y) which defines an ellipse for the maximum spatial distance in the XY plane between clusters and an upstream or downstream tracklet for association to the tracklet. Absolute and relative spatial cuts are mutually exclusive. No default value.
-* `track_model`: Specifies the track model used for the up and downstream
-arms. Defaults to `straightline`
+* `exclude_from_seed`: Names of detectors which should not be used as the first detector for the creation of the straigh line track seed, even if they are used in the tracking. This can be useful to build better seed tracks e.g. if the first plane in z has a much worse spatial resolution than the following tracking planes. Default is empty.
+* `require_detectors`: Names of detectors which are required to have a cluster on the track. If a track does not have a cluster from all detectors listed here, it is rejected. If empty, no detector is required. Default is empty.
+* `timestamp_from`: Defines the detector which provides the track timestamp. This detector is by default added to `required_detector`. If empty, the average timestamp of upstream and downstream tracklet will be used. Empty by default.
+* `track_model`: Specifies the track model used for the up and downstream arms. Defaults to `straightline`
 * `momentum`: Defines the beam momentum. Only required if `track_model="gbl"`
+* `lorentz_beta`: Lorentz beta factor. For low momentum particles, it impacts the estimation of the scattering angle. Defaults to `1`.
+* `particle_charge`: Particle charge number. Defaults to `1`.
+* `refit_gbl`: Refit the multiplet tracks with GBL. Defaults to false.
+* `unique_cluster_usage`: Only use a cluster for one track - in the case of multiple assignments, the track with the best chi2/ndof is kept. Defaults to `false`
 
 ### Plots produced
 
-For both upstream and downstream tracklets, the following plots are produced:
+For both upstream and downstream tracklets (multiplet candidates and accepted tracks), the following plots are produced:
 
 * Histogram of the tracklets per event
 * Histogram of the number of clusters per tracklet
@@ -43,12 +53,13 @@ For both upstream and downstream tracklets, the following plots are produced:
 
 The following plots are produced only once:
 
-* Histogram of the number of accepted multiplets per event
 * Histograms of the matching distance of multiplet candidates in X/Y
 * Histograms of the matching distance of accepted multiplets in X/Y
 * Histograms of kink angles of accepted multiplets in X/Y
+* Histogram of the number of accepted multiplets per event
+* Histogram of the chi2(ndf) of the accepted tracks
 
-For each detector the following plots are produced:
+For each detector the following plots are produced both for multiplet candidates and accepted tracks:
 
 * Histograms of the global and local track residual in X/Y.
 

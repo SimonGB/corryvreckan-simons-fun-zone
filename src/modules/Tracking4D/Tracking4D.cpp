@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Tracking4D.h"
@@ -29,6 +30,8 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     config_.setDefault<bool>("exclude_dut", true);
     config_.setDefault<std::string>("track_model", "straightline");
     config_.setDefault<double>("momentum", Units::get<double>(5, "GeV"));
+    config_.setDefault<double>("lorentz_beta", 1);
+    config_.setDefault<int>("particle_charge", 1);
     config_.setDefault<double>("max_plot_chi2", 50.0);
     config_.setDefault<double>("volume_radiation_length", Units::get<double>(304.2, "m"));
     config_.setDefault<bool>("volume_scattering", false);
@@ -62,6 +65,8 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
 
     track_model_ = config_.get<std::string>("track_model");
     momentum_ = config_.get<double>("momentum");
+    beta_ = config_.get<double>("lorentz_beta");
+    charge_ = config_.get<int>("particle_charge");
     max_plot_chi2_ = config_.get<double>("max_plot_chi2");
     volume_radiation_length_ = config_.get<double>("volume_radiation_length");
     use_volume_scatterer_ = config_.get<bool>("volume_scattering");
@@ -78,6 +83,11 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     // print a warning if beam energy < 1 GeV
     if(momentum_ < Units::get<double>(1, "GeV")) {
         LOG(WARNING) << "Beam energy is less than 1 GeV";
+    }
+
+    // warning if wrong beta
+    if(beta_ <= 0 || beta_ > 1) {
+        throw InvalidValueError(config_, "lorentz_beta", "Lorentz beta must be larger than 0 and smaller than 1!");
     }
 }
 
@@ -129,6 +139,14 @@ void Tracking4D::initialize() {
                                                  detector->nPixels().Y(),
                                                  0,
                                                  detector->nPixels().Y());
+        global_intersects_[detectorID] = new TH2F("global_intersect",
+                                                  "global intersect, global intercept x [mm];global intercept y [mm]",
+                                                  600,
+                                                  -30,
+                                                  30,
+                                                  600,
+                                                  -30,
+                                                  30);
 
         title = detectorID + "local track resolution x; resolution x [mm] ;events";
         local_resolution_x_[detectorID] =
@@ -204,10 +222,10 @@ void Tracking4D::initialize() {
         title = detectorID + "global  Residual X, cluster column width 1;x-x_{track} [mm];events";
         residualsXwidth1_global[detectorID] = new TH1F(
             "GlobalResidualsXwidth1", title.c_str(), 500, -3 * detector->getPitch().X(), 3 * detector->getPitch().X());
-        title = detectorID + "global  Residual X, cluster column width  2;x-x_{track} [mm];events";
+        title = detectorID + "global  Residual X, cluster column width 2;x-x_{track} [mm];events";
         residualsXwidth2_global[detectorID] = new TH1F(
             "GlobalResidualsXwidth2", title.c_str(), 500, -3 * detector->getPitch().X(), 3 * detector->getPitch().X());
-        title = detectorID + "global  Residual X, cluster column width  3;x-x_{track} [mm];events";
+        title = detectorID + "global  Residual X, cluster column width 3;x-x_{track} [mm];events";
         residualsXwidth3_global[detectorID] = new TH1F(
             "GlobalResidualsXwidth3", title.c_str(), 500, -3 * detector->getPitch().X(), 3 * detector->getPitch().X());
         title = detectorID + " Pull X;x-x_{track}/resolution;events";
@@ -296,7 +314,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
     }
 
     // If there are no detectors then stop trying to track
-    if(trees.size() < 2) {
+    if(reference_first == reference_last) {
         // Fill histogram
         tracksPerEvent->Fill(0);
 
@@ -344,6 +362,11 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 track->setVolumeScatter(volume_radiation_length_);
             }
             track->setParticleMomentum(momentum_);
+            track->setParticleCharge(charge_);
+            track->setParticleBetaFactor(beta_);
+
+            // Fit initial trajectory guess
+            refTrack.fit();
 
             // Loop over each subsequent plane and look for a cluster within the timing cuts
             size_t detector_nr = 2;
@@ -353,8 +376,10 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     continue;
                 }
                 auto detectorID = detector->getName();
-                LOG(TRACE) << "added material budget for " << detectorID << " at z = " << detector->displacement().z();
-                refTrack.registerPlane(
+                LOG(TRACE) << "Registering detector " << detectorID << " at z = " << detector->displacement().z();
+
+                // Add plane to track and trigger re-fit:
+                refTrack.updatePlane(
                     detectorID, detector->displacement().z(), detector->materialBudget(), detector->toLocal());
                 track->registerPlane(
                     detectorID, detector->displacement().z(), detector->materialBudget(), detector->toLocal());
@@ -401,11 +426,10 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
 
                 auto neighbors = trees[detector].getAllElementsInTimeWindow(refTrack.timestamp(), timeCut);
 
-                LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window";
+                LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window on "
+                           << detectorID;
 
                 // Now look for the spatially closest cluster on the next plane
-                refTrack.fit();
-
                 PositionVector3D<Cartesian3D<double>> interceptPoint = detector->getLocalIntercept(&refTrack);
                 double interceptX = interceptPoint.X();
                 double interceptY = interceptPoint.Y();
@@ -628,6 +652,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto col = detector->getColumn(local);
             LOG(TRACE) << "Local col/row intersect of track: " << col << "\t" << row;
             local_intersects_[det]->Fill(col, row);
+
+            auto global = detector->getIntercept(track.get());
+            global_intersects_[det]->Fill(global.X(), global.Y());
 
             if(!kinkX.count(det)) {
                 LOG(WARNING) << "Skipping writing kinks due to missing init of histograms for  " << det;

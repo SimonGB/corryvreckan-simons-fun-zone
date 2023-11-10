@@ -1,0 +1,46 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Corryvreckan
+Upstream-Contact: Simon Spannagel <simon.spannagel@cern.ch>
+Source: https://gitlab.cern.ch/corryvreckan/corryvreckan
+
+Files: .gitlab/ci/ctest-to-junit.xsl
+Copyright: 2011 Ryan Pavlik <rpavlik@iastate.edu>
+License: MIT
+
+Files: 3rdparty/GeneralBrokenLines/*
+Copyright: 2011, Claus Kleinwort
+License: LGPL-2.0-only
+
+Files: doc/*
+Copyright: 2016-2022 CERN and the Corryvreckan authors
+License: CC-BY-4.0
+
+Files: src/modules/EventLoaderALiBaVa/ALiBaVa/*
+Copyright: Alibava Systems S.L.
+License: CC-BY-4.0
+
+Files: src/modules/EventLoaderCLICpix2/CLICpix2/*
+Copyright: 2016-2023 CERN and the Peary Authors
+License: LGPL-3.0-only
+
+Files: testing/*
+Copyright: 2017-2023 CERN and the Corryvreckan authors
+License: CC0-1.0 OR CC-BY-4.0
+
+Files: cmake/LATEX.cmake
+Copyright: 2004, 2015 Sandia Corporation
+License: BSD-3-Clause
+
+Files: cmake/PANDOC.cmake
+Copyright: 2015 Jeet Sukumaran
+License: BSD-3-Clause
+
+Files: jobsub/Colorer.py
+Copyright: sorin
+License: CC-BY-SA-3.0
+
+Files: jobsub/_*
+Copyright: 2016-2022 CERN and the Corryvreckan authors
+License: CC0-1.0
+
+

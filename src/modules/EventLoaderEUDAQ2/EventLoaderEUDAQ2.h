@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  *
  * Contains minimal dummy module to use as a start for the development of your own module
  *
@@ -116,6 +117,7 @@ namespace corryvreckan {
         bool sync_by_trigger_{};
         double skip_time_{};
         Matrix<std::string> adjust_event_times_;
+        std::vector<std::string> discard_raw_events_;
         int buffer_depth_;
         int shift_triggers_;
 

@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef EtaCalculation_H
@@ -40,6 +41,8 @@ namespace corryvreckan {
 
         std::shared_ptr<Detector> detector_;
         double chi2ndof_cut_;
+        bool calculate_x_;
+        bool calculate_y_;
 
         // Histograms
         TH2F* etaDistributionX_;

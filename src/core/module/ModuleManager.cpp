@@ -1,9 +1,12 @@
-/** @file
- *  @brief Interface to the core framework
- *  @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
+/**
+ * @file
+ * @brief Interface to the core framework
+ *
+ * @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 // ROOT include files
@@ -29,6 +32,7 @@
 #define CORRYVRECKAN_GLOBAL_FUNCTION "corryvreckan_module_is_global"
 #define CORRYVRECKAN_DUT_FUNCTION "corryvreckan_module_is_dut"
 #define CORRYVRECKAN_AUX_FUNCTION "corryvreckan_module_exclude_aux"
+#define CORRYVRECKAN_PASS_FUNCTION "corryvreckan_module_include_passive"
 #define CORRYVRECKAN_TYPE_FUNCTION "corryvreckan_detector_types"
 
 using namespace corryvreckan;
@@ -224,10 +228,12 @@ void ModuleManager::load_modules() {
         void* globalFunction = dlsym(loaded_libraries_[lib_name], CORRYVRECKAN_GLOBAL_FUNCTION);
         void* dutFunction = dlsym(loaded_libraries_[lib_name], CORRYVRECKAN_DUT_FUNCTION);
         void* auxFunction = dlsym(loaded_libraries_[lib_name], CORRYVRECKAN_AUX_FUNCTION);
+        void* passFunction = dlsym(loaded_libraries_[lib_name], CORRYVRECKAN_PASS_FUNCTION);
         void* typeFunction = dlsym(loaded_libraries_[lib_name], CORRYVRECKAN_TYPE_FUNCTION);
 
         // If the global function was not found, throw an error
-        if(globalFunction == nullptr || dutFunction == nullptr || auxFunction == nullptr || typeFunction == nullptr) {
+        if(globalFunction == nullptr || dutFunction == nullptr || auxFunction == nullptr || passFunction == nullptr ||
+           typeFunction == nullptr) {
             LOG(ERROR) << "Module library is invalid or outdated: required interface function not found!";
             throw corryvreckan::DynamicLibraryError(config.getName());
         }
@@ -235,6 +241,7 @@ void ModuleManager::load_modules() {
         bool global = reinterpret_cast<bool (*)()>(globalFunction)();      // NOLINT
         bool dut_only = reinterpret_cast<bool (*)()>(dutFunction)();       // NOLINT
         bool exclude_aux = reinterpret_cast<bool (*)()>(auxFunction)();    // NOLINT
+        bool include_pass = reinterpret_cast<bool (*)()>(passFunction)();  // NOLINT
         char* type_tokens = reinterpret_cast<char* (*)()>(typeFunction)(); // NOLINT
 
         std::vector<std::string> types = get_type_vector(type_tokens);
@@ -248,7 +255,8 @@ void ModuleManager::load_modules() {
         if(global) {
             mod_list.emplace_back(create_unique_module(loaded_libraries_[lib_name], config));
         } else {
-            mod_list = create_detector_modules(loaded_libraries_[lib_name], config, dut_only, exclude_aux, types);
+            mod_list =
+                create_detector_modules(loaded_libraries_[lib_name], config, dut_only, exclude_aux, include_pass, types);
         }
 
         // Loop through all created instantiations
@@ -391,8 +399,12 @@ std::pair<ModuleIdentifier, Module*> ModuleManager::create_unique_module(void* l
     return std::make_pair(identifier, module);
 }
 
-std::vector<std::pair<ModuleIdentifier, Module*>> ModuleManager::create_detector_modules(
-    void* library, Configuration& config, bool dut_only, bool exclude_aux, std::vector<std::string> types) {
+std::vector<std::pair<ModuleIdentifier, Module*>> ModuleManager::create_detector_modules(void* library,
+                                                                                         Configuration& config,
+                                                                                         bool dut_only,
+                                                                                         bool exclude_aux,
+                                                                                         bool include_pass,
+                                                                                         std::vector<std::string> types) {
     LOG(TRACE) << "Creating instantiations for module " << config.getName() << ", using generator \""
                << CORRYVRECKAN_GENERATOR_FUNCTION << "\"";
 
@@ -496,6 +508,11 @@ std::vector<std::pair<ModuleIdentifier, Module*>> ModuleManager::create_detector
             continue;
         }
 
+        if(!include_pass && detector->isPassive()) {
+            LOG(TRACE) << "Skipping instantiation \"" << identifier.getUniqueName() << "\", detector is passive";
+            continue;
+        }
+
         // Do not instantiate module if detector type is not mentioned as supported:
         auto detectortype = detector->getType();
         std::transform(detectortype.begin(), detectortype.end(), detectortype.begin(), ::tolower);
@@ -557,9 +574,18 @@ void ModuleManager::run() {
 
     while(1) {
         bool run = true;
+        bool detectors_updated = false;
 
         // Run all modules
         for(auto& module : m_modules) {
+            // Check if we should already update the detectors:
+            if(m_clipboard->isEventDefined() && !detectors_updated) {
+                for(auto& det : m_detectors) {
+                    det->update(m_clipboard->getEvent()->start());
+                }
+                detectors_updated = true;
+            }
+
             // Get current time
             auto start = std::chrono::steady_clock::now();
 

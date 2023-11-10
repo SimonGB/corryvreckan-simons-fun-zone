@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2017-2022 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: MIT
+
 # Include the dependencies
 INCLUDE_DIRECTORIES(SYSTEM ${CORRYVRECKAN_DEPS_INCLUDE_DIRS})
 
@@ -26,6 +29,8 @@ ADD_LIBRARY(CorryvreckanCore SHARED
     detector/Detector.cpp
     detector/PixelDetector.cpp
     detector/HexagonalPixelDetector.cpp
+    detector/PixelModuleDetector.cpp
+    detector/PolarDetector.cpp
     detector/exceptions.cpp
     clipboard/Clipboard.cpp
     config/ConfigManager.cpp

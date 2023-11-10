@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef AlignmentTrackChi2_H
@@ -57,6 +58,7 @@ namespace corryvreckan {
         bool m_alignOrientation;
         size_t m_maxAssocClusters;
         double m_maxTrackChi2;
+        std::vector<std::string> fixed_planes_;
 
         std::map<std::string, TGraph*> align_correction_shiftX;
         std::map<std::string, TGraph*> align_correction_shiftY;

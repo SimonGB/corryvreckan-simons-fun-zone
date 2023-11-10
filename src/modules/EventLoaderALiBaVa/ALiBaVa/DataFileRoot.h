@@ -60,6 +60,8 @@ protected: // This is ugly but comfortable
     double _cnoise_roi;
 
     EventDataBlock _data;
+    static std::string _idf;
+    double _mean_temp_pedestal = std::numeric_limits<double>::quiet_NaN();
 
 protected:
     void reset_data();
@@ -281,6 +283,8 @@ public:
     std::vector<unsigned int> get_ROI() const { return _roi; }
 
     void calc_common_mode_signal();
+
+    double get_mean_pedestal_temp() const { return _mean_temp_pedestal; }
 };
 
 #endif /* DATAFILEROOT_H_ */

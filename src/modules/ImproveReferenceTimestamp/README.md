@@ -1,3 +1,7 @@
+---
+# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+---
 # ImproveReferenceTimestamp
 **Maintainer**: Florian Pitters (<florian.pitters@cern.ch>), Jens Kroeger (<jens.kroeger@cern.ch>)  
 **Module Type**: *GLOBAL*  
