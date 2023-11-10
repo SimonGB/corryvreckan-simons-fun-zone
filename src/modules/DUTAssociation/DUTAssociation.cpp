@@ -112,8 +112,7 @@ void DUTAssociation::initialize() {
     LOG(DEBUG) << "DUT association time cut = " << Units::display(time_cut_, {"ms", "ns"});
 
     // Add additional histograms for polar detectors
-    auto polar_det = dynamic_pointer_cast<PolarDetector>(m_detector);
-    if(polar_det != nullptr) {
+    if(m_detector->is<PolarDetector>()) {
         hDistR =
             new TH1D("hDistRClusterClosest",
                      "Distance cluster center to pixel closest to track; r_{cluster} - r_{closest pixel} [mm]; # events",
@@ -148,9 +147,6 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
     auto tracks = clipboard->getData<Track>();
     // Get the DUT clusters from the clipboard
     auto clusters = clipboard->getData<Cluster>(m_detector->getName());
-
-    // Try to cast the detector to a polar detector, for further use in this function
-    auto polar_det = dynamic_pointer_cast<PolarDetector>(m_detector);
 
     // Loop over all tracks
     for(auto& track : tracks) {
@@ -191,7 +187,9 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
                 ydistance_nearest = std::min(ydistance_nearest, std::abs(interceptLocal.Y() - pixelPositionLocal.y()));
 
                 // Recalculate distances for polar detectors
-                if(polar_det != nullptr) {
+                if(m_detector->is<PolarDetector>()) {
+                    auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
+
                     // Get polar coordinates of cluster, intercept and strip
                     auto cluster_polar = polar_det->getPolarPosition(cluster->local());
                     auto intercept_polar = polar_det->getPolarPosition(interceptLocal);
@@ -255,7 +253,7 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
             }
 
             // Fill distance histograms for polar detectors
-            if(polar_det != nullptr) {
+            if(m_detector->is<PolarDetector>()) {
                 hDistPhi->Fill(static_cast<double>(Units::convert(xdistance, "mrad")));
                 hDistR->Fill(static_cast<double>(Units::convert(ydistance, "mm")));
             }
@@ -286,7 +284,7 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
             num_cluster++;
 
             // Fill distance to assoc. cluster for polar detectors
-            if(polar_det != nullptr) {
+            if(m_detector->is<PolarDetector>()) {
                 hAssocDistPhi->Fill(static_cast<double>(Units::convert(xdistance, "urad")));
                 hAssocDistR->Fill(static_cast<double>(Units::convert(ydistance, "mm")));
             }

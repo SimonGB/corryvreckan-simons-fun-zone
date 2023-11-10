@@ -470,6 +470,14 @@ namespace corryvreckan {
         virtual std::set<std::pair<int, int>>
         getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const = 0;
 
+        /**
+         * @brief Helper method to determine if this detector is of a given type
+         * The template parameter needs to be specified specifically, i.e.
+         *     if(model->is<PolarDetector>()) { }
+         * @return Boolean indication whether this detector is of the given type or not
+         */
+        template <class T> bool is() { return dynamic_cast<T*>(this) != nullptr; }
+
     protected:
         // Roles of the detector
         DetectorRole m_role;

@@ -95,8 +95,7 @@ void AlignmentDUTResidual::initialize() {
         new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
 
     // Add residuals in R and Phi if detector is polar
-    auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
-    if(polar_det != nullptr) {
+    if(m_detector->is<PolarDetector>()) {
         title = detname + " Residuals r;r_{track}-r [um];events";
         residualsRPlot = new TH1F("residualsR", title.c_str(), 1000, -50000, 50000);
         title = detname + " Residuals #phi;#phi_{track}-#phi [#murad];events";
@@ -168,8 +167,8 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             double residualY = formula_residual_y->Eval(intercept.Y(), position.Y());
 
             // Recalculate residuals for polar detectors
-            auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
-            if(polar_det != nullptr) {
+            if(m_detector->is<PolarDetector>()) {
+                auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
                 // Convert cluster and intercept positions to polar coordinates
                 auto cluster_polar = polar_det->getPolarPosition(column, row);
                 auto intercept_polar = polar_det->getPolarPosition(intercept);
@@ -267,8 +266,8 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
             double errorY = associatedCluster->errorY();
 
             // Recalculate for polar detectors
-            auto polar_det = std::dynamic_pointer_cast<PolarDetector>(AlignmentDUTResidual::globalDetector);
-            if(polar_det != nullptr) {
+            if(AlignmentDUTResidual::globalDetector->is<PolarDetector>()) {
+                auto polar_det = std::dynamic_pointer_cast<PolarDetector>(AlignmentDUTResidual::globalDetector);
                 // Convert cluster and intercept positions to polar coordinates
                 auto cluster_polar = polar_det->getPolarPosition(associatedCluster->column(), associatedCluster->row());
                 auto intercept_polar = polar_det->getPolarPosition(intercept);
