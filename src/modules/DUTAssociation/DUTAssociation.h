@@ -40,6 +40,7 @@ namespace corryvreckan {
         std::shared_ptr<Detector> m_detector;
         double time_cut_;
         ROOT::Math::XYVector spatial_cut_;
+        bool elliptic_cut_;
         bool use_cluster_centre_;
 
         TH1F* hCutHisto;
@@ -58,6 +59,11 @@ namespace corryvreckan {
         TH1D* hDistX_3px;
         TH1D* hDistY_3px;
         TH2D* hDist2D;
+        // Plots in polar coordinates
+        TH1D* hDistR{};
+        TH1D* hDistPhi{};
+        TH1D* hAssocDistR{};
+        TH1D* hAssocDistPhi{};
     };
 } // namespace corryvreckan
 #endif // DUTAssociation_H

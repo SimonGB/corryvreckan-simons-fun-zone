@@ -94,6 +94,14 @@ void AlignmentDUTResidual::initialize() {
     profile_dX_Y =
         new TProfile("profile_dX_Y", title.c_str(), m_detector->nPixels().y(), -0.5, m_detector->nPixels().y() - 0.5);
 
+    // Add residuals in R and Phi if detector is polar
+    if(m_detector->is<PolarDetector>()) {
+        title = detname + " Residuals r;r_{track}-r [um];events";
+        residualsRPlot = new TH1F("residualsR", title.c_str(), 1000, -50000, 50000);
+        title = detname + " Residuals #phi;#phi_{track}-#phi [#murad];events";
+        residualsPhiPlot = new TH1F("residualsPhi", title.c_str(), 800, -2000, 2000);
+    }
+
     SetResidualsFunctions();
 }
 
@@ -157,6 +165,22 @@ StatusCode AlignmentDUTResidual::run(const std::shared_ptr<Clipboard>& clipboard
             // Calculate the local residuals
             double residualX = formula_residual_x->Eval(intercept.X(), position.X());
             double residualY = formula_residual_y->Eval(intercept.Y(), position.Y());
+
+            // Recalculate residuals for polar detectors
+            if(m_detector->is<PolarDetector>()) {
+                auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
+                // Convert cluster and intercept positions to polar coordinates
+                auto cluster_polar = polar_det->getPolarPosition(column, row);
+                auto intercept_polar = polar_det->getPolarPosition(intercept);
+
+                // Calculate polar residuals
+                auto residualPhi = intercept_polar.phi() - cluster_polar.phi();
+                auto residualR = intercept_polar.r() - cluster_polar.r();
+
+                // Fill polar residual histograms
+                residualsRPlot->Fill(static_cast<double>(Units::convert(residualR, "um")));
+                residualsPhiPlot->Fill(static_cast<double>(Units::convert(residualPhi, "urad")));
+            }
 
             // Fill the alignment residual profile plots
             residualsXPlot->Fill(static_cast<double>(Units::convert(residualX, "um")));
@@ -240,6 +264,19 @@ void AlignmentDUTResidual::MinimiseResiduals(Int_t&, Double_t*, Double_t& result
 
             double errorX = associatedCluster->errorX();
             double errorY = associatedCluster->errorY();
+
+            // Recalculate for polar detectors
+            if(AlignmentDUTResidual::globalDetector->is<PolarDetector>()) {
+                auto polar_det = std::dynamic_pointer_cast<PolarDetector>(AlignmentDUTResidual::globalDetector);
+                // Convert cluster and intercept positions to polar coordinates
+                auto cluster_polar = polar_det->getPolarPosition(associatedCluster->column(), associatedCluster->row());
+                auto intercept_polar = polar_det->getPolarPosition(intercept);
+
+                // Interpreting (Phi,R) as (X,Y)
+                residualX = intercept_polar.phi() - cluster_polar.phi();
+                residualY = intercept_polar.r() - cluster_polar.r();
+            }
+
             LOG(TRACE) << "- track has intercept (" << intercept.X() << "," << intercept.Y() << ")";
             LOG(DEBUG) << "- cluster has position (" << position.X() << "," << position.Y() << ")";
 

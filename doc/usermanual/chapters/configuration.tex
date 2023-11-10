@@ -353,6 +353,21 @@ Detectors with different gemetries are supported in the \corry framework and can
   \item In the current status, only symmetric hexagons are supported, with the pixel pitch in x- and y-direction forced to be equal.
   \item No difference is made between hexagons with a flat side or a corner pointing upwards. This can be compensated for via a rotation of the detector.
   \end{itemize}
+\item Polar strip detectors with trapezoidal strips fanning out radially from a common point are defined via \parameter{coordinates = polar}. This detector geometry is used by the ATLAS Inner Tracker project.     
+  \begin{itemize}
+  \item In addition to the common parameters, three parameters are required to define the detector, passed as arrays describing the geometry in each row of strips. The \parameter{number_of_strips} and \parameter{angular_pitch} parameter arrays have as many elements as there are strip rows, while the \parameter{row_radius} parameter array has one element more.
+  \begin{minted}[frame=single,framesep=3pt,breaklines=true,tabsize=2,linenos]{ini}
+    coordinates = polar   
+    number_of_strips = 1026, 1026, 1154, 1154
+    angular_pitch = 193.09urad, 193.09urad, 171.69urad, 171.69urad
+    row_radius = 384.500mm, 403.481mm, 427.462mm, 456.442mm, 488.423mm
+  \end{minted}
+  \item Additional optional parameters can be defined to further tune the geometry of the detector:
+  \begin{minted}[frame=single,framesep=3pt,breaklines=true,tabsize=2,linenos]{ini}
+    stereo_angle = 20mrad
+    center_radius = 438.614mm    
+  \end{minted}
+  \end{itemize}   
 \end{itemize}
 
 

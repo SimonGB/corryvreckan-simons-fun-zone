@@ -37,6 +37,7 @@ DUTAssociation::DUTAssociation(Configuration& config, std::shared_ptr<Detector> 
     // spatial cut, relative (x * spatial_resolution) or absolute:
     spatial_cut_ = corryvreckan::calculate_cut<XYVector>("spatial_cut", config_, m_detector);
     use_cluster_centre_ = config_.get<bool>("use_cluster_centre");
+    elliptic_cut_ = config_.get<bool>("elliptic_cut", true);
 
     LOG(DEBUG) << "time_cut = " << Units::display(time_cut_, {"ms", "us", "ns"});
     LOG(DEBUG) << "spatial_cut = " << Units::display(spatial_cut_, {"um", "mm"});
@@ -109,6 +110,35 @@ void DUTAssociation::initialize() {
     title = m_detector->getName() + ": number of associated clusters per track;associated clusters;events";
     hNoAssocCls = new TH1F("no_assoc_cls", title.c_str(), 10, -0.5, 9.5);
     LOG(DEBUG) << "DUT association time cut = " << Units::display(time_cut_, {"ms", "ns"});
+
+    // Add additional histograms for polar detectors
+    if(m_detector->is<PolarDetector>()) {
+        hDistR =
+            new TH1D("hDistRClusterClosest",
+                     "Distance cluster center to pixel closest to track; r_{cluster} - r_{closest pixel} [mm]; # events",
+                     500,
+                     -50,
+                     50);
+
+        hDistPhi = new TH1D("hDistPhiClusterClosest",
+                            "Distance cluster center to pixel closest to track; #varphi_{cluster} - #varphi_{closest pixel} "
+                            "[mrad]; # events",
+                            500,
+                            -150,
+                            150);
+
+        hAssocDistR = new TH1D("hAssocDistR",
+                               "Distance to associated cluster; r_{cluster} - r_{pixel} [mm]; # events",
+                               500,
+                               -spatial_cut_.y(),
+                               spatial_cut_.y());
+
+        hAssocDistPhi = new TH1D("hAssocDistPhi",
+                                 "Distance to associated cluster; #varphi_{cluster} - #varphi_{pixel} [#murad]; # events",
+                                 500,
+                                 -static_cast<double>(Units::convert(spatial_cut_.x(), "urad")),
+                                 static_cast<double>(Units::convert(spatial_cut_.x(), "urad")));
+    }
 }
 
 StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -155,6 +185,26 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
 
                 xdistance_nearest = std::min(xdistance_nearest, std::abs(interceptLocal.X() - pixelPositionLocal.x()));
                 ydistance_nearest = std::min(ydistance_nearest, std::abs(interceptLocal.Y() - pixelPositionLocal.y()));
+
+                // Recalculate distances for polar detectors
+                if(m_detector->is<PolarDetector>()) {
+                    auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
+
+                    // Get polar coordinates of cluster, intercept and strip
+                    auto cluster_polar = polar_det->getPolarPosition(cluster->local());
+                    auto intercept_polar = polar_det->getPolarPosition(interceptLocal);
+                    auto strip_polar = polar_det->getPolarPosition(pixelPositionLocal);
+
+                    // Recalculate distance to cluster centre
+                    xdistance_centre = intercept_polar.phi() - cluster_polar.phi();
+                    ydistance_centre = intercept_polar.r() - cluster_polar.r();
+
+                    // Recalculate distance to nearest strip
+                    xdistance_nearest = std::numeric_limits<double>::max();
+                    ydistance_nearest = std::numeric_limits<double>::max();
+                    xdistance_nearest = std::min(xdistance_nearest, std::abs(intercept_polar.phi() - strip_polar.phi()));
+                    ydistance_nearest = std::min(ydistance_nearest, std::abs(intercept_polar.r() - strip_polar.r()));
+                }
             }
 
             hDistX->Fill(static_cast<double>(Units::convert(xdistance_centre - xdistance_nearest, "um")));
@@ -183,15 +233,31 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto xdistance = (use_cluster_centre_ ? xdistance_centre : xdistance_nearest);
             auto ydistance = (use_cluster_centre_ ? ydistance_centre : ydistance_nearest);
             auto distance = sqrt(xdistance * xdistance + ydistance * ydistance);
-            // Check if track-cluster distance lies within ellipse defined by spatial cuts, following this example:
-            // https://www.geeksforgeeks.org/check-if-a-point-is-inside-outside-or-on-the-ellipse/
-            //
-            // ellipse defined by: x^2/a^2 + y^2/b^2 = 1: on ellipse,
-            //                                       > 1: outside,
-            //                                       < 1: inside
-            // Discard track if outside of ellipse:
-            auto norm = (xdistance * xdistance) / (spatial_cut_.x() * spatial_cut_.x()) +
-                        (ydistance * ydistance) / (spatial_cut_.y() * spatial_cut_.y());
+
+            // Evaluate distances based on requested type of cut (elliptic or rectangular)
+            double norm;
+            if(elliptic_cut_) {
+                // Check if track-cluster distance lies within ellipse defined by spatial cuts, following this example:
+                // https://www.geeksforgeeks.org/check-if-a-point-is-inside-outside-or-on-the-ellipse/
+                //
+                // ellipse defined by: x^2/a^2 + y^2/b^2 = 1: on ellipse,
+                //                                       > 1: outside,
+                //                                       < 1: inside
+                // Discard track if outside of ellipse
+                norm = (xdistance * xdistance) / (spatial_cut_.x() * spatial_cut_.x()) +
+                       (ydistance * ydistance) / (spatial_cut_.y() * spatial_cut_.y());
+            } else {
+                // Use rectangular cut
+                norm = std::max((xdistance * xdistance) / (spatial_cut_.x() * spatial_cut_.x()),
+                                (ydistance * ydistance) / (spatial_cut_.y() * spatial_cut_.y()));
+            }
+
+            // Fill distance histograms for polar detectors
+            if(m_detector->is<PolarDetector>()) {
+                hDistPhi->Fill(static_cast<double>(Units::convert(xdistance, "mrad")));
+                hDistR->Fill(static_cast<double>(Units::convert(ydistance, "mm")));
+            }
+
             if(norm > 1) {
                 LOG(DEBUG) << "Discarding DUT cluster with distance (" << Units::display(std::abs(xdistance), {"um", "mm"})
                            << "," << Units::display(std::abs(ydistance), {"um", "mm"}) << ")"
@@ -216,6 +282,12 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
             assoc_cls_per_track++;
             assoc_cluster_counter++;
             num_cluster++;
+
+            // Fill distance to assoc. cluster for polar detectors
+            if(m_detector->is<PolarDetector>()) {
+                hAssocDistPhi->Fill(static_cast<double>(Units::convert(xdistance, "urad")));
+                hAssocDistR->Fill(static_cast<double>(Units::convert(ydistance, "mm")));
+            }
 
             // check if cluster is closest to track
             if(distance < min_distance) {
