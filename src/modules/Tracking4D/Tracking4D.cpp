@@ -37,7 +37,6 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     config_.setDefault<bool>("volume_scattering", false);
     config_.setDefault<bool>("reject_by_roi", false);
     config_.setDefault<bool>("unique_cluster_usage", false);
-    config_.setDefault<bool>("filter_same_z", false);
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
         config_.setDefault("time_cut_rel", 3.0);
@@ -73,7 +72,6 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     use_volume_scatterer_ = config_.get<bool>("volume_scattering");
     reject_by_ROI_ = config_.get<bool>("reject_by_roi");
     unique_cluster_usage_ = config_.get<bool>("unique_cluster_usage");
-    filter_same_z_ = config_.get<bool>("filter_same_z");
 
     // print a warning if volumeScatterer are used as this causes fit failures
     // that are still not understood
@@ -331,12 +329,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 continue;
             }
 
-            // If first and last cluster are in the same plane, skip this pair
-            if(filter_same_z_ && (reference_first->displacement().z() == reference_last->displacement().z())) {
-                LOG(DEBUG) << "Reference clusters in the same detector plane, skipping.";
-                continue;
-            }
-
             // The track finding is based on a straight line. Therefore a refTrack to extrapolate to the next plane is used
             StraightLineTrack refTrack;
             refTrack.addCluster(clusterFirst.get());
@@ -395,12 +387,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
 
                 if(detector->isPassive()) {
                     LOG(DEBUG) << "Skipping passive plane.";
-                    continue;
-                }
-
-                if(filter_same_z_ && (detector->displacement().z() == reference_first->displacement().z() ||
-                                      detector->displacement().z() == reference_last->displacement().z())) {
-                    LOG(DEBUG) << "Detector in same z plane as reference, skipping.";
                     continue;
                 }
 
