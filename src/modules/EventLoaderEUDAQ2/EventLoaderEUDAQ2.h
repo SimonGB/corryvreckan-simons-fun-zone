@@ -16,6 +16,7 @@
 #include <chrono>
 #include <iostream>
 #include <queue>
+#include <thread>
 #include <vector>
 
 #include <TCanvas.h>
@@ -42,6 +43,7 @@ namespace corryvreckan {
     class EventLoaderEUDAQ2 : public Module {
 
         class EndOfFile : public Exception {};
+        class NoNewEvent : public Exception {};
 
     public:
         /**

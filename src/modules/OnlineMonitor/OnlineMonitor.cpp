@@ -80,8 +80,12 @@ OnlineMonitor::OnlineMonitor(Configuration& config, std::vector<std::shared_ptr<
     canvas_time = config_.getMatrix<std::string>("event_times");
 }
 
-void OnlineMonitor::initialize() {
+void OnlineMonitor::guiRun() {
 
+    std::cout << "OnlineMonitor::guiRun() 1" << std::endl;
+
+    // std::lock_guard<std::mutex> lock(guiMutex);
+    guiMutex.lock();
     // TApplication keeps the canvases persistent
     app = new TApplication("example", nullptr, nullptr);
 
@@ -159,17 +163,41 @@ void OnlineMonitor::initialize() {
 
     // Initialise member variables
     eventNumber = 0;
+
+    guiMutex.unlock();
+
+    std::cout << "OnlineMonitor::guiRun() 2" << std::endl;
+    while(guiRunning) {
+        // std::cout<<"OnlineMonitor::guiRun() loopy"<<std::endl;
+        std::unique_lock<std::mutex> lock(guiMutex);
+        // guiCondition.wait(lock);
+        // if (guiRunning) {
+        guiUpdate();
+        // }
+    }
+}
+
+void OnlineMonitor::initialize() {
+    // Start the GUI thread
+    guiThread = std::thread(&OnlineMonitor::guiRun, this);
+    std::cout << "OnlineMonitor::initialize 2" << std::endl;
 }
 
 StatusCode OnlineMonitor::run(const std::shared_ptr<Clipboard>&) {
 
-    if(!gui->isPaused()) {
-        // Draw all histograms
-        if(eventNumber % updateNumber == 0) {
-            gui->Update();
-        }
-    }
-    gSystem->ProcessEvents();
+    // std::lock_guard<std::mutex> lock(guiMutex);
+    std::cout << "OnlineMonitor::run 1" << std::endl;
+    // if(!gui->isPaused()) {
+    // std::cout<<"OnlineMonitor::run 1.1"<<std::endl;
+    // Draw all histograms
+    // if(eventNumber % updateNumber == 0) {
+    // std::cout<<"OnlineMonitor::run 1.2"<<std::endl;
+    // guiUpdate();
+    // }
+    // }
+    // std::cout<<"OnlineMonitor::run 2"<<std::endl;
+    // gSystem->ProcessEvents();
+    // std::cout<<"OnlineMonitor::run 3"<<std::endl;
 
     // Increase the event number
     eventNumber++;
@@ -289,5 +317,28 @@ void OnlineMonitor::AddHisto(string canvasName, string histoName, string style, 
         gui->styles[gui->histograms[canvasName].back()] = style;
     } else {
         LOG(WARNING) << "Histogram " << histoName << " does not exist";
+    }
+}
+
+void OnlineMonitor::guiUpdate() {
+    // std::lock_guard<std::mutex> lock(guiMutex);
+    // Your GUI update logic here
+    // std::cout<<"OnlineMonitor::guiUpdate 1"<<std::endl;
+    gui->Update();
+    // std::cout<<"OnlineMonitor::guiUpdate 2"<<std::endl;
+    gSystem->ProcessEvents();
+    // std::cout<<"OnlineMonitor::guiUpdate 3"<<std::endl;
+}
+
+void OnlineMonitor::guiStop() {
+    {
+        std::lock_guard<std::mutex> lock(guiMutex);
+        guiRunning = false;
+    }
+    guiCondition.notify_one();
+
+    // Wait for the GUI thread to finish
+    if(guiThread.joinable()) {
+        guiThread.join();
     }
 }

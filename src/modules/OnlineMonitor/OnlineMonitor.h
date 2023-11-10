@@ -24,7 +24,9 @@
 #include <TROOT.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TSystem.h>
+#include <condition_variable>
 #include <iostream>
+#include <thread>
 
 #include "GuiDisplay.hpp"
 #include "core/module/Module.hpp"
@@ -47,8 +49,8 @@ namespace corryvreckan {
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
 
         // Application to allow display persistancy
-        TApplication* app;
-        GuiDisplay* gui;
+        // TApplication* app;
+        // GuiDisplay* gui;
 
     private:
         void AddCanvasGroup(std::string group_title);
@@ -76,6 +78,21 @@ namespace corryvreckan {
         // Canvases and their plots:
         Matrix<std::string> canvas_dutplots, canvas_overview, canvas_tracking, canvas_hitmaps, canvas_residuals, canvas_cx,
             canvas_cy, canvas_cx2d, canvas_cy2d, canvas_charge, canvas_time;
+
+        // Thread-related members
+        std::thread guiThread;
+        std::mutex guiMutex;
+        std::condition_variable guiCondition;
+        bool guiRunning = true;
+
+        // Additional methods for GUI thread
+        void guiRun();
+        void guiUpdate();
+        void guiStop();
+
+        // GUI-related members
+        TApplication* app = nullptr;
+        GuiDisplay* gui = nullptr;
     };
 } // namespace corryvreckan
 #endif // OnlineMonitor_H

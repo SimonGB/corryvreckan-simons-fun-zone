@@ -211,14 +211,17 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_sorted_std_eve
     while(static_cast<int>(sorted_events_.size()) < buffer_depth_) {
         LOG(DEBUG) << "Filling buffer with new event.";
         // fill buffer with new std event:
+        // try {
         auto new_event = get_next_std_event();
+        sorted_events_.push(new_event);
+        // } catch (NoNewEvent&) {
+        // std::cout<<"NO NEW EVENT EXCEPTION CATCH"<<std::endl;
+        // using namespace std::chrono_literals;
+        // std::this_thread::sleep_for(10000ms);
+        // std::this_thread::yield();
+        // }
         // in case EventLoader is used as monitor, new_event might be nullptr
-        if(new_event) {
-            sorted_events_.push(new_event);
-        }
         // if new_event is nullptr we need to return to uphold communication with ModuleManager
-        else
-            return nullptr;
     }
 
     // get first element of queue and erase it
@@ -252,7 +255,8 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
                     time_of_last_log_for_monitoring_ = time_reference_for_logging;
                 }
                 // need to return to uphold communication with module manager
-                return nullptr;
+                throw NoNewEvent();
+                // continue;
             }
             // if new data is incoming reset logging timer
             time_of_last_log_for_monitoring_ = std::chrono::steady_clock::now();
@@ -633,6 +637,12 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
                 LOG(ERROR) << "EUDAQ2 reports invalid data: " << e.what() << std::endl << "Ending run.";
                 return StatusCode::EndRun;
 #endif
+            } catch(NoNewEvent&) {
+                std::cout << "NO NEW EVENT EXCEPTION CATCH" << std::endl;
+                using namespace std::chrono_literals;
+                std::this_thread::sleep_for(10000ms);
+                // std::this_thread::yield();
+                return StatusCode::NoData;
             }
         }
 
