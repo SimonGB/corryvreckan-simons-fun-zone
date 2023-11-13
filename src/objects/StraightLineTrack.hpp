@@ -12,6 +12,7 @@
 #ifndef CORRYVRECKAN_STRAIGHTLINETRACK_H
 #define CORRYVRECKAN_STRAIGHTLINETRACK_H 1
 
+#include "Eigen/Dense"
 #include "Track.hpp"
 
 namespace corryvreckan {
@@ -73,6 +74,9 @@ namespace corryvreckan {
          */
         ROOT::Math::XYPoint getKinkAt(const std::string& detectorID) const override;
 
+        TMatrixD getLocalStateUncertainty(const std::string& detectorID) const override;
+        TMatrixD getGlobalStateUncertainty(const std::string& detectorID) const override;
+
         void setVolumeScatter(double) override{};
 
     private:
@@ -82,10 +86,13 @@ namespace corryvreckan {
         void calculateChi2();
 
         void calculateResiduals();
+
+        TMatrixD getUncertainyPos(const double& z) const;
+
         // Member variables
         ROOT::Math::XYZVector m_direction{0, 0, 1.};
         ROOT::Math::XYZPoint m_state{0, 0, 0.};
-
+        Eigen::Vector4d uncertainties_;
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(StraightLineTrack, 1)
     };

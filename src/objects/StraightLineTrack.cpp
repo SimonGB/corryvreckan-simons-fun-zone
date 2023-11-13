@@ -10,7 +10,6 @@
  */
 
 #include "StraightLineTrack.hpp"
-#include "Eigen/Dense"
 #include "Track.hpp"
 #include "core/utils/log.h"
 #include "exceptions.h"
@@ -104,6 +103,29 @@ void StraightLineTrack::calculateResiduals() {
     }
 }
 
+TMatrixD StraightLineTrack::getUncertainyPos(const double& z) const {
+    if(!isFitted_) {
+        throw TrackError(typeid(StraightLineTrack), " has no uncertainty for z = " + std::to_string(z) + " before fitting");
+    }
+    TMatrixD error(3, 3);
+    error(0, 0) = uncertainties_(0) + z * z * uncertainties_(1);
+    error(1, 1) = uncertainties_(2) + z * z * uncertainties_(3);
+
+    return error;
+}
+TMatrixD StraightLineTrack::getLocalStateUncertainty(const std::string& detectorID) const {
+    auto p = std::find_if(
+        planes_.begin(), planes_.end(), [detectorID](const auto& plane) { return (plane.getName() == detectorID); });
+    TMatrixD gtl(3, 3);
+    p->getToLocal().Rotation().GetRotationMatrix(gtl);
+    return (gtl * getGlobalStateUncertainty(detectorID));
+}
+
+TMatrixD StraightLineTrack::getGlobalStateUncertainty(const std::string& detectorID) const {
+    auto p = std::find_if(
+        planes_.begin(), planes_.end(), [detectorID](const auto& plane) { return (plane.getName() == detectorID); });
+    return (getUncertainyPos(p->getPosition()));
+}
 double StraightLineTrack::operator()(const double* parameters) {
 
     // Update the StraightLineTrack gradient and intercept
@@ -124,6 +146,7 @@ void StraightLineTrack::fit() {
     isFitted_ = false;
     Eigen::Matrix4d mat(Eigen::Matrix4d::Zero());
     Eigen::Vector4d vec(Eigen::Vector4d::Zero());
+    uncertainties_ = Eigen::Vector4d::Zero();
 
     // Loop over all clusters and fill the matrices
     for(auto& cl : track_clusters_) {
@@ -142,14 +165,22 @@ void StraightLineTrack::fit() {
         V << errorMatrix(0, 0), errorMatrix(0, 1), errorMatrix(1, 0), errorMatrix(1, 1);
         Eigen::Matrix<double, 2, 4> C;
         C << 1., z, 0., 0., 0., 0., 1., z;
-
+        std::cout << V << std::endl << std::endl;
         // Fill the matrices
         if(fabs(V.determinant()) < std::numeric_limits<double>::epsilon()) {
             throw TrackFitError(typeid(this), "Error matrix inversion in straight line fit failed");
         }
         vec += C.transpose() * V.inverse() * pos;
         mat += C.transpose() * V.inverse() * C;
+        // Fill the uncertainties per layers:
+        uncertainties_ += Eigen::Vector4d((1) / (errorMatrix(0, 0)),
+                                          (z * z) / (errorMatrix(0, 0)),
+                                          (1) / (errorMatrix(1, 1)),
+                                          (z * z) / (errorMatrix(1, 1)));
     }
+    // invert the uncertainties
+    uncertainties_ =
+        Eigen::Vector4d(1 / uncertainties_(0), 1 / uncertainties_(1), 1 / uncertainties_(2), 1 / uncertainties_(3));
 
     // Check for singularities.
     if(fabs(mat.determinant()) < std::numeric_limits<double>::epsilon()) {
@@ -171,6 +202,14 @@ void StraightLineTrack::fit() {
     this->calculateChi2();
     this->calculateResiduals();
     isFitted_ = true;
+
+    for(auto& cl : track_clusters_) {
+        auto name = cl.get()->getDetectorID();
+        std::cout << name << "\t ";
+        getLocalStateUncertainty(name).Print();
+        std::cout << std::endl;
+    }
+    std::cout << "errors: " << uncertainties_ << std::endl;
 }
 
 ROOT::Math::XYZPoint StraightLineTrack::getIntercept(double z) const {
