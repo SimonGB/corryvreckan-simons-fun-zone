@@ -314,6 +314,12 @@ void AnalysisEfficiency::createFakeRatePlots() {
     }
     fake_rate_directory->cd();
 
+    if(m_fake_rate_method == FakeRateMethod::RADIUS) {
+        LOG(STATUS) << "Estimating fake rate based on radial cut around pixels (RADIUS method).";
+    } else if(m_fake_rate_method == FakeRateMethod::EDGE) {
+        LOG(STATUS) << "Estimating fake rate based on events without DUT intercepting tracks (EDGE method).";
+    }
+
     std::string title = m_detector->getName() + " number of fake hits per event; hits; events";
     hFakePixelPerEvent = new TH1D("hFakePixelPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
 
@@ -551,7 +557,6 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     // fake rate analysis
     if(m_fake_rate_method == FakeRateMethod::RADIUS) {
-        LOG_ONCE(STATUS) << "Estimating fake rate based on radial cut around pixels (RADIUS method).";
 
         int fake_hits = 0;
         int fake_clusters = 0;
@@ -602,9 +607,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
         fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
         hFakeClusterPerEvent->Fill(fake_clusters);
-    }
-    if(m_fake_rate_method == FakeRateMethod::EDGE) {
-        LOG_ONCE(STATUS) << "Estimating fake rate based on events without DUT intercepting tracks (EDGE method).";
+    } else if(m_fake_rate_method == FakeRateMethod::EDGE) {
 
         bool track_in_active = false;
         int fake_hits = 0;
