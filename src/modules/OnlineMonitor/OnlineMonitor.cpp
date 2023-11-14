@@ -82,7 +82,7 @@ OnlineMonitor::OnlineMonitor(Configuration& config, std::vector<std::shared_ptr<
 
 void OnlineMonitor::guiRun() {
 
-    std::cout << "OnlineMonitor::guiRun() 1" << std::endl;
+    // std::cout << "OnlineMonitor::guiRun() 1" << std::endl;
 
     // std::lock_guard<std::mutex> lock(guiMutex);
     guiMutex.lock();
@@ -202,6 +202,12 @@ StatusCode OnlineMonitor::run(const std::shared_ptr<Clipboard>&) {
     // Increase the event number
     eventNumber++;
     return StatusCode::Success;
+}
+
+void OnlineMonitor::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
+    std::cout << "OnlineMonitor::finalize 1" << std::endl;
+    guiStop();
+    std::cout << "OnlineMonitor::finalize 2" << std::endl;
 }
 
 void OnlineMonitor::AddCanvasGroup(std::string group_title) {
@@ -324,6 +330,7 @@ void OnlineMonitor::guiUpdate() {
     // std::lock_guard<std::mutex> lock(guiMutex);
     // Your GUI update logic here
     // std::cout<<"OnlineMonitor::guiUpdate 1"<<std::endl;
+
     gui->Update();
     // std::cout<<"OnlineMonitor::guiUpdate 2"<<std::endl;
     gSystem->ProcessEvents();
@@ -331,14 +338,23 @@ void OnlineMonitor::guiUpdate() {
 }
 
 void OnlineMonitor::guiStop() {
-    {
-        std::lock_guard<std::mutex> lock(guiMutex);
-        guiRunning = false;
-    }
-    guiCondition.notify_one();
+
+    std::cout << "OnlineMonitor:: guiStop 1" << std::endl;
+
+    // std::lock_guard<std::mutex> lock(guiMutex);
+    guiRunning = false;
+
+    std::cout << "OnlineMonitor:: guiStop 2" << std::endl;
+    // guiCondition.notify_one();
+
+    std::cout << "OnlineMonitor:: guiStop 3" << std::endl;
 
     // Wait for the GUI thread to finish
     if(guiThread.joinable()) {
+
+        std::cout << "OnlineMonitor:: guiStop 4" << std::endl;
         guiThread.join();
+
+        std::cout << "OnlineMonitor:: guiStop 5" << std::endl;
     }
 }
