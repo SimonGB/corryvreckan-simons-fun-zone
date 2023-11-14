@@ -52,7 +52,6 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     inclusive_ = config_.get<bool>("inclusive");
     sync_by_trigger_ = config_.get<bool>("sync_by_trigger");
     wait_on_eof_ = config_.get<bool>("wait_on_eof");
-    time_of_last_log_for_monitoring_ = std::chrono::steady_clock::now();
 
     // Set EUDAQ log level to desired value:
     EUDAQ_LOG_LEVEL(config_.get<std::string>("eudaq_loglevel"));
@@ -211,17 +210,8 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_sorted_std_eve
     while(static_cast<int>(sorted_events_.size()) < buffer_depth_) {
         LOG(DEBUG) << "Filling buffer with new event.";
         // fill buffer with new std event:
-        // try {
         auto new_event = get_next_std_event();
         sorted_events_.push(new_event);
-        // } catch (NoNewEvent&) {
-        // std::cout<<"NO NEW EVENT EXCEPTION CATCH"<<std::endl;
-        // using namespace std::chrono_literals;
-        // std::this_thread::sleep_for(10000ms);
-        // std::this_thread::yield();
-        // }
-        // in case EventLoader is used as monitor, new_event might be nullptr
-        // if new_event is nullptr we need to return to uphold communication with ModuleManager
     }
 
     // get first element of queue and erase it
@@ -243,24 +233,9 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
                 LOG(DEBUG) << "Reached EOF";
                 throw EndOfFile();
             } else if(!new_event && wait_on_eof_) {
-                // LOG(DEBUG) << "End of file reach, but keeping monitoring open";
-                // only want to log every 10 seconds but cannot use sleep(10) because then GUI becomes unresponsive for 10
-                // seconds
-                std::chrono::steady_clock::time_point time_reference_for_logging = std::chrono::steady_clock::now();
-                auto time_since_last_logging = std::chrono::duration_cast<std::chrono::seconds>(
-                                                   time_reference_for_logging - time_of_last_log_for_monitoring_)
-                                                   .count();
-                if(time_since_last_logging >= 10) {
-                    LOG(INFO) << "Waiting for new events";
-                    time_of_last_log_for_monitoring_ = time_reference_for_logging;
-                }
-                // need to return to uphold communication with module manager
+                LOG(DEBUG) << "No new event in file";
                 throw NoNewEvent();
-                // continue;
             }
-            // if new data is incoming reset logging timer
-            time_of_last_log_for_monitoring_ = std::chrono::steady_clock::now();
-
             // Build buffer from all sub-events:
             auto subevents = new_event->GetSubEvents();
             events_raw_ = std::queue(std::deque(subevents.begin(), subevents.end()));
@@ -638,10 +613,9 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
                 return StatusCode::EndRun;
 #endif
             } catch(NoNewEvent&) {
-                std::cout << "NO NEW EVENT EXCEPTION CATCH" << std::endl;
+                LOG(INFO) << "Waiting for new events";
                 using namespace std::chrono_literals;
                 std::this_thread::sleep_for(10000ms);
-                // std::this_thread::yield();
                 return StatusCode::NoData;
             }
         }
