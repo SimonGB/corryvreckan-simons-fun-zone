@@ -56,11 +56,6 @@ namespace corryvreckan {
         explicit PixelDetector(const Configuration& config);
 
         /**
-         * @brief Set position and orientation from configuration file
-         */
-        void SetPostionAndOrientation(const Configuration& config);
-
-        /**
          * @brief Checks if a given pixel index lies within the pixel matrix of the detector
          * @return True if pixel index is within matrix bounds, false otherwise
          */

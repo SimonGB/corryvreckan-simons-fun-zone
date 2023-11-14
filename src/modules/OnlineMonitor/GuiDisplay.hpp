@@ -29,10 +29,12 @@
 #include "TGDockableFrame.h"
 #include "TGFrame.h"
 #include "TGMenu.h"
+#include "TGScrollBar.h"
 #include "TGTextEntry.h"
 #include "TROOT.h"
 #include "TRootEmbeddedCanvas.h"
 #include "TSystem.h"
+#include "TVirtualX.h"
 
 namespace corryvreckan {
     /**
@@ -55,6 +57,9 @@ namespace corryvreckan {
         std::map<std::string, TGButtonGroup*> buttonGroups;
         std::map<TRootEmbeddedCanvas*, bool> stackedCanvas;
         TGHorizontalFrame* buttonMenu;
+        TGMainFrame* dutFrame;
+        TGCanvas* dutCanvas;
+        TGVerticalFrame* dutInnerFrame;
 
         bool running_ = true;
 

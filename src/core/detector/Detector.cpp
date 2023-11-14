@@ -87,16 +87,18 @@ Detector::Detector(const Configuration& config) : m_role(DetectorRole::NONE) {
 
 std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& config) {
     // default coordinate is cartesian coordinate
-    auto coordinates = config.get<std::string>("coordinates", "cartesian");
-    std::transform(coordinates.begin(), coordinates.end(), coordinates.begin(), ::tolower);
-    if(coordinates == "cartesian") {
+    auto coordinates = config.get<Coordinates>("coordinates", Coordinates::CARTESIAN);
+
+    if(coordinates == Coordinates::CARTESIAN) {
         return std::make_shared<PixelDetector>(config);
-    } else if(coordinates == "hexagonal") {
+    } else if(coordinates == Coordinates::HEXAGONAL) {
         return std::make_shared<HexagonalPixelDetector>(config);
-    } else if(coordinates == "cartesian_module") {
+    } else if(coordinates == Coordinates::CARTESIAN_MODULE) {
         return std::make_shared<PixelModuleDetector>(config);
+    } else if(coordinates == Coordinates::POLAR) {
+        return std::make_shared<PolarDetector>(config);
     } else {
-        throw InvalidValueError(config, "coordinates", "Coordinates can only set to be cartesian now");
+        throw InvalidValueError(config, "coordinates", "Unrecognized coordinate system set");
     }
 }
 

@@ -252,4 +252,5 @@ void Corryvreckan::add_units() {
     Units::add("deg", 3.14159265358979323846 / 180.0);
     Units::add("rad", 1);
     Units::add("mrad", 1e-3);
+    Units::add("urad", 1e-6);
 }

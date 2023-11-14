@@ -60,6 +60,8 @@ namespace corryvreckan {
                        Matrix<std::string> canvas_plots,
                        bool ignoreDut = false,
                        std::string detector_name = "");
+        // Function specifically for adding "DUT" ButtonGroup to enable scroll bar for large number of DUTs
+        void AddDUTGroup();
         void AddPlots(std::string canvas_name,
                       Matrix<std::string> canvas_plots,
                       bool ignoreDut = false,
