@@ -11,7 +11,6 @@
 
 #include "OnlineMonitor.h"
 #include <TGButtonGroup.h>
-#include <TGScrollBar.h>
 #include <TVirtualPadEditor.h>
 #include <regex>
 
