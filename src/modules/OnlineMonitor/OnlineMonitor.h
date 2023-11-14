@@ -50,8 +50,8 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
         // Application to allow display persistancy
-        // TApplication* app;
-        // GuiDisplay* gui;
+        TApplication* app = nullptr;
+        GuiDisplay* gui = nullptr;
 
     private:
         void AddCanvasGroup(std::string group_title);
@@ -83,17 +83,11 @@ namespace corryvreckan {
         // Thread-related members
         std::thread guiThread;
         std::mutex guiMutex;
-        std::condition_variable guiCondition;
         bool guiRunning = true;
 
         // Additional methods for GUI thread
         void guiRun();
         void guiUpdate();
-        void guiStop();
-
-        // GUI-related members
-        TApplication* app = nullptr;
-        GuiDisplay* gui = nullptr;
     };
 } // namespace corryvreckan
 #endif // OnlineMonitor_H
