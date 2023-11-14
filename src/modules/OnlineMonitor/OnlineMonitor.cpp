@@ -331,7 +331,11 @@ void OnlineMonitor::guiUpdate() {
     // Your GUI update logic here
     // std::cout<<"OnlineMonitor::guiUpdate 1"<<std::endl;
 
-    gui->Update();
+    if(!gui->isPaused()) {
+        if(eventNumber % updateNumber == 0) {
+            gui->Update();
+        }
+    }
     // std::cout<<"OnlineMonitor::guiUpdate 2"<<std::endl;
     gSystem->ProcessEvents();
     // std::cout<<"OnlineMonitor::guiUpdate 3"<<std::endl;
