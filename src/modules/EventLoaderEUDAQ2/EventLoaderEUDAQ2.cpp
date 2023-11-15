@@ -9,6 +9,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <chrono>
+#include <thread>
+
 #include "EventLoaderEUDAQ2.h"
 #include "eudaq/FileReader.hh"
 

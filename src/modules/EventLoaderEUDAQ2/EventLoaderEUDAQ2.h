@@ -13,10 +13,8 @@
  * Refer to the User's Manual for more details.
  */
 
-#include <chrono>
 #include <iostream>
 #include <queue>
-#include <thread>
 #include <vector>
 
 #include <TCanvas.h>
