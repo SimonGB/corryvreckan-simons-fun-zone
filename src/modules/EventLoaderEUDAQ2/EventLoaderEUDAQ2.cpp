@@ -601,9 +601,6 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
                     // get next decoded EUDAQ StandardEvent from timesorted buffer
                     event_ = get_next_sorted_std_event();
                 }
-                // In case the monitor needs to wait for more events, send StatusCode::NoData
-                if(!event_)
-                    return StatusCode::NoData;
             } catch(EndOfFile&) {
                 return StatusCode::EndRun;
 #ifdef STDEVENTCONVERTER_EXCEPTIONS_
