@@ -82,13 +82,13 @@ namespace corryvreckan {
             canvas_cy, canvas_cx2d, canvas_cy2d, canvas_charge, canvas_time;
 
         // Thread-related members
-        std::thread guiThread;
-        std::mutex guiMutex;
-        bool guiRunning = true;
+        std::thread gui_thread;
+        std::mutex gui_mutex;
+        bool gui_running = true;
 
         // Additional methods for GUI thread
-        void guiRun();
-        void guiUpdate();
+        void gui_run();
+        void gui_update();
     };
 } // namespace corryvreckan
 #endif // OnlineMonitor_H
