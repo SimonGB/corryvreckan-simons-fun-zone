@@ -165,7 +165,6 @@ void StraightLineTrack::fit() {
         V << errorMatrix(0, 0), errorMatrix(0, 1), errorMatrix(1, 0), errorMatrix(1, 1);
         Eigen::Matrix<double, 2, 4> C;
         C << 1., z, 0., 0., 0., 0., 1., z;
-        std::cout << V << std::endl << std::endl;
         // Fill the matrices
         if(fabs(V.determinant()) < std::numeric_limits<double>::epsilon()) {
             throw TrackFitError(typeid(this), "Error matrix inversion in straight line fit failed");
@@ -203,13 +202,13 @@ void StraightLineTrack::fit() {
     this->calculateResiduals();
     isFitted_ = true;
 
-    for(auto& cl : track_clusters_) {
-        auto name = cl.get()->getDetectorID();
-        std::cout << name << "\t ";
-        getLocalStateUncertainty(name).Print();
-        std::cout << std::endl;
-    }
-    std::cout << "errors: " << uncertainties_ << std::endl;
+    //    for(auto& cl : track_clusters_) {
+    //        auto name = cl.get()->getDetectorID();
+    //        std::cout << name << "\t ";
+    //        getLocalStateUncertainty(name).Print();
+    //        std::cout << std::endl;
+    //    }
+    //    std::cout << "errors: " << uncertainties_ << std::endl;
 }
 
 ROOT::Math::XYZPoint StraightLineTrack::getIntercept(double z) const {
