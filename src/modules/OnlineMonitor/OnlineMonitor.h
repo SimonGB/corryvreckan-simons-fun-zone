@@ -25,6 +25,7 @@
 #include <TRootEmbeddedCanvas.h>
 #include <TSystem.h>
 #include <iostream>
+#include <thread>
 
 #include "GuiDisplay.hpp"
 #include "core/module/Module.hpp"
@@ -45,10 +46,11 @@ namespace corryvreckan {
         // Functions
         void initialize() override;
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
+        void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
         // Application to allow display persistancy
-        TApplication* app;
-        GuiDisplay* gui;
+        TApplication* app = nullptr;
+        GuiDisplay* gui = nullptr;
 
     private:
         void AddCanvasGroup(std::string group_title);
@@ -78,6 +80,15 @@ namespace corryvreckan {
         // Canvases and their plots:
         Matrix<std::string> canvas_dutplots, canvas_overview, canvas_tracking, canvas_hitmaps, canvas_residuals, canvas_cx,
             canvas_cy, canvas_cx2d, canvas_cy2d, canvas_charge, canvas_time;
+
+        // Thread-related members
+        std::thread gui_thread;
+        std::mutex gui_mutex;
+        bool gui_running = true;
+
+        // Additional methods for GUI thread
+        void gui_run();
+        void gui_update();
     };
 } // namespace corryvreckan
 #endif // OnlineMonitor_H
