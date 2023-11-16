@@ -107,11 +107,15 @@ void OnlineMonitor::AddCanvasGroup(std::string group_title) {
 }
 
 // Need special function to get scroll bar working
-void OnlineMonitor::AddDUTGroup() {
+void OnlineMonitor::AddDUTGroup(uint64_t num_planes) {
     std::string group_title = "DUTs";
 
+    // Dynamic sizing of DUT section for less than 3 planes
+    UInt_t vert_size;
+    vert_size = (num_planes >= 3) ? 150 : 40 + num_planes * 40;
+
     // Adding an outer frame to place canvas inside
-    gui->dutFrame = new TGMainFrame(gui->buttonMenu, 150, 150, kVerticalFrame | kFixedSize);
+    gui->dutFrame = new TGMainFrame(gui->buttonMenu, 150, vert_size, kVerticalFrame | kFixedSize);
     gui->dutFrame->SetCleanup(kDeepCleanup);
     gui->buttonMenu->AddFrame(gui->dutFrame, new TGLayoutHints(kLHintsLeft, 10, 10, 10, 10));
 
@@ -277,7 +281,7 @@ void OnlineMonitor::gui_run() {
     AddCanvas("2D Y", "Correlations 2D", canvas_cy2d);
 
     if(!get_duts().empty()) {
-        AddDUTGroup();
+        AddDUTGroup(get_duts().size());
         for(auto& detector : get_duts()) {
             AddCanvas(detector->getName(), "DUTs", canvas_dutplots, false, detector->getName());
         }
