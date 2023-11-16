@@ -23,6 +23,8 @@ void FilterEvents::initialize() {
     config_.setDefault<bool>("only_tracks_on_dut", false);
     config_.setDefault<unsigned>("min_clusters_per_plane", 0);
     config_.setDefault<unsigned>("max_clusters_per_plane", 100);
+    config_.setDefault<double>("min_event_duration", Units::get<double>(0, "ps"));
+    config_.setDefault<double>("max_event_duration", Units::get<double>(500, "s"));
 
     // Get trigger windows as matrix from config, copy to vec<arr<2>> if requirements fulfilled
     auto exclude_trigger_windows_matrix = config_.getMatrix("exclude_trigger_windows", Matrix<uint32_t>{});
@@ -44,6 +46,8 @@ void FilterEvents::initialize() {
     min_clusters_per_reference_ = config_.get<unsigned>("min_clusters_per_plane");
     max_clusters_per_reference_ = config_.get<unsigned>("max_clusters_per_plane");
     only_tracks_on_dut_ = config_.get<bool>("only_tracks_on_dut");
+    min_event_duration_ = config_.get<double>("min_event_duration");
+    max_event_duration_ = config_.get<double>("max_event_duration");
 
     if(only_tracks_on_dut_ && get_duts().size() != 1) {
         LOG(WARNING) << "Multiple DUTs in geometry, only_tracks_on_dut_ forced to true";
@@ -53,7 +57,7 @@ void FilterEvents::initialize() {
     auto tag_filters = config_.getMap<std::string, std::string>("filter_tags", std::map<std::string, std::string>{});
     load_tag_filters(tag_filters);
 
-    hFilter_ = new TH1F("FilteredEvents", "Events filtered;events", 8, 0.5, 8.5);
+    hFilter_ = new TH1F("FilteredEvents", "Events filtered;events", 10, 0.5, 10.5);
     hFilter_->GetXaxis()->SetBinLabel(1, "Events");
     hFilter_->GetXaxis()->SetBinLabel(2, "Excluded trigger");
     std::string label = (only_tracks_on_dut_ ? "Too few tracks on dut " : "Too few tracks");
@@ -63,7 +67,9 @@ void FilterEvents::initialize() {
     hFilter_->GetXaxis()->SetBinLabel(5, "Too few clusters");
     hFilter_->GetXaxis()->SetBinLabel(6, "Too many clusters");
     hFilter_->GetXaxis()->SetBinLabel(7, "Rejected by tag filter");
-    hFilter_->GetXaxis()->SetBinLabel(8, "Events passed ");
+    hFilter_->GetXaxis()->SetBinLabel(8, "Event too short");
+    hFilter_->GetXaxis()->SetBinLabel(9, "Event too long");
+    hFilter_->GetXaxis()->SetBinLabel(10, "Events passed ");
 }
 
 StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -73,6 +79,7 @@ StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
     status = filter_tracks(clipboard) ? StatusCode::DeadTime : status;
     status = filter_cluster(clipboard) ? StatusCode::DeadTime : status;
     status = filter_tags(clipboard) ? StatusCode::DeadTime : status;
+    status = filter_event_duration(clipboard) ? StatusCode::DeadTime : status;
 
     if(status == StatusCode::Success) {
         hFilter_->Fill(8);
@@ -139,6 +146,22 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
             LOG(TRACE) << "Number of Clusters on below minimum";
             return true;
         }
+    }
+    return false;
+}
+
+bool FilterEvents::filter_event_duration(const std::shared_ptr<Clipboard>& clipboard) {
+    auto event = clipboard->getEvent();
+    auto duration = event->duration();
+    if(duration > max_event_duration_) {
+        hFilter_->Fill(9); // too long event
+        LOG(TRACE) << "Event too long: " << duration << " vs max: " << max_event_duration_;
+        return true;
+    }
+    if(event->duration() < min_event_duration_) {
+        hFilter_->Fill(8); // too short event
+        LOG(TRACE) << "Event too short: " << duration << " vs max: " << max_event_duration_;
+        return true;
     }
     return false;
 }
