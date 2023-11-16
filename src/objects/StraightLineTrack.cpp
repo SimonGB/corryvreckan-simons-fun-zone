@@ -171,13 +171,13 @@ void StraightLineTrack::fit() {
         }
         vec += C.transpose() * V.inverse() * pos;
         mat += C.transpose() * V.inverse() * C;
-        // Fill the uncertainties per layers:
+        // Fill the 1/uncertainties per layers:
         uncertainties_ += Eigen::Vector4d((1) / (errorMatrix(0, 0)),
                                           (z * z) / (errorMatrix(0, 0)),
                                           (1) / (errorMatrix(1, 1)),
                                           (z * z) / (errorMatrix(1, 1)));
     }
-    // invert the uncertainties
+
     uncertainties_ =
         Eigen::Vector4d(1 / uncertainties_(0), 1 / uncertainties_(1), 1 / uncertainties_(2), 1 / uncertainties_(3));
 
@@ -201,14 +201,6 @@ void StraightLineTrack::fit() {
     this->calculateChi2();
     this->calculateResiduals();
     isFitted_ = true;
-
-    //    for(auto& cl : track_clusters_) {
-    //        auto name = cl.get()->getDetectorID();
-    //        std::cout << name << "\t ";
-    //        getLocalStateUncertainty(name).Print();
-    //        std::cout << std::endl;
-    //    }
-    //    std::cout << "errors: " << uncertainties_ << std::endl;
 }
 
 ROOT::Math::XYZPoint StraightLineTrack::getIntercept(double z) const {

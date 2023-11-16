@@ -74,7 +74,20 @@ namespace corryvreckan {
          */
         ROOT::Math::XYPoint getKinkAt(const std::string& detectorID) const override;
 
+        /**
+         * @brief getLocalStateUncertainty: return the uncertainty on each detetcor plane. Calculated via error propagation
+         * of track start point on z=0 and the slope uncertainty
+         * @param detectorID
+         * @return local uncertainty on track state at given detetcor ID
+         */
         TMatrixD getLocalStateUncertainty(const std::string& detectorID) const override;
+
+        /**
+         * @brief getGlobalStateUncertainty: return the uncertainty on each detetcor plane. Calculated via error propagation
+         * of track start point on z=0 and the slope uncertainty
+         * @param detectorID
+         * @return global uncertainty on track state at given detetcor ID
+         */
         TMatrixD getGlobalStateUncertainty(const std::string& detectorID) const override;
 
         void setVolumeScatter(double) override{};
