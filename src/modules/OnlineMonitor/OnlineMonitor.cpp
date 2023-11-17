@@ -114,8 +114,9 @@ void OnlineMonitor::AddDUTGroup(uint64_t num_planes) {
     uint64_t vert_size;
     vert_size = (num_planes >= 3) ? 150 : 40 + num_planes * 40;
 
+    UInt_t h = static_cast<UInt_t>(vert_size);
     // Adding an outer frame to place canvas inside
-    gui->dutFrame = new TGMainFrame(gui->buttonMenu, 150, static_cast<UInt_t>(vert_size), kVerticalFrame | kFixedSize);
+    gui->dutFrame = new TGMainFrame(gui->buttonMenu, 150, h, kVerticalFrame | kFixedSize);
     gui->dutFrame->SetCleanup(kDeepCleanup);
     gui->buttonMenu->AddFrame(gui->dutFrame, new TGLayoutHints(kLHintsLeft, 10, 10, 10, 10));
 
