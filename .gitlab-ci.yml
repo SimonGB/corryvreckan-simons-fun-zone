@@ -40,6 +40,8 @@ stages:
 
 .docker:
     image: gitlab-registry.cern.ch/corryvreckan/corryvreckan/corryvreckan-deps:latest
+    tags:
+        - k8s-default
     before_script:
         - mkdir -p build/ && cd build/
 
