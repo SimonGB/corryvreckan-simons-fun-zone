@@ -232,6 +232,8 @@ fmt:reuse:
     image:
         name: registry.cern.ch/docker.io/fsfe/reuse:latest
         entrypoint: [""]
+    tags:
+        - k8s-default
     stage: formatting
     needs: []
     dependencies: []
@@ -271,6 +273,8 @@ cmp:doxygen:
 # Compile LaTeX user manual:
 cmp:usermanual:
     extends: .doc
+    tags:
+        - k8s-default
     image: gitlab-registry.cern.ch/clicdp/publications/templates/custom_ci_worker:fedora-latex-latest
     script:
         - cmake -DBUILD_DOCS_ONLY=ON ..
@@ -349,6 +353,8 @@ deploy:documentation:
     stage: deployment
     variables:
         GIT_STRATEGY: none
+    tags:
+        - k8s-default
     # Only run for new tags:
     only:
         - tags@corryvreckan/corryvreckan
@@ -367,6 +373,8 @@ deploy:eos:
     stage: deployment
     variables:
         GIT_STRATEGY: none
+    tags:
+        - k8s-default
     # Only run for new tags:
     only:
         - tags@corryvreckan/corryvreckan
@@ -405,6 +413,8 @@ deploy:cvmfs:
 
 .deploy-docker:
     stage: deployment
+    tags:
+        - k8s-default
     image:
         name: gcr.io/kaniko-project/executor:debug
         entrypoint: [""]
