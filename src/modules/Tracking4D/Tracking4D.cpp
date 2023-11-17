@@ -148,6 +148,14 @@ void Tracking4D::initialize() {
                                                   -30,
                                                   30);
 
+        title = detectorID + "local track resolution x; resolution x [mm] ;events";
+        local_resolution_x_[detectorID] =
+            new TH1F("LocalTRackResolutionX", title.c_str(), 500, 0, detector->getPitch().X() / 5.);
+
+        title = detectorID + "local track resolution y; resolution x [mm]; events";
+        local_resolution_y_[detectorID] =
+            new TH1F("LocalTRackResolutionY", title.c_str(), 500, 0, detector->getPitch().Y() / 5.);
+
         // Do not create plots for detectors not participating in the tracking:
         if(exclude_DUT_ && detector->isDUT()) {
             continue;
@@ -654,8 +662,11 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             }
 
             XYPoint kink = track->getKinkAt(det);
+            auto error = track->getLocalStateUncertainty(det);
             kinkX.at(det)->Fill(kink.x());
             kinkY.at(det)->Fill(kink.y());
+            local_resolution_x_[det]->Fill(error(0, 0));
+            local_resolution_y_[det]->Fill(error(1, 1));
         }
     }
     tracksPerEvent->Fill(static_cast<double>(tracks.size()));

@@ -327,6 +327,8 @@ void GblTrack::fit() {
         local_fitted_track_points_[name] = ROOT::Math::XYZPoint(
             local_track_points_.at(name).x() + localPar(3), local_track_points_.at(name).y() + localPar(4), 0);
 
+        // thanks to https://github.com/simonspa/resolution-simulator/blob/master/telescope/assembly.cc:224
+        local_fitted_track_points_error[name] = ROOT::Math::XYZPoint(sqrt(localCov(3, 3)), sqrt(localCov(4, 4)), 0);
         if(plane.hasCluster()) {
             traj.getMeasResults(gbl_id, numData, gblResiduals, gblErrorsMeasurements, gblErrorsResiduals, gblDownWeights);
             // to be consistent with previous residuals global ones here:
@@ -339,7 +341,7 @@ void GblTrack::fit() {
             LOG(TRACE) << "Results for detector  " << name << std::endl
                        << "Fitted residual local:\t" << residual_local_.at(name) << std::endl
                        << "Seed residual:\t" << initital_residual_.at(name) << std::endl
-                       << "Ditted residual global:\t" << ROOT::Math::XYPoint(clusterPos - corPos);
+                       << "Fitted residual global:\t" << ROOT::Math::XYPoint(clusterPos - corPos);
         }
         LOG(DEBUG) << "Plane: " << name << ": residual " << residual_local_[name] << ", kink: " << kink_[name];
     }
@@ -391,6 +393,30 @@ ROOT::Math::XYZPoint GblTrack::getState(const std::string& detectorID) const {
         planes_.begin(), planes_.end(), [detectorID](const auto& plane) { return (plane.getName() == detectorID); });
 
     return (p->getToGlobal() * local_fitted_track_points_.at(detectorID));
+}
+
+TMatrixD GblTrack::getLocalStateUncertainty(const std::string& detectorID) const {
+    if(!isFitted_) {
+        throw TrackError(typeid(GblTrack), " has no defined state for " + detectorID + " before fitting");
+    }
+    if(local_fitted_track_points_.count(detectorID) != 1) {
+        throw TrackError(typeid(GblTrack), " does not have any entry for detector " + detectorID);
+    }
+    TMatrixD error(3, 3);
+    error(0, 0) = local_fitted_track_points_error.at(detectorID).x();
+    error(1, 1) = local_fitted_track_points_error.at(detectorID).y();
+    return error;
+}
+
+TMatrixD GblTrack::getGlobalStateUncertainty(const std::string& detectorID) const {
+    // The local track position can simply be transformed to global coordinates
+    auto p = std::find_if(
+        planes_.begin(), planes_.end(), [detectorID](const auto& plane) { return (plane.getName() == detectorID); });
+
+    // rotate the to global coordinates
+    TMatrixD ltg(3, 3);
+    p->getToGlobal().Rotation().GetRotationMatrix(ltg);
+    return (ltg * getLocalStateUncertainty(detectorID));
 }
 
 void GblTrack::set_seed_cluster(const Cluster* cluster) {

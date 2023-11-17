@@ -59,6 +59,7 @@ namespace corryvreckan {
         std::map<std::string, TH1F*> pullX_local;
 
         std::map<std::string, TH1F*> residualsX_global;
+        std::map<std::string, TH1F*> local_resolution_x_;
         std::map<std::string, TH2F*> residualsX_vs_positionX_global;
         std::map<std::string, TH2F*> residualsX_vs_positionY_global;
         std::map<std::string, TH1F*> residualsXwidth1_global;
@@ -66,6 +67,7 @@ namespace corryvreckan {
         std::map<std::string, TH1F*> residualsXwidth3_global;
         std::map<std::string, TH1F*> pullX_global;
         std::map<std::string, TH1F*> residualsY_global;
+        std::map<std::string, TH1F*> local_resolution_y_;
         std::map<std::string, TH2F*> residualsY_vs_positionY_global;
         std::map<std::string, TH2F*> residualsY_vs_positionX_global;
         std::map<std::string, TH1F*> residualsYwidth1_global;

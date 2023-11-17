@@ -46,6 +46,7 @@ The following plots are produced only once:
 For each detector, the following plots are produced:
 
 * Histograms of the track residual in X/Y for various cluster sizes (1-3)
+* Histograms with the pointing resolution on each detector
 
 ### Usage
 ```toml
