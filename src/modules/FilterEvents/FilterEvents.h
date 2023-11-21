@@ -53,10 +53,13 @@ namespace corryvreckan {
         TH1F* hFilter_;
 
         std::vector<std::array<uint32_t, 2>> exclude_trigger_windows_{};
-        long unsigned max_number_tracks_{};
-        long unsigned min_number_tracks_{};
-        long unsigned min_clusters_per_reference_{};
-        long unsigned max_clusters_per_reference_{};
+        std::optional<long unsigned> max_number_tracks_{};
+        std::optional<long unsigned> min_number_tracks_{};
+        std::optional<long unsigned> min_clusters_per_reference_{};
+        std::optional<long unsigned> max_clusters_per_reference_{};
+        std::optional<double> min_event_duration_{};
+        std::optional<double> max_event_duration_{};
+
         bool only_tracks_on_dut_{};
         std::map<std::string, std::function<bool(const std::string&)>> tag_filter_funcs_{};
 
@@ -80,6 +83,13 @@ namespace corryvreckan {
          * @return true if number of clusters on one plane is not within specified range, false otherwise
          */
         bool filter_cluster(const std::shared_ptr<Clipboard>& clipboard);
+
+        /**
+         * @brief Function to filter events based on event duration
+         * @param clipboard with the current event
+         * @return true if the event duration is not within specified range, false otherwise
+         */
+        bool filter_event_duration(const std::shared_ptr<Clipboard>& clipboard);
 
         /**
          * @brief Function to load decoded tag filters
