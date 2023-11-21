@@ -18,13 +18,7 @@ FilterEvents::FilterEvents(Configuration& config, std::vector<std::shared_ptr<De
 
 void FilterEvents::initialize() {
 
-    config_.setDefault<unsigned>("min_tracks", 0);
-    config_.setDefault<unsigned>("max_tracks", 100);
     config_.setDefault<bool>("only_tracks_on_dut", false);
-    config_.setDefault<unsigned>("min_clusters_per_plane", 0);
-    config_.setDefault<unsigned>("max_clusters_per_plane", 100);
-    config_.setDefault<double>("min_event_duration", Units::get<double>(0, "ps"));
-    config_.setDefault<double>("max_event_duration", Units::get<double>(500, "s"));
 
     // Get trigger windows as matrix from config, copy to vec<arr<2>> if requirements fulfilled
     auto exclude_trigger_windows_matrix = config_.getMatrix("exclude_trigger_windows", Matrix<uint32_t>{});
