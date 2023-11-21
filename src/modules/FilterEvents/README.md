@@ -8,7 +8,7 @@
 **Status**: Work in progress  
 
 ### Description
-This module allows for a filtering of events based on the number of tracks/clusters on the clipboard. If no value for the parameters is given, the filter on the parameter is inactive
+This module allows for a filtering of events based on the number of tracks/clusters on the clipboard. If no value for the parameters is given, the filter on the parameter is inactive.
 Events can be skipped based on the number of tracks and clusters per plane. The accepted cluster range is defined for all planes, that are not a `DUT` or a `Auxiliary`.
 Events can also be skipped based on tag values where the tag value is either checked to be witihin a specified range, or matching at least one value of a specified list.
 

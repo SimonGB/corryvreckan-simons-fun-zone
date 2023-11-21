@@ -144,8 +144,7 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
 }
 
 bool FilterEvents::filter_event_duration(const std::shared_ptr<Clipboard>& clipboard) {
-    auto event = clipboard->getEvent();
-    auto duration = event->duration();
+    auto duration = clipboard->getEvent()->duration();
     if(max_event_duration_.has_value() && duration > max_event_duration_.value()) {
         hFilter_->Fill(9); // too long event
         LOG(TRACE) << "Event too long: " << duration << " vs max: " << max_event_duration_.value();
