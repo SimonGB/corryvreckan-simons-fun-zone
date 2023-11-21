@@ -41,13 +41,13 @@ void FilterEvents::initialize() {
         exclude_trigger_windows_.push_back({trigger_window[0], trigger_window[1]});
     }
 
-    min_number_tracks_ = config_.get<unsigned>("min_tracks");
-    max_number_tracks_ = config_.get<unsigned>("max_tracks");
-    min_clusters_per_reference_ = config_.get<unsigned>("min_clusters_per_plane");
-    max_clusters_per_reference_ = config_.get<unsigned>("max_clusters_per_plane");
+    min_number_tracks_ = get_config<long unsigned>("min_tracks");
+    max_number_tracks_ = get_config<long unsigned>("max_tracks");
+    min_clusters_per_reference_ = get_config<long unsigned>("min_clusters_per_plane");
+    max_clusters_per_reference_ = get_config<long unsigned>("max_clusters_per_plane");
     only_tracks_on_dut_ = config_.get<bool>("only_tracks_on_dut");
-    min_event_duration_ = config_.get<double>("min_event_duration");
-    max_event_duration_ = config_.get<double>("max_event_duration");
+    min_event_duration_ = get_config<double>("min_event_duration");
+    max_event_duration_ = get_config<double>("max_event_duration");
 
     if(only_tracks_on_dut_ && get_duts().size() != 1) {
         LOG(WARNING) << "Multiple DUTs in geometry, only_tracks_on_dut_ forced to true";
@@ -118,11 +118,11 @@ bool FilterEvents::filter_tracks(const std::shared_ptr<Clipboard>& clipboard) {
         }
     }
 
-    if(num_tracks > max_number_tracks_) {
+    if(max_number_tracks_.has_value() && num_tracks > max_number_tracks_.value()) {
         hFilter_->Fill(4); // too many tracks
         LOG(TRACE) << "Number of tracks above maximum";
         return true;
-    } else if(num_tracks < min_number_tracks_) {
+    } else if(min_number_tracks_.has_value() && num_tracks < min_number_tracks_.value()) {
         hFilter_->Fill(3); //  too few tracks
         LOG(TRACE) << "Number of tracks below minimum";
         return true;
@@ -136,14 +136,13 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
         std::string det = detector->getName();
         // Check if number of Clusters on plane is within acceptance
         auto num_clusters = clipboard->getData<Cluster>(det).size();
-        if(num_clusters > max_clusters_per_reference_) {
+        if(max_clusters_per_reference_.has_value() && num_clusters > max_clusters_per_reference_.value()) {
             hFilter_->Fill(6); //  too many clusters
-            LOG(TRACE) << "Number of Clusters on above maximum";
+            LOG(TRACE) << "Number of Clusters " << det << " above maximum";
             return true;
-        }
-        if(num_clusters < min_clusters_per_reference_) {
+        } else if(min_clusters_per_reference_.has_value() && num_clusters < min_clusters_per_reference_.value()) {
             hFilter_->Fill(5); //  too few clusters
-            LOG(TRACE) << "Number of Clusters on below minimum";
+            LOG(TRACE) << "Number of Clusters on " << det << " below minimum";
             return true;
         }
     }
@@ -153,14 +152,13 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
 bool FilterEvents::filter_event_duration(const std::shared_ptr<Clipboard>& clipboard) {
     auto event = clipboard->getEvent();
     auto duration = event->duration();
-    if(duration > max_event_duration_) {
+    if(max_event_duration_.has_value() && duration > max_event_duration_.value()) {
         hFilter_->Fill(9); // too long event
-        LOG(TRACE) << "Event too long: " << duration << " vs max: " << max_event_duration_;
+        LOG(TRACE) << "Event too long: " << duration << " vs max: " << max_event_duration_.value();
         return true;
-    }
-    if(event->duration() < min_event_duration_) {
+    } else if(min_event_duration_.has_value() && duration < min_event_duration_.value()) {
         hFilter_->Fill(8); // too short event
-        LOG(TRACE) << "Event too short: " << duration << " vs max: " << max_event_duration_;
+        LOG(TRACE) << "Event too short: " << duration << " vs max: " << max_event_duration_.value();
         return true;
     }
     return false;
@@ -225,4 +223,12 @@ bool FilterEvents::filter_tags(const std::shared_ptr<Clipboard>& clipboard) {
         }
     }
     return false;
+}
+
+template <typename T> std::optional<T> FilterEvents::get_config(const std::string& key) {
+    if(config_.has(key)) {
+        return std::optional<T>(config_.get<T>(key));
+    } else {
+        return std::optional<T>();
+    }
 }

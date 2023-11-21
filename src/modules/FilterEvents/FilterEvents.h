@@ -53,12 +53,14 @@ namespace corryvreckan {
         TH1F* hFilter_;
 
         std::vector<std::array<uint32_t, 2>> exclude_trigger_windows_{};
-        long unsigned max_number_tracks_{};
-        long unsigned min_number_tracks_{};
-        long unsigned min_clusters_per_reference_{};
-        long unsigned max_clusters_per_reference_{};
-        double min_event_duration_{};
-        double max_event_duration_{};
+        std::optional<long unsigned> max_number_tracks_{};
+        std::optional<long unsigned> min_number_tracks_{};
+        std::optional<long unsigned> min_clusters_per_reference_{};
+        std::optional<long unsigned> max_clusters_per_reference_{};
+        std::optional<double> min_event_duration_{};
+        std::optional<double> max_event_duration_{};
+
+        template <typename T> std::optional<T> get_config(const std::string& key);
 
         bool only_tracks_on_dut_{};
         std::map<std::string, std::function<bool(const std::string&)>> tag_filter_funcs_{};
