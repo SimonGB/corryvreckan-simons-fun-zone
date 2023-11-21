@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <map>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -132,6 +133,14 @@ namespace corryvreckan {
          * @return Value of the key in the type of the requested template parameter
          */
         template <typename T> T get(const std::string& key) const;
+
+        /**
+         * @brief Get value of an optional key in requested type
+         * @param key Key to get value of
+         * @return Value of the key in the type of the requested template parameter, if provided
+         */
+        template <typename T> std::optional<T> getOptional(const std::string& key) const;
+
         /**
          * @brief Get value of a key in requested type or default value if it does not exists
          * @param key Key to get value of
