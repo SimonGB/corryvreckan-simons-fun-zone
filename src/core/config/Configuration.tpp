@@ -10,6 +10,15 @@
  */
 
 namespace corryvreckan {
+
+    template <typename T> std::optional<T> Configuration::getOptional(const std::string& key) const {
+        if(has(key)) {
+            return std::optional<T>(get<T>(key));
+        } else {
+            return std::optional<T>();
+        }
+    }
+
     /**
      * @throws MissingKeyError If the requested key is not defined
      * @throws InvalidKeyError If the conversion to the requested type did not succeed
