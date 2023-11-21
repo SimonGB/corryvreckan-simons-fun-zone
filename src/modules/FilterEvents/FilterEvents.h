@@ -60,8 +60,6 @@ namespace corryvreckan {
         std::optional<double> min_event_duration_{};
         std::optional<double> max_event_duration_{};
 
-        template <typename T> std::optional<T> get_config(const std::string& key);
-
         bool only_tracks_on_dut_{};
         std::map<std::string, std::function<bool(const std::string&)>> tag_filter_funcs_{};
 

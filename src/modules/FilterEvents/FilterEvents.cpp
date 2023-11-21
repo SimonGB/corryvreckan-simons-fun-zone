@@ -35,13 +35,13 @@ void FilterEvents::initialize() {
         exclude_trigger_windows_.push_back({trigger_window[0], trigger_window[1]});
     }
 
-    min_number_tracks_ = get_config<long unsigned>("min_tracks");
-    max_number_tracks_ = get_config<long unsigned>("max_tracks");
-    min_clusters_per_reference_ = get_config<long unsigned>("min_clusters_per_plane");
-    max_clusters_per_reference_ = get_config<long unsigned>("max_clusters_per_plane");
+    min_number_tracks_ = config_.getOptional<long unsigned>("min_tracks");
+    max_number_tracks_ = config_.getOptional<long unsigned>("max_tracks");
+    min_clusters_per_reference_ = config_.getOptional<long unsigned>("min_clusters_per_plane");
+    max_clusters_per_reference_ = config_.getOptional<long unsigned>("max_clusters_per_plane");
     only_tracks_on_dut_ = config_.get<bool>("only_tracks_on_dut");
-    min_event_duration_ = get_config<double>("min_event_duration");
-    max_event_duration_ = get_config<double>("max_event_duration");
+    min_event_duration_ = config_.getOptional<double>("min_event_duration");
+    max_event_duration_ = config_.getOptional<double>("max_event_duration");
 
     if(only_tracks_on_dut_ && get_duts().size() != 1) {
         LOG(WARNING) << "Multiple DUTs in geometry, only_tracks_on_dut_ forced to true";
@@ -217,12 +217,4 @@ bool FilterEvents::filter_tags(const std::shared_ptr<Clipboard>& clipboard) {
         }
     }
     return false;
-}
-
-template <typename T> std::optional<T> FilterEvents::get_config(const std::string& key) {
-    if(config_.has(key)) {
-        return std::optional<T>(config_.get<T>(key));
-    } else {
-        return std::optional<T>();
-    }
 }
