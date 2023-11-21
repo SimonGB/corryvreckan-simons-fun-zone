@@ -111,8 +111,7 @@ void OnlineMonitor::AddDUTGroup(uint64_t num_planes) {
     std::string group_title = "DUTs";
 
     // Dynamic sizing of DUT section for less than 3 planes
-    UInt_t vert_size;
-    vert_size = static_cast<UInt_t>((num_planes >= 3) ? 150 : 40 + num_planes * 40);
+    auto vert_size = static_cast<UInt_t>((num_planes >= 3) ? 150 : 40 + num_planes * 40);
 
     // Adding an outer frame to place canvas inside
     gui->dutFrame = new TGMainFrame(gui->buttonMenu, 150, vert_size, kVerticalFrame | kFixedSize);
