@@ -319,7 +319,7 @@ void GblTrack::fit() {
 
     for(const auto& plane : planes_) {
         const auto& name = plane.getName();
-        auto gbl_id = plane_to_gblpoint_[plane.getName()];
+        auto gbl_id = plane_to_gblpoint_[name];
         traj.getScatResults(gbl_id, numData, gblResiduals, gblErrorsMeasurements, gblErrorsResiduals, gblDownWeights);
         // fixme: Kinks are in local coordinates and would be more reasonably in global
         kink_[name] = ROOT::Math::XYPoint(gblResiduals(0), gblResiduals(1));
