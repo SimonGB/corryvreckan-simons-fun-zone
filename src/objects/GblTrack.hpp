@@ -12,8 +12,14 @@
 #ifndef CORRYVRECKAN_GBLTRACK_H
 #define CORRYVRECKAN_GBLTRACK_H 1
 
-#include <GblPoint.h>
+#include <Eigen/Core>
+
 #include "Track.hpp"
+
+// Forward-declare GblPoint to avoid exposure of the header inclusion
+namespace gbl {
+    class GblPoint;
+}
 
 namespace corryvreckan {
     /**
