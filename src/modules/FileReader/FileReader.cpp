@@ -22,6 +22,8 @@
 #include <TProcessID.h>
 #include <TTree.h>
 
+#include <GblPoint.h>
+
 #include "core/utils/log.h"
 #include "core/utils/type.h"
 
