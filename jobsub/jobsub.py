@@ -23,6 +23,7 @@ import misc
 import os
 import multiprocessing
 import hashlib
+import signal
 
 def runCorryvreckanLocally(filename, jobtask, silent):
     """ Runs Corryvreckan and stores log of output """
@@ -263,11 +264,13 @@ def main(argv=None):
         csv_loader = loader.Loader(args.csv_file, runs)
         csv_parsed = csv_loader.parse()
 
+    # Set signal to ignore SIGINT before spawning the pool workers
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
     # execute all submissions in a parallel fashion
     pool = multiprocessing.Pool(processes=args.cores)
 
     # setup mechanism to deal with user pressing ctrl-c in a safe way while we execute Corryvreckan later
-    import signal
     keep_running = {'Sigint':'no'}
     def signal_handler(signal, frame):
         """ log if SIGINT detected, set variable to indicate status """
