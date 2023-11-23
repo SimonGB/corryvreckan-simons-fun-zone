@@ -333,10 +333,13 @@ void GblTrack::fit() {
             traj.getMeasResults(gbl_id, numData, gblResiduals, gblErrorsMeasurements, gblErrorsResiduals, gblDownWeights);
             // to be consistent with previous residuals global ones here:
 
-            auto corPos = plane.getToGlobal() * local_fitted_track_points_.at(name);
-            ROOT::Math::XYZPoint clusterPos = plane.getCluster()->global();
+            auto corPosLocal = local_fitted_track_points_.at(name);
+            auto clusterPosLocal = plane.getCluster()->local();
+            residual_local_[name] = clusterPosLocal - corPosLocal;
+
+            auto corPos = plane.getToGlobal() * corPosLocal;
+            auto clusterPos = plane.getCluster()->global();
             residual_global_[name] = clusterPos - corPos;
-            residual_local_[plane.getName()] = ROOT::Math::XYPoint(gblResiduals(0), gblResiduals(1));
 
             LOG(TRACE) << "Results for detector  " << name << std::endl
                        << "Fitted residual local:\t" << residual_local_.at(name) << std::endl
