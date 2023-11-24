@@ -30,7 +30,7 @@ Clustering4D::Clustering4D(Configuration& config, std::shared_ptr<Detector> dete
     config_.setDefault<bool>("reject_by_roi", false);
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
-        config_.setDefault("time_cut_rel", 3.0);
+        config_.setDefault("time_cut_rel", 10.0);
     }
 
     // timing cut, relative (x * time_resolution) or absolute:

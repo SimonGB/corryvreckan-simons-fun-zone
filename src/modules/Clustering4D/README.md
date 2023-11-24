@@ -19,7 +19,7 @@ Split clusters can be recovered using a larger search radius for neighboring pix
 Their width is defined as the maximum extent in column/row direction, i.e. a cluster of pixels (1,10), (1,12) would have a column width of 1 and a row width of 3.
 
 ### Parameters
-* `time_cut_rel`: Number of standard deviations the `time_resolution` of the detector plane will be multiplied by. This value is then used as the maximum time difference allowed between pixels for association to a cluster. By default, a relative time cut is applied. Absolute and relative time cuts are mutually exclusive. Defaults to `3.0`.
+* `time_cut_rel`: Number of standard deviations the `time_resolution` of the detector plane will be multiplied by. This value is then used as the maximum time difference allowed between pixels for association to a cluster. By default, a relative time cut is applied. Absolute and relative time cuts are mutually exclusive. Defaults to `10.0`.
 * `time_cut_abs`: Specifies an absolute value for the maximum time difference allowed between pixels for association to a cluster. Absolute and relative time cuts are mutually exclusive. No default value.
 * `neighbor_radius_col`: Search radius for neighboring pixels in column direction, defaults to `1` (do not allow split clusters)
 * `neighbor_radius_row`:  Search radius for neighboring pixels in row direction, defaults to `1` (do not allow split clusters)
