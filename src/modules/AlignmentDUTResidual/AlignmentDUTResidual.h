@@ -23,6 +23,16 @@
 #include "objects/Track.hpp"
 
 namespace corryvreckan {
+    /**
+     * @brief Version of std::make_shared that does not delete the pointer
+     *
+     * This version is needed because some pointers are deleted by ROOT's MINUIT2 internally, but they are stored as
+     * std::shared_ptr in this framework.
+     */
+    template <typename T, typename... Args> static std::shared_ptr<T> make_shared_no_delete(Args... args) {
+        return std::shared_ptr<T>(new T(args...), [](T*) {});
+    }
+
     /** @ingroup Modules
      * @brief Module to do function
      *
