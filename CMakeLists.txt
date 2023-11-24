@@ -140,7 +140,7 @@ ENDIF()
 SET(CORRYVRECKAN_LIBRARIES "")
 
 # ROOT is required for vector and persistency etc
-FIND_PACKAGE(ROOT REQUIRED COMPONENTS Minuit Minuit2 Gui GenVector Geom Core Hist RIO NO_MODULE)
+FIND_PACKAGE(ROOT 6.20 REQUIRED COMPONENTS Minuit Minuit2 Gui GenVector Geom Core Hist RIO NO_MODULE)
 IF(NOT ROOT_FOUND)
     MESSAGE(FATAL_ERROR "Could not find ROOT, make sure to source the ROOT environment\n"
     "$ source YOUR_ROOT_DIR/bin/thisroot.sh")
