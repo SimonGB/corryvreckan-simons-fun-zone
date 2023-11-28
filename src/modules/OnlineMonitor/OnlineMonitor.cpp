@@ -81,23 +81,15 @@ OnlineMonitor::OnlineMonitor(Configuration& config, std::vector<std::shared_ptr<
 }
 
 void OnlineMonitor::initialize() {
-    // Start the GUI thread
-    gui_thread = std::thread(&OnlineMonitor::gui_run, this);
+    gui_run();
 }
 
 StatusCode OnlineMonitor::run(const std::shared_ptr<Clipboard>&) {
+    gui_update();
+
     // Increase the event number
     eventNumber++;
     return StatusCode::Success;
-}
-
-void OnlineMonitor::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-    gui_running = false;
-
-    // Wait for the GUI thread to finish
-    if(gui_thread.joinable()) {
-        gui_thread.join();
-    }
 }
 
 void OnlineMonitor::AddCanvasGroup(std::string group_title) {
@@ -245,8 +237,6 @@ void OnlineMonitor::AddHisto(string canvasName, string histoName, string style, 
 
 void OnlineMonitor::gui_run() {
 
-    gui_mutex.lock();
-
     // TApplication keeps the canvases persistent
     app = new TApplication("example", nullptr, nullptr);
 
@@ -326,14 +316,6 @@ void OnlineMonitor::gui_run() {
 
     // Initialise member variables
     eventNumber = 0;
-
-    gui_mutex.unlock();
-
-    // Loop to keep the GUI updating in the thread
-    while(gui_running) {
-        std::unique_lock<std::mutex> lock(gui_mutex);
-        gui_update();
-    }
 }
 
 void OnlineMonitor::gui_update() {
