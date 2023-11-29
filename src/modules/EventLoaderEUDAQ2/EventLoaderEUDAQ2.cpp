@@ -613,7 +613,7 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
                 return StatusCode::EndRun;
 #endif
             } catch(NoNewEvent&) {
-                LOG(DEBUG) << "Waiting for new events";
+                LOG_PROGRESS(INFO, "eudaq2_loader") << "Waiting for new events";
                 using namespace std::chrono_literals;
                 std::this_thread::sleep_for(1000ms);
                 return StatusCode::NoData;
