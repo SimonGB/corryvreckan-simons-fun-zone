@@ -10,6 +10,7 @@ INCLUDE("${ROOT_USE_FILE}")
 
 # Generate the ROOT dictionary
 ROOT_GENERATE_DICTIONARY(CorryvreckanObjectsDictionary
+    ${CMAKE_SOURCE_DIR}/3rdparty/GeneralBrokenLines/include/GblPoint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Object.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Pixel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Cluster.hpp
