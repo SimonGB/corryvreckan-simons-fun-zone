@@ -318,9 +318,9 @@ void AlignmentDUTResidual::SetResidualsFunctions() {
     auto m_parameters_residuals = config_.getArray<double>("parameters_residuals", {});
     // Define residual
     AlignmentDUTResidual::formula_residual_x =
-        std::make_shared<TFormula>("formula_residual_x", m_residuals.at(0).c_str(), false);
+        make_shared_no_delete<TFormula>("formula_residual_x", m_residuals.at(0).c_str(), false);
     AlignmentDUTResidual::formula_residual_y =
-        std::make_shared<TFormula>("formula_residual_y", m_residuals.at(1).c_str(), false);
+        make_shared_no_delete<TFormula>("formula_residual_y", m_residuals.at(1).c_str(), false);
     // Check formulas
     if(!formula_residual_x->IsValid() || !formula_residual_y->IsValid()) {
         throw InvalidValueError(config_, "residuals", "Expression is not a valid function");
