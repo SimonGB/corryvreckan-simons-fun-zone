@@ -254,7 +254,7 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
                 pixelbuffers_.at(t).pop(); // remove top element
                 continue;
             } else if(pixelbuffers_.at(t).size() && (pixel->timestamp() < clipboard->getEvent()->end()) &&
-                      (pixel->timestamp() > clipboard->getEvent()->start())) {
+                      (pixel->timestamp() >= clipboard->getEvent()->start())) {
                 LOG(DEBUG) << " Adding pixel hit: " << Units::display(pixel->timestamp(), "us") << " vs prev end ("
                            << eventNo_ - 1 << ")\t" << Units::display(prev_event_end_, "us") << " and current start \t"
                            << Units::display(clipboard->getEvent()->start(), "us")
