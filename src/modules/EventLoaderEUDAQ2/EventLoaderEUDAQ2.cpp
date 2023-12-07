@@ -523,16 +523,19 @@ PixelVector EventLoaderEUDAQ2::get_pixel_data(std::shared_ptr<eudaq::StandardEve
                                 Waveform::waveform_t{plane.GetWaveform(i), plane.GetWaveformX0(i), plane.GetWaveformDX(i)})
                           : std::make_shared<Pixel>(detector_->getName(), col, row, raw, raw, ts));
 
-        hitmap->Fill(col, row);
-        hPixelTimes->Fill(static_cast<double>(Units::convert(ts, "ms")));
-        hPixelTimes_long->Fill(static_cast<double>(Units::convert(ts, "s")));
-        hPixelRawValues->Fill(raw);
-        hRawValuesMap->Fill(col, row, raw);
+        if(!detector_->isAuxiliary()) {
+            hitmap->Fill(col, row);
+            hPixelTimes->Fill(static_cast<double>(Units::convert(ts, "ms")));
+            hPixelTimes_long->Fill(static_cast<double>(Units::convert(ts, "s")));
+            hPixelRawValues->Fill(raw);
+            hRawValuesMap->Fill(col, row, raw);
+        }
 
         pixels.push_back(pixel);
     }
-    hPixelMultiplicityPerEudaqEvent->Fill(static_cast<int>(pixels.size()));
-    LOG(DEBUG) << detector_->getName() << ": Plane contains " << pixels.size() << " pixels";
+    if(!detector_->isAuxiliary()) {
+        hPixelMultiplicityPerEudaqEvent->Fill(static_cast<int>(pixels.size()));
+    }
 
     return pixels;
 }
@@ -637,12 +640,12 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
 
         if(current_position == Event::Position::DURING) {
             num_eudaq_events_per_corry++;
-            LOG(DEBUG) << "Is within current Corryvreckan event, storing data";
-            // Store data on the clipboard
-            auto new_pixels = get_pixel_data(event_, plane_id);
-            hits_ += new_pixels.size();
-            pixels.insert(pixels.end(), new_pixels.begin(), new_pixels.end());
-
+            if(!detector_->isAuxiliary()) {
+                // Store data on the clipboard
+                auto new_pixels = get_pixel_data(event_, plane_id);
+                hits_ += new_pixels.size();
+                pixels.insert(pixels.end(), new_pixels.begin(), new_pixels.end());
+            }
             // Add eudaq tags to the event
             auto eudaq_tags = event_->GetTags();
             clipboard->getEvent()->addTags(eudaq_tags);
