@@ -242,6 +242,12 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
                 LOG(DEBUG) << "Buffer " << t << " empty";
                 return StatusCode::EndRun;
             }
+
+            LOG(TRACE) << "Tag " << t << " : buffer " << pixelbuffers_.at(t).size();
+            if(pixelbuffers_.at(t).empty() && !eof_) {
+                fillBuffer();
+            }
+
             auto pixel = pixelbuffers_.at(t).top();
             if(pixelbuffers_.at(t).size() && (pixel->timestamp() < clipboard->getEvent()->start())) {
                 LOG(DEBUG) << " Old hit found: " << Units::display(pixel->timestamp(), "us") << " vs prev end ("
@@ -280,9 +286,6 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
             } else {
                 break;
             }
-
-            if(!eof_)
-                fillBuffer();
         }
     }
     prev_event_end_ = clipboard->getEvent()->end();
