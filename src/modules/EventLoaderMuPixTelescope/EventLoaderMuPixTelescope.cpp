@@ -430,13 +430,11 @@ std::map<std::string, int> EventLoaderMuPixTelescope::typeString_to_typeID = {{"
                                                                               {"run2020v6", R20V6_UNSORTED_GS1_GS2_GS3},
                                                                               {"run2020v7", R20V7_UNSORTED_GS1_GS2_GS3},
                                                                               {"run2020v8", R20V8_UNSORTED_GS1_GS2_GS3},
-                                                                              {"run2020v9", R20V9_UNSORTED_GS1_GS2_GS3},
                                                                               {"telepix2", TELEPIX2_UNSORTED_GS1_GS2_GS3}};
 
 StatusCode EventLoaderMuPixTelescope::run(const std::shared_ptr<Clipboard>& clipboard) {
     eventNo_++;
-    LOG(WARNING) << "running eventloadermupixtelescope";
-    // std::cout<< "running eventloadermupixtelescope" <<std::endl;
+
     for(auto t : tags_)
         pixels_.at(t).clear();
     // get the hits
