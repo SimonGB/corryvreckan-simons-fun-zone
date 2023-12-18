@@ -18,8 +18,8 @@ stages:
 # General target templates #
 ############################
 
-.centos7:
-    image: gitlab-registry.cern.ch/sft/docker/centos7:latest
+.alma9:
+    image: gitlab-registry.cern.ch/sft/docker/alma9:latest
     tags:
         - cvmfs
     variables:
@@ -28,8 +28,8 @@ stages:
         - source .ci/init_x86_64.sh
         - mkdir -p build/ && cd build/
 
-.centos8:
-    image: gitlab-registry.cern.ch/sft/docker/centos8:latest
+.centos7:
+    image: gitlab-registry.cern.ch/sft/docker/centos7:latest
     tags:
         - cvmfs
     variables:
@@ -46,7 +46,7 @@ stages:
         - mkdir -p build/ && cd build/
 
 .lxplus:
-    image: gitlab-registry.cern.ch/sft/docker/centos7:latest
+    image: gitlab-registry.cern.ch/sft/docker/alma9:latest
     tags:
         - cvmfs
     variables:
@@ -87,12 +87,8 @@ stages:
 
 cmp:lxplus-gcc:
     extends:
-        - .centos7
+        - .lxplus
         - .compile
-    script:
-        - cmake -GNinja -DCMAKE_CXX_FLAGS="-Werror" -DBUILD_EventLoaderALiBaVa=ON -DCMAKE_BUILD_TYPE=RELEASE -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR ..
-        - ninja -k0
-        - ninja install
 
 cmp:docker:
     extends:
@@ -108,17 +104,17 @@ cmp:cc7-gcc:
         - .centos7
         - .compile
 
-cmp:cc7-llvm:
+cmp:el9-gcc:
     extends:
-        - .centos7
+        - .alma9
+        - .compile
+
+cmp:el9-llvm:
+    extends:
+        - .alma9
         - .compile
     variables:
         COMPILER_TYPE: "llvm"
-
-cmp:cc8-gcc:
-    extends:
-        - .centos8
-        - .compile
 
 cmp:macos-clang:
     extends:
@@ -194,13 +190,13 @@ tst:sim:
         - export PATH=~/.local/bin:$PATH
         - mkdir -p build/ && cd build/
 
-fmt:centos7-llvm-format:
+fmt:llvm-format:
     extends: .format
     script:
         - cmake -DCMAKE_CXX_FLAGS="-Werror" -DCMAKE_BUILD_TYPE=RELEASE -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR ..
         - make check-format
 
-fmt:cc7-llvm-lint:
+fmt:llvm-lint:
     extends: .format
     script:
         - cmake -DCMAKE_CXX_FLAGS="-Werror" -DBUILD_EventLoaderEUDAQ2=ON -DBUILD_EventDefinitionM26=ON -DCMAKE_BUILD_TYPE=RELEASE -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR -Deudaq_DIR=/opt/eudaq2/cmake ..
@@ -209,7 +205,7 @@ fmt:cc7-llvm-lint:
         - schedules
         - tags
 
-fmt:cc7-llvm-lint-diff:
+fmt:llvm-lint-diff:
     extends: .format
     script:
         - git remote add upstream $REPOSITORY && git fetch upstream
@@ -261,7 +257,7 @@ fmt:reuse:
 # Compile Doxygen reference
 cmp:doxygen:
     extends: .doc
-    image: gitlab-registry.cern.ch/sft/docker/centos7:latest
+    image: gitlab-registry.cern.ch/sft/docker/alma9:latest
     tags:
         - cvmfs
     script:
@@ -306,13 +302,23 @@ cmp:usermanual:
             - public
         expire_in: 24 hour
 
-pkg:cc8-gcc:
+pkg:el9-gcc:
     extends:
-        - .centos8
+        - .alma9
         - .pack
     needs:
-        - job: cmp:cc8-gcc
+        - job: cmp:el9-gcc
           artifacts: true
+
+pkg:el9-llvm:
+    extends:
+        - .alma9
+        - .pack
+    needs:
+        - job: cmp:el9-llvm
+          artifacts: true
+    variables:
+        COMPILER_TYPE: "llvm"
 
 pkg:cc7-gcc:
     extends:
@@ -321,16 +327,6 @@ pkg:cc7-gcc:
     needs:
         - job: cmp:cc7-gcc
           artifacts: true
-
-pkg:cc7-llvm:
-    extends:
-        - .centos7
-        - .pack
-    needs:
-        - job: cmp:cc7-llvm
-          artifacts: true
-    variables:
-        COMPILER_TYPE: "llvm"
 
 pkg:macos-clang:
     extends:
@@ -381,7 +377,8 @@ deploy:eos:
         - schedules@corryvreckan/corryvreckan
     dependencies:
         - pkg:cc7-gcc
-        - pkg:cc8-gcc
+        - pkg:el9-gcc
+        - pkg:el9-llvm
         - pkg:macos-clang
     # Docker image with tools to deploy to EOS
     image: gitlab-registry.cern.ch/ci-tools/ci-web-deployer:latest
@@ -395,8 +392,8 @@ deploy:cvmfs:
     stage: deployment
     dependencies:
         - pkg:cc7-gcc
-        - pkg:cc7-llvm
-        - pkg:cc8-gcc
+        - pkg:el9-gcc
+        - pkg:el9-llvm
         - pkg:macos-clang
     tags:
         - cvmfs-deploy

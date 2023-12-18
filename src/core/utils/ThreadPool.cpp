@@ -64,24 +64,14 @@ ThreadPool::ThreadPool(unsigned int num_threads,
     run_cnt_ = 0;
 }
 
-ThreadPool::~ThreadPool() {
-    destroy();
-}
+ThreadPool::~ThreadPool() { destroy(); }
 
-void ThreadPool::markComplete(uint64_t n) {
-    queue_.complete(n);
-}
+void ThreadPool::markComplete(uint64_t n) { queue_.complete(n); }
 
-uint64_t ThreadPool::minimumUncompleted() const {
-    return queue_.currentId();
-}
+uint64_t ThreadPool::minimumUncompleted() const { return queue_.currentId(); }
 
-size_t ThreadPool::queueSize() const {
-    return queue_.size();
-}
-size_t ThreadPool::bufferedQueueSize() const {
-    return queue_.prioritySize();
-}
+size_t ThreadPool::queueSize() const { return queue_.size(); }
+size_t ThreadPool::bufferedQueueSize() const { return queue_.prioritySize(); }
 
 void ThreadPool::checkException() {
     // If exception has been thrown, destroy pool and propagate it
@@ -168,9 +158,7 @@ void ThreadPool::destroy() {
     }
 }
 
-bool ThreadPool::valid() {
-    return queue_.valid() && !done_;
-}
+bool ThreadPool::valid() { return queue_.valid() && !done_; }
 
 unsigned int ThreadPool::threadNum() {
     auto iter = thread_nums_.find(std::this_thread::get_id());
@@ -180,10 +168,6 @@ unsigned int ThreadPool::threadNum() {
     return 0;
 }
 
-unsigned int ThreadPool::threadCount() {
-    return thread_total_;
-}
+unsigned int ThreadPool::threadCount() { return thread_total_; }
 
-void ThreadPool::registerThreadCount(unsigned int cnt) {
-    thread_total_ += cnt;
-}
+void ThreadPool::registerThreadCount(unsigned int cnt) { thread_total_ += cnt; }

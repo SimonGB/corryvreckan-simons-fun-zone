@@ -80,9 +80,7 @@ OnlineMonitor::OnlineMonitor(Configuration& config, std::vector<std::shared_ptr<
     canvas_time = config_.getMatrix<std::string>("event_times");
 }
 
-void OnlineMonitor::initialize() {
-    gui_run();
-}
+void OnlineMonitor::initialize() { gui_run(); }
 
 StatusCode OnlineMonitor::run(const std::shared_ptr<Clipboard>&) {
     gui_update();

@@ -74,9 +74,7 @@ int AsciiRoot::nevents() const {
     return -1;
 }
 
-bool AsciiRoot::valid() const {
-    return (priv->ifile != nullptr);
-}
+bool AsciiRoot::valid() const { return (priv->ifile != nullptr); }
 
 void AsciiRoot::open(const char* name) {
     priv->ifile = new std::ifstream(name);
@@ -282,6 +280,4 @@ double AsciiRoot::time() const {
     return tt;
 }
 
-double AsciiRoot::temp() const {
-    return 0.12 * _data.temp - 39.8;
-}
+double AsciiRoot::temp() const { return 0.12 * _data.temp - 39.8; }

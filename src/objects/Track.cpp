@@ -22,21 +22,13 @@ using namespace corryvreckan;
 Track::Plane::Plane(std::string name, double z, double x_x0, Transform3D to_local)
     : z_(z), x_x0_(x_x0), name_(std::move(name)), to_local_(to_local) {}
 
-double Track::Plane::getPosition() const {
-    return z_;
-}
+double Track::Plane::getPosition() const { return z_; }
 
-double Track::Plane::getMaterialBudget() const {
-    return x_x0_;
-}
+double Track::Plane::getMaterialBudget() const { return x_x0_; }
 
-bool Track::Plane::hasCluster() const {
-    return (cluster_.get() != nullptr);
-}
+bool Track::Plane::hasCluster() const { return (cluster_.get() != nullptr); }
 
-const std::string& Track::Plane::getName() const {
-    return name_;
-}
+const std::string& Track::Plane::getName() const { return name_; }
 
 Cluster* Track::Plane::getCluster() const {
     auto* cluster = cluster_.get();
@@ -46,21 +38,13 @@ Cluster* Track::Plane::getCluster() const {
     return cluster;
 }
 
-Transform3D Track::Plane::getToLocal() const {
-    return to_local_;
-}
+Transform3D Track::Plane::getToLocal() const { return to_local_; }
 
-Transform3D Track::Plane::getToGlobal() const {
-    return to_local_.Inverse();
-}
+Transform3D Track::Plane::getToGlobal() const { return to_local_.Inverse(); }
 
-bool Track::Plane::operator<(const Plane& pl) const {
-    return z_ < pl.z_;
-}
+bool Track::Plane::operator<(const Plane& pl) const { return z_ < pl.z_; }
 
-void Track::Plane::setCluster(const Cluster* cluster) {
-    cluster_ = PointerWrapper<Cluster>(cluster);
-}
+void Track::Plane::setCluster(const Cluster* cluster) { cluster_ = PointerWrapper<Cluster>(cluster); }
 
 void Track::Plane::print(std::ostream& os) const {
     os << "Plane at " << z_ << " with rad. length " << x_x0_ << ", name " << name_ << " and";
@@ -71,16 +55,10 @@ void Track::Plane::print(std::ostream& os) const {
     }
 }
 
-void Track::Plane::loadHistory() {
-    cluster_.get();
-}
-void Track::Plane::petrifyHistory() {
-    cluster_.store();
-}
+void Track::Plane::loadHistory() { cluster_.get(); }
+void Track::Plane::petrifyHistory() { cluster_.store(); }
 
-void Track::addCluster(const Cluster* cluster) {
-    track_clusters_.emplace_back(const_cast<Cluster*>(cluster));
-}
+void Track::addCluster(const Cluster* cluster) { track_clusters_.emplace_back(const_cast<Cluster*>(cluster)); }
 void Track::addAssociatedCluster(const Cluster* cluster) {
     associated_clusters_[cluster->getDetectorID()].emplace_back(const_cast<Cluster*>(cluster));
 }
@@ -122,21 +100,13 @@ bool Track::hasClosestCluster(const std::string& detectorID) const {
     return (closest_cluster_.find(detectorID) != closest_cluster_.end());
 }
 
-void Track::print(std::ostream& out) const {
-    out << "Base class - nothing to see here" << std::endl;
-}
+void Track::print(std::ostream& out) const { out << "Base class - nothing to see here" << std::endl; }
 
-void Track::setParticleMomentum(double p) {
-    momentum_ = p;
-}
+void Track::setParticleMomentum(double p) { momentum_ = p; }
 
-void Track::setParticleCharge(int q) {
-    charge_ = q;
-}
+void Track::setParticleCharge(int q) { charge_ = q; }
 
-void Track::setParticleBetaFactor(double b) {
-    beta_ = b;
-}
+void Track::setParticleBetaFactor(double b) { beta_ = b; }
 
 double Track::getChi2() const {
     if(!isFitted_) {
@@ -214,13 +184,9 @@ Cluster* Track::getClusterFromDetector(std::string detectorID) const {
     return it->get();
 }
 
-XYZPoint Track::getIntercept(double) const {
-    return ROOT::Math::XYZPoint(0.0, 0.0, 0.0);
-}
+XYZPoint Track::getIntercept(double) const { return ROOT::Math::XYZPoint(0.0, 0.0, 0.0); }
 
-XYZPoint Track::getState(const std::string&) const {
-    return ROOT::Math::XYZPoint(0.0, 0.0, 0.0);
-}
+XYZPoint Track::getState(const std::string&) const { return ROOT::Math::XYZPoint(0.0, 0.0, 0.0); }
 
 TMatrixD Track::getLocalStateUncertainty(const std::string&) const {
     TMatrixD error(3, 3);
@@ -232,20 +198,12 @@ TMatrixD Track::getGlobalStateUncertainty(const std::string&) const {
     return error;
 }
 
-XYZVector Track::getDirection(const std::string&) const {
-    return ROOT::Math::XYZVector(0.0, 0.0, 0.0);
-}
-XYZVector Track::getDirection(const double&) const {
-    return ROOT::Math::XYZVector(0.0, 0.0, 0.0);
-}
+XYZVector Track::getDirection(const std::string&) const { return ROOT::Math::XYZVector(0.0, 0.0, 0.0); }
+XYZVector Track::getDirection(const double&) const { return ROOT::Math::XYZVector(0.0, 0.0, 0.0); }
 
-XYPoint Track::getLocalResidual(const std::string& detectorID) const {
-    return residual_local_.at(detectorID);
-}
+XYPoint Track::getLocalResidual(const std::string& detectorID) const { return residual_local_.at(detectorID); }
 
-XYZPoint Track::getGlobalResidual(const std::string& detectorID) const {
-    return residual_global_.at(detectorID);
-}
+XYZPoint Track::getGlobalResidual(const std::string& detectorID) const { return residual_global_.at(detectorID); }
 
 double Track::getMaterialBudget(const std::string& detectorID) const {
     auto budget = std::find_if(planes_.begin(), planes_.end(), [&detectorID](const Plane& plane) {
@@ -289,9 +247,7 @@ void Track::updatePlane(const std::string& name, double z, double x0, Transform3
     this->fit();
 }
 
-std::vector<Track::Plane> Track::getPlanes() {
-    return planes_;
-}
+std::vector<Track::Plane> Track::getPlanes() { return planes_; }
 
 const Track::Plane* Track::get_plane(const std::string& detetorID) const {
     auto plane =
@@ -312,13 +268,9 @@ std::shared_ptr<Track> corryvreckan::Track::Factory(const std::string& trackMode
     }
 }
 
-std::type_index Track::getBaseType() {
-    return typeid(Track);
-}
+std::type_index Track::getBaseType() { return typeid(Track); }
 
-std::string Track::getType() const {
-    return corryvreckan::demangle(typeid(*this).name());
-}
+std::string Track::getType() const { return corryvreckan::demangle(typeid(*this).name()); }
 
 void Track::loadHistory() {
     std::for_each(planes_.begin(), planes_.end(), [](auto& n) { n.loadHistory(); });

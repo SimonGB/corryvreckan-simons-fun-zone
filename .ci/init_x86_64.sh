@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SPDX-FileCopyrightText: 2018-2022 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2018-2023 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 # Determine which OS you are using
@@ -8,12 +8,12 @@ if [ "$(uname)" = "Linux" ]; then
     if [ "$( cat /etc/*-release | grep "CentOS Linux 7" )" ]; then
         echo "Detected CentOS Linux 7"
         OS=centos7
-    elif [ "$( cat /etc/*-release | grep "CentOS Linux 8" )" ] || [ "$( cat /etc/*-release | grep "CentOS Stream release 8" )" ]; then
-        echo "Detected CentOS Linux 8"
-        OS=centos8
-    elif [ "$( cat /etc/*-release | grep "CentOS Stream release 9" )" ]; then
-        echo "Detected CentOS Linux 9"
-        OS=centos9
+    elif [ "$( cat /etc/*-release | grep "Red Hat Enterprise Linux 9" )" ]; then
+        echo "Detected Red Hat Enterprise Linux 9"
+        OS=el9
+    elif [ "$( cat /etc/*-release | grep "AlmaLinux 9" )" ]; then
+        echo "Detected AlmaLinux 9"
+        OS=el9
     else
         echo "Cannot detect OS, falling back to CentOS7"
         OS=centos7
@@ -52,8 +52,9 @@ if [ ! -d "${CVMFS_MOUNT}/cvmfs/sft.cern.ch" ]; then
     exit 1
 fi
 
+
 # Determine which LCG version to use
-DEFAULT_LCG="LCG_102"
+DEFAULT_LCG="LCG_104"
 
 if [ -z ${CORRY_LCG_VERSION} ]; then
     echo "No explicit LCG version set, using ${DEFAULT_LCG}."
@@ -71,14 +72,14 @@ if [ -z ${COMPILER_TYPE} ]; then
     fi
 fi
 if [ ${COMPILER_TYPE} = "gcc" ]; then
-    COMPILER_VERSION="gcc11"
+    COMPILER_VERSION="gcc12"
     echo "Compiler type set to GCC, version ${COMPILER_VERSION}."
 fi
 if [ ${COMPILER_TYPE} = "llvm" ]; then
     if [ "$(uname)" = "Darwin" ]; then
         COMPILER_VERSION="clang120"
     else
-        COMPILER_VERSION="clang12"
+        COMPILER_VERSION="clang16"
     fi
     echo "Compiler type set to LLVM, version ${COMPILER_VERSION}."
 fi

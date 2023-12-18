@@ -252,12 +252,8 @@ LogLevel& DefaultLogger::get_reporting_level() {
     thread_local LogLevel reporting_level = LogLevel::NONE;
     return reporting_level;
 }
-void DefaultLogger::setReportingLevel(LogLevel level) {
-    get_reporting_level() = level;
-}
-LogLevel DefaultLogger::getReportingLevel() {
-    return get_reporting_level();
-}
+void DefaultLogger::setReportingLevel(LogLevel level) { get_reporting_level() = level; }
+LogLevel DefaultLogger::getReportingLevel() { return get_reporting_level(); }
 
 // String to LogLevel conversions and vice versa
 std::string DefaultLogger::getStringFromLevel(LogLevel level) {
@@ -298,12 +294,8 @@ LogFormat& DefaultLogger::get_format() {
     thread_local LogFormat reporting_level = LogFormat::DEFAULT;
     return reporting_level;
 }
-void DefaultLogger::setFormat(LogFormat level) {
-    get_format() = level;
-}
-LogFormat DefaultLogger::getFormat() {
-    return get_format();
-}
+void DefaultLogger::setFormat(LogFormat level) { get_format() = level; }
+LogFormat DefaultLogger::getFormat() { return get_format(); }
 
 // Convert string to log format and vice versa
 std::string DefaultLogger::getStringFromFormat(LogFormat format) {
@@ -330,16 +322,12 @@ LogFormat DefaultLogger::getFormatFromString(const std::string& format) {
 /**
  * The streams are shared by all logger instantiations.
  */
-const std::vector<std::ostream*>& DefaultLogger::getStreams() {
-    return get_streams();
-}
+const std::vector<std::ostream*>& DefaultLogger::getStreams() { return get_streams(); }
 std::vector<std::ostream*>& DefaultLogger::get_streams() {
     static std::vector<std::ostream*> streams;
     return streams;
 }
-void DefaultLogger::clearStreams() {
-    get_streams().clear();
-}
+void DefaultLogger::clearStreams() { get_streams().clear(); }
 /**
  * The caller has to make sure that the added ostream exists for as long log messages may be written. The std::cout stream is
  * added automatically to the list of streams and does not need to be added itself.
@@ -360,12 +348,8 @@ std::string& DefaultLogger::get_section() {
     thread_local std::string section;
     return section;
 }
-void DefaultLogger::setSection(std::string section) {
-    get_section() = std::move(section);
-}
-std::string DefaultLogger::getSection() {
-    return get_section();
-}
+void DefaultLogger::setSection(std::string section) { get_section() = std::move(section); }
+std::string DefaultLogger::getSection() { return get_section(); }
 
 /**
  * The date is returned in the hh:mm:ss.ms format

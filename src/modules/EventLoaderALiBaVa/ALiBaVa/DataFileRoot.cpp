@@ -28,9 +28,7 @@
 
 bool _A_do_run = true;
 void _A_got_intr(int);
-void _A_got_intr(int) {
-    _A_do_run = false;
-}
+void _A_got_intr(int) { _A_do_run = false; }
 std::string DataFileRoot::_idf;
 
 DataFileRoot::DataFileRoot(const char*, const char* pedfile, const char*)
@@ -66,13 +64,9 @@ void DataFileRoot::set_data(int nchan, const unsigned short int* data) {
         _data.data[i] = data[i];
 }
 
-void DataFileRoot::reset_data() {
-    memset(&_data, 0, sizeof(_data));
-}
+void DataFileRoot::reset_data() { memset(&_data, 0, sizeof(_data)); }
 
-void DataFileRoot::set_ROI(std::vector<unsigned int> roi) {
-    _roi = roi;
-}
+void DataFileRoot::set_ROI(std::vector<unsigned int> roi) { _roi = roi; }
 
 void DataFileRoot::set_timecut(double t1, double t2) {
     if(t1 > 0)
@@ -88,9 +82,7 @@ void DataFileRoot::set_timecut(double t1, double t2) {
     }
 }
 
-bool DataFileRoot::valid_time(double tim) const {
-    return (tim >= _t1 && tim <= _t2);
-}
+bool DataFileRoot::valid_time(double tim) const { return (tim >= _t1 && tim <= _t2); }
 
 void DataFileRoot::compute_pedestals_alternative() {
     int mxevts = 10000000;
@@ -273,16 +265,10 @@ void DataFileRoot::calc_common_mode_signal() {
     _cnoise_roi = st_dev;
 }
 
-unsigned int DataFileRoot::clock_counter() const {
-    return _data.clock;
-}
+unsigned int DataFileRoot::clock_counter() const { return _data.clock; }
 
-double DataFileRoot::time() const {
-    return 0.0;
-}
-double DataFileRoot::temp() const {
-    return 0.0;
-}
+double DataFileRoot::time() const { return 0.0; }
+double DataFileRoot::temp() const { return 0.0; }
 
 DataFileRoot* DataFileRoot::OpenFile(const char* nam, const char* pedfile, const char* gainfile) {
     struct stat sb;

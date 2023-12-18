@@ -29,9 +29,7 @@ ROOT::Math::XYPoint StraightLineTrack::distance(const Cluster* cluster) const {
     return ROOT::Math::XYPoint(dist.x(), dist.y());
 }
 
-ROOT::Math::XYPoint StraightLineTrack::getKinkAt(const std::string&) const {
-    return ROOT::Math::XYPoint(0, 0);
-}
+ROOT::Math::XYPoint StraightLineTrack::getKinkAt(const std::string&) const { return ROOT::Math::XYPoint(0, 0); }
 
 ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string& detectorID) const {
     LOG(TRACE) << "Requesting state at: " << detectorID;
@@ -52,13 +50,9 @@ ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string& detectorID) 
     return position;
 }
 
-ROOT::Math::XYZVector StraightLineTrack::getDirection(const std::string&) const {
-    return m_direction;
-}
+ROOT::Math::XYZVector StraightLineTrack::getDirection(const std::string&) const { return m_direction; }
 
-ROOT::Math::XYZVector StraightLineTrack::getDirection(const double&) const {
-    return m_direction;
-}
+ROOT::Math::XYZVector StraightLineTrack::getDirection(const double&) const { return m_direction; }
 
 void StraightLineTrack::calculateChi2() {
 
@@ -203,9 +197,7 @@ void StraightLineTrack::fit() {
     isFitted_ = true;
 }
 
-ROOT::Math::XYZPoint StraightLineTrack::getIntercept(double z) const {
-    return m_state + m_direction * z;
-}
+ROOT::Math::XYZPoint StraightLineTrack::getIntercept(double z) const { return m_state + m_direction * z; }
 
 void StraightLineTrack::print(std::ostream& out) const {
     out << "StraightLineTrack " << this->m_state << ", " << this->m_direction << ", " << this->chi2_ << ", " << this->ndof_

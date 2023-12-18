@@ -50,13 +50,13 @@ AnalysisDUT::AnalysisDUT(Configuration& config, std::shared_ptr<Detector> detect
     }
 
     // if no separate raw histo bin settings are given, use the ones specified for the charge
-    if(config_.has("n_charge_bins") & !config_.has("n_raw_bins")) {
+    if(config_.has("n_charge_bins") && !config_.has("n_raw_bins")) {
         n_rawbins_ = n_chargebins_;
     } else {
         n_rawbins_ = config_.get<int>("n_raw_bins");
     }
 
-    if(config_.has("charge_histo_range") & !config_.has("raw_histo_range")) {
+    if(config_.has("charge_histo_range") && !config_.has("raw_histo_range")) {
         raw_histo_range_ = charge_histo_range_;
     } else {
         raw_histo_range_ = config_.get<double>("raw_histo_range");

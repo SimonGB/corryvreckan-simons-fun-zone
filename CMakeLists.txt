@@ -92,6 +92,32 @@ ENDIF()
 # Include corry cmake functions
 INCLUDE("cmake/corryvreckan.cmake")
 
+#################################
+# Figure out ROOT's C++ version #
+#################################
+
+FIND_PACKAGE(ROOT 6.20 REQUIRED COMPONENTS Minuit Minuit2 Gui GenVector Geom Core Hist RIO NO_MODULE)
+IF(NOT ROOT_FOUND)
+    MESSAGE(FATAL_ERROR "Could not find ROOT, make sure to source the ROOT environment\n"
+                        "$ source YOUR_ROOT_DIR/bin/thisroot.sh")
+ENDIF()
+
+# Check which C++ version ROOT was built against
+IF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+2[0a].*")
+    SET(ROOT_CXX_STD 20)
+ELSEIF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+1[7z].*")
+    SET(ROOT_CXX_STD 17)
+ELSEIF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+.*")
+    MESSAGE(FATAL_ERROR "ROOT was built with an unsupported C++ version, at least C++17 is required: ${ROOT_CXX_FLAGS}")
+ELSE()
+    MESSAGE(FATAL_ERROR "Could not deduce ROOT's C++ version from build flags: ${ROOT_CXX_FLAGS}")
+ENDIF()
+
+# Check ROOT version
+IF(NOT ${ROOT_VERSION} VERSION_GREATER "6.0")
+    MESSAGE(FATAL_ERROR "ROOT versions below 6.0 are not supported")
+ENDIF()
+
 #########################################
 # Define build flags for Corryvreckan   #
 #########################################
@@ -110,13 +136,18 @@ IF(CCACHE_FOUND)
         CACHE PATH "CCache program" FORCE)
 ENDIF()
 
-# Require C++17
+# Require C++17 or C++20
 CHECK_CXX_COMPILER_FLAG(-std=c++17 SUPPORT_STD_CXX17)
-IF(NOT SUPPORT_STD_CXX17)
-    MESSAGE(FATAL_ERROR "Compiler does not support required standard C++17")
+CHECK_CXX_COMPILER_FLAG(-std=c++20 SUPPORT_STD_CXX20)
+IF(ROOT_CXX_STD EQUAL 20 AND NOT SUPPORT_STD_CXX20)
+    MESSAGE(FATAL_ERROR "Compiler does not support standard required by ROOT: C++20")
+ELSEIF(ROOT_CXX_STD EQUAL 17 AND NOT SUPPORT_STD_CXX17)
+    MESSAGE(FATAL_ERROR "Compiler does not support standard required by ROOT: C++17")
 ENDIF()
 
-SET(CMAKE_CXX_STANDARD 17)
+# Build with C++20 or C++17
+SET(CMAKE_CXX_STANDARD "${ROOT_CXX_STD}")
+MESSAGE(STATUS "Building against C++ version ${CMAKE_CXX_STANDARD}")
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -138,29 +169,6 @@ ENDIF()
 
 # Define the libraries
 SET(CORRYVRECKAN_LIBRARIES "")
-
-# ROOT is required for vector and persistency etc
-FIND_PACKAGE(ROOT 6.20 REQUIRED COMPONENTS Minuit Minuit2 Gui GenVector Geom Core Hist RIO NO_MODULE)
-IF(NOT ROOT_FOUND)
-    MESSAGE(FATAL_ERROR "Could not find ROOT, make sure to source the ROOT environment\n"
-    "$ source YOUR_ROOT_DIR/bin/thisroot.sh")
-ENDIF()
-
-# Downgrade to C++14 if ROOT is not build with C++17 support
-IF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+1[7z].*")
-    IF(NOT SUPPORT_STD_CXX17)
-        MESSAGE(FATAL_ERROR "ROOT was built with C++17 support but current compiler doesn't support it")
-    ENDIF()
-ELSEIF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+.*")
-    MESSAGE(FATAL_ERROR "ROOT was built with an unsupported C++ version, C++17 is required: ${ROOT_CXX_FLAGS}")
-ELSE()
-    MESSAGE(FATAL_ERROR "Could not deduce ROOT's C++ version from build flags: ${ROOT_CXX_FLAGS}")
-ENDIF()
-
-# Check ROOT version
-IF (NOT ${ROOT_VERSION} VERSION_GREATER "6.0")
-    MESSAGE(FATAL_ERROR "ROOT versions below 6.0 are not supported")
-ENDIF()
 
 # Eigen3
 FIND_PACKAGE(Eigen3 REQUIRED)
