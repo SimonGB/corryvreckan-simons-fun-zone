@@ -215,8 +215,9 @@ StatusCode EventLoaderMuPixTelescope::read_sorted(const std::shared_ptr<Clipboar
 }
 
 StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipboard>& clipboard) {
-    if(!eof_)
-        fillBuffer();
+
+    // Fill buffer
+    fillBuffer();
 
     // check if an event is defined - if not we make one
     if(!clipboard->isEventDefined()) {
@@ -235,7 +236,7 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
     }
 
     for(auto t : tags_) {
-        while(true) {
+        while(!pixelbuffers_.at(t).empty()) {
             // Always fill the buffer:
             fillBuffer();
 
