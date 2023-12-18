@@ -26,6 +26,7 @@ MaskCreator::MaskCreator(Configuration& config, std::shared_ptr<Detector> detect
     config_.setDefault<double>("rate_max", 1.);
     config_.setDefault<bool>("mask_dead_pixels", false);
     config_.setDefault<bool>("write_new_config", false);
+    config_.setDefault<std::string>("new_config_suffix", "");
 
     m_method = config_.get<MaskingMethod>("method");
     m_frequency = config_.get<double>("frequency_cut");
@@ -35,6 +36,7 @@ MaskCreator::MaskCreator(Configuration& config, std::shared_ptr<Detector> detect
     m_rateMax = config_.get<double>("rate_max");
     m_maskDeadPixels = config_.get<bool>("mask_dead_pixels");
     m_writeNewConfig = config_.get<bool>("write_new_config");
+    m_newConfigSuffix = config_.get<std::string>("new_config_suffix");
 }
 
 void MaskCreator::initialize() {
@@ -251,7 +253,7 @@ void MaskCreator::writeMaskFiles() {
     // Get the mask file from detector or use default name:
     auto maskfile_path = m_detector->maskFile();
     if(maskfile_path.empty()) {
-        maskfile_path = createOutputFile("mask_" + m_detector->getName() + ".txt");
+        maskfile_path = createOutputFile("mask_" + m_detector->getName() + m_newConfigSuffix + ".txt");
     }
 
     // Open the new mask file for writing

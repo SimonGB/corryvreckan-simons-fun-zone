@@ -76,6 +76,7 @@ namespace corryvreckan {
         double m_sigmaMax, m_rateMax;
         int m_numEvents, binsOccupancy;
         bool m_maskDeadPixels, m_writeNewConfig;
+        std::string m_newConfigSuffix;
 
         static inline void fillDist(const TH2D* values, TH1D* dist);
     };
