@@ -236,17 +236,8 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
 
     for(auto t : tags_) {
         while(true) {
-            if(pixelbuffers_.at(t).size() == 0 && !eof_)
-                fillBuffer();
-            if(pixelbuffers_.at(t).size() == 0) {
-                LOG(DEBUG) << "Buffer " << t << " empty";
-                return StatusCode::EndRun;
-            }
-
-            LOG(TRACE) << "Tag " << t << " : buffer " << pixelbuffers_.at(t).size();
-            if(pixelbuffers_.at(t).empty() && !eof_) {
-                fillBuffer();
-            }
+            // Always fill the buffer:
+            fillBuffer();
 
             auto pixel = pixelbuffers_.at(t).top();
             auto event = clipboard->getEvent();
