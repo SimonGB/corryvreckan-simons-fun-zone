@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2018-2023 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 # git pre-commit hook that runs an clang-format stylecheck.
@@ -80,13 +80,14 @@ if [ ! -x "$CLANG_FORMAT" ] ; then
     exit 1
 fi
 
-if ! "$CLANG_FORMAT" --version | grep "clang-format version $CLANG_FORMAT_VERSION" >/dev/null 2>/dev/null; then
+CLANG_FORMAT_VERSION_FOUND=`"$CLANG_FORMAT" --version | sed -n "s/.* \([0-9]\+\)\.[0-9]\+\.[0-9]\+.*/\1/p"`
+if [ "${CLANG_FORMAT_VERSION_FOUND}" -lt "${CLANG_FORMAT_VERSION}" ]; then
     # Be indulgent with OSX users, no 4.0 seems to be available...
-    if [[ "$OSTYPE" != "darwin"* ]]; then
-        printf "Error: clang-format version $CLANG_FORMAT_VERSION is required (exactly), cannot check format!\n"
+    if [ "$OSTYPE" != "darwin"* ]; then
+        printf "Error: clang-format version $CLANG_FORMAT_VERSION or newer is required, cannot check format!\n"
         exit 1
     else
-        printf "Warning: clang-format version $CLANG_FORMAT_VERSION is required, formatting might be incompatible!\n"
+        printf "Warning: clang-format version $CLANG_FORMAT_VERSION or newer is required, formatting might be incompatible!\n"
     fi
 fi
 
