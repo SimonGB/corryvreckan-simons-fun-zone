@@ -293,6 +293,7 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
         }
     }
     prev_event_end_ = clipboard->getEvent()->end();
+
     // Return value telling analysis to keep running
     for(auto t : tags_) {
         if(pixels_.at(t).size() > 0)
@@ -300,13 +301,15 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
     }
     bool data_in_buffer = false;
     for(auto t : tags_) {
-        if(pixelbuffers_.at(t).size() > 0)
-            std::map<std::string, TH1F*> ts_ToT;
-
-        data_in_buffer = true;
+        if(pixelbuffers_.at(t).size() > 0) {
+            data_in_buffer = true;
+        }
     }
-    if(!data_in_buffer)
+
+    if(!data_in_buffer) {
         return StatusCode::EndRun;
+    }
+
     return StatusCode::NoData;
 }
 
