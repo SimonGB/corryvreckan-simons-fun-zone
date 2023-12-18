@@ -107,9 +107,7 @@ WaveformVector DirectoryLoader::read_segment(size_t s, std::pair<uint32_t, doubl
     return out;
 }
 
-size_t DirectoryLoader::get_segments(void) {
-    return segments;
-}
+size_t DirectoryLoader::get_segments(void) { return segments; }
 
 WaveformVector DirectoryLoader::read(std::pair<uint32_t, double> trigger) {
     auto out = read_segment(segment, trigger);
@@ -124,9 +122,7 @@ WaveformVector DirectoryLoader::read(std::pair<uint32_t, double> trigger) {
     return out;
 }
 
-bool DirectoryLoader::end(void) {
-    return _end;
-}
+bool DirectoryLoader::end(void) { return _end; }
 
 double DirectoryLoader::get_timestamp(size_t s) {
     timestamps.seekg(static_cast<std::streamoff>(s * 8));

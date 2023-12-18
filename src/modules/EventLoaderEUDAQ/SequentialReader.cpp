@@ -33,6 +33,4 @@ bool SequentialReader::NextEvent() {
     return true;
 }
 
-const eudaq::DetectorEvent& SequentialReader::GetDetectorEvent() const {
-    return file_readers_.front()->GetDetectorEvent();
-}
+const eudaq::DetectorEvent& SequentialReader::GetDetectorEvent() const { return file_readers_.front()->GetDetectorEvent(); }

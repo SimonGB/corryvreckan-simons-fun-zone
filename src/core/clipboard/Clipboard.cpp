@@ -15,9 +15,7 @@
 
 using namespace corryvreckan;
 
-bool Clipboard::isEventDefined() const {
-    return (event_ != nullptr);
-}
+bool Clipboard::isEventDefined() const { return (event_ != nullptr); }
 
 void Clipboard::putEvent(std::shared_ptr<Event> event) {
     // Already defined:
@@ -72,6 +70,4 @@ std::vector<std::string> Clipboard::listCollections() const {
     return collections;
 }
 
-const ClipboardData& Clipboard::getAll() const {
-    return data_;
-}
+const ClipboardData& Clipboard::getAll() const { return data_; }

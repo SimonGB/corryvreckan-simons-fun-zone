@@ -23,9 +23,7 @@ Module::~Module() {}
 Module::Module(Configuration& config, std::vector<std::shared_ptr<Detector>> detectors)
     : config_(config), m_detectors(std::move(detectors)) {}
 
-StatusCode Module::run(const std::shared_ptr<Clipboard>&) {
-    return StatusCode::Success;
-}
+StatusCode Module::run(const std::shared_ptr<Clipboard>&) { return StatusCode::Success; }
 
 void Module::finalize(const std::shared_ptr<ReadonlyClipboard>&) {}
 
@@ -42,12 +40,8 @@ std::string Module::getUniqueName() const {
     return unique_name;
 }
 
-void Module::set_identifier(ModuleIdentifier identifier) {
-    identifier_ = std::move(identifier);
-}
-ModuleIdentifier Module::get_identifier() const {
-    return identifier_;
-}
+void Module::set_identifier(ModuleIdentifier identifier) { identifier_ = std::move(identifier); }
+ModuleIdentifier Module::get_identifier() const { return identifier_; }
 
 /**
  * @throws ModuleError If the file cannot be accessed (or created if it did not yet exist)
@@ -133,9 +127,7 @@ TDirectory* Module::getROOTDirectory() const {
 
     return directory_;
 }
-void Module::set_ROOT_directory(TDirectory* directory) {
-    directory_ = directory;
-}
+void Module::set_ROOT_directory(TDirectory* directory) { directory_ = directory; }
 
 std::shared_ptr<Detector> Module::get_detector(const std::string& name) const {
     auto it = find_if(
@@ -147,9 +139,7 @@ std::shared_ptr<Detector> Module::get_detector(const std::string& name) const {
     return (*it);
 }
 
-std::shared_ptr<Detector> Module::get_reference() const {
-    return m_reference;
-}
+std::shared_ptr<Detector> Module::get_reference() const { return m_reference; }
 
 std::vector<std::shared_ptr<Detector>> Module::get_duts() const {
     std::vector<std::shared_ptr<Detector>> duts;
@@ -169,9 +159,7 @@ bool Module::has_detector(const std::string& name) const {
     return true;
 }
 
-Configuration& Module::get_configuration() {
-    return config_;
-}
+Configuration& Module::get_configuration() { return config_; }
 
 /**
  * @throws InvalidModuleActionException If this method is called from the constructor or destructor
@@ -183,6 +171,4 @@ ConfigManager* Module::getConfigManager() {
     };
     return conf_manager_;
 }
-void Module::set_config_manager(ConfigManager* conf_manager) {
-    conf_manager_ = conf_manager;
-}
+void Module::set_config_manager(ConfigManager* conf_manager) { conf_manager_ = conf_manager; }

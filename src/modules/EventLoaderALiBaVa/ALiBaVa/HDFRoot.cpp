@@ -121,13 +121,9 @@ HDFRoot::~HDFRoot() {
         close();
 }
 
-bool HDFRoot::valid() const {
-    return priv->fileid != H5I_BADID;
-}
+bool HDFRoot::valid() const { return priv->fileid != H5I_BADID; }
 
-unsigned int HDFRoot::nevents() const {
-    return priv->nevts;
-}
+unsigned int HDFRoot::nevents() const { return priv->nevts; }
 
 void HDFRoot::open(const char* name) {
     Header H;
@@ -338,12 +334,6 @@ void HDFRoot::get_scan_values(short& delay, short& charge) {
     }
 }
 
-double HDFRoot::time() const {
-    return priv->data.time;
-}
-double HDFRoot::temp() const {
-    return priv->data.temp;
-}
-unsigned int HDFRoot::clock_counter() const {
-    return priv->data.clock;
-}
+double HDFRoot::time() const { return priv->data.time; }
+double HDFRoot::temp() const { return priv->data.temp; }
+unsigned int HDFRoot::clock_counter() const { return priv->data.clock; }

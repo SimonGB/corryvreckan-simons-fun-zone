@@ -422,9 +422,7 @@ TMatrixD GblTrack::getGlobalStateUncertainty(const std::string& detectorID) cons
     return (ltg * getLocalStateUncertainty(detectorID));
 }
 
-void GblTrack::set_seed_cluster(const Cluster* cluster) {
-    seed_cluster_ = PointerWrapper<Cluster>(cluster);
-}
+void GblTrack::set_seed_cluster(const Cluster* cluster) { seed_cluster_ = PointerWrapper<Cluster>(cluster); }
 
 Cluster* GblTrack::get_seed_cluster() const {
     if(seed_cluster_.get() == nullptr) {

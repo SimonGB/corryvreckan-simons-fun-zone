@@ -678,9 +678,7 @@ void ModuleManager::run() {
     }
 }
 
-void ModuleManager::terminate() {
-    m_terminate = true;
-}
+void ModuleManager::terminate() { m_terminate = true; }
 
 // Initialise all modules
 void ModuleManager::initializeAll() {

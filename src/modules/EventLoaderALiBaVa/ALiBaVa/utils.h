@@ -12,9 +12,7 @@
 /**
  * Utils
  */
-inline bool isws(char c, char const* const wstr = " \t\n") {
-    return (strchr(wstr, c) != nullptr);
-}
+inline bool isws(char c, char const* const wstr = " \t\n") { return (strchr(wstr, c) != nullptr); }
 
 inline std::string trim_right(const std::string& s) {
     std::string b = " \t\n";

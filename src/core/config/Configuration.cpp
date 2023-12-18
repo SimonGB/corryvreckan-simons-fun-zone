@@ -44,9 +44,7 @@ void Configuration::AccessMarker::registerMarker(const std::string& key) {
 Configuration::Configuration(std::string name, std::filesystem::path path)
     : name_(std::move(name)), path_(std::move(path)) {}
 
-bool Configuration::has(const std::string& key) const {
-    return config_.find(key) != config_.cend();
-}
+bool Configuration::has(const std::string& key) const { return config_.find(key) != config_.cend(); }
 
 unsigned int Configuration::count(std::initializer_list<std::string> keys) const {
     if(keys.size() == 0) {
@@ -62,12 +60,8 @@ unsigned int Configuration::count(std::initializer_list<std::string> keys) const
     return found;
 }
 
-std::string Configuration::getName() const {
-    return name_;
-}
-std::filesystem::path Configuration::getFilePath() const {
-    return path_;
-}
+std::string Configuration::getName() const { return name_; }
+std::filesystem::path Configuration::getFilePath() const { return path_; }
 
 std::string Configuration::getText(const std::string& key) const {
     try {
@@ -177,9 +171,7 @@ void Configuration::setAlias(const std::string& new_key, const std::string& old_
     }
 }
 
-unsigned int Configuration::countSettings() const {
-    return static_cast<unsigned int>(config_.size());
-}
+unsigned int Configuration::countSettings() const { return static_cast<unsigned int>(config_.size()); }
 
 /**
  * All keys that are already defined earlier in this configuration are not changed.

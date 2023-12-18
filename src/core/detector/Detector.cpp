@@ -271,47 +271,27 @@ double Detector::getTimeResolution() const {
     }
 }
 
-std::string Detector::getName() const {
-    return m_detectorName;
-}
+std::string Detector::getName() const { return m_detectorName; }
 
-std::string Detector::getType() const {
-    return m_detectorType;
-}
+std::string Detector::getType() const { return m_detectorType; }
 
-bool Detector::isReference() const {
-    return static_cast<bool>(m_role & DetectorRole::REFERENCE);
-}
+bool Detector::isReference() const { return static_cast<bool>(m_role & DetectorRole::REFERENCE); }
 
-bool Detector::isDUT() const {
-    return static_cast<bool>(m_role & DetectorRole::DUT);
-}
+bool Detector::isDUT() const { return static_cast<bool>(m_role & DetectorRole::DUT); }
 
-bool Detector::isAuxiliary() const {
-    return static_cast<bool>(m_role & DetectorRole::AUXILIARY);
-}
+bool Detector::isAuxiliary() const { return static_cast<bool>(m_role & DetectorRole::AUXILIARY); }
 
-bool Detector::isPassive() const {
-    return static_cast<bool>(m_role & DetectorRole::PASSIVE);
-}
+bool Detector::isPassive() const { return static_cast<bool>(m_role & DetectorRole::PASSIVE); }
 
-DetectorRole Detector::getRoles() const {
-    return m_role;
-}
+DetectorRole Detector::getRoles() const { return m_role; }
 
-bool Detector::hasRole(DetectorRole role) const {
-    return static_cast<bool>(m_role & role);
-}
+bool Detector::hasRole(DetectorRole role) const { return static_cast<bool>(m_role & role); }
 
 // Function to set the channel maskfile
-void Detector::maskFile(std::filesystem::path file) {
-    m_maskfile = std::move(file);
-}
+void Detector::maskFile(std::filesystem::path file) { m_maskfile = std::move(file); }
 
 // Function to update transforms (such as during alignment)
-void Detector::update(double time) {
-    alignment_->update(time);
-}
+void Detector::update(double time) { alignment_->update(time); }
 
 void Detector::update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation) {
     alignment_->update(displacement, orientation);

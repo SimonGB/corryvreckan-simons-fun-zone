@@ -42,7 +42,4 @@ StatusCode Dummy::run(const std::shared_ptr<Clipboard>&) {
     return StatusCode::Success;
 }
 
-void Dummy::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-
-    LOG(DEBUG) << "Analysed " << m_eventNumber << " events";
-}
+void Dummy::finalize(const std::shared_ptr<ReadonlyClipboard>&) { LOG(DEBUG) << "Analysed " << m_eventNumber << " events"; }

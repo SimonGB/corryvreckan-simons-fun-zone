@@ -28,13 +28,9 @@ void Cluster::addPixel(const Pixel* pixel) {
     m_rowWidth = static_cast<size_t>(1 + m_rowHits.rbegin()->first - m_rowHits.begin()->first);
 }
 
-double Cluster::error() const {
-    return sqrt(m_error.X() * m_error.X() + m_error.Y() * m_error.Y());
-}
+double Cluster::error() const { return sqrt(m_error.X() * m_error.X() + m_error.Y() * m_error.Y()); }
 
-void Cluster::setSplit(bool split) {
-    m_split = split;
-}
+void Cluster::setSplit(bool split) { m_split = split; }
 
 std::vector<const Pixel*> Cluster::pixels() const {
     std::vector<const Pixel*> pixelvec;

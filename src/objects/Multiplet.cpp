@@ -42,9 +42,7 @@ Multiplet::Multiplet(std::shared_ptr<Track> upstream, std::shared_ptr<Track> dow
     }
 }
 
-ROOT::Math::XYPoint Multiplet::getKinkAt(const std::string&) const {
-    return ROOT::Math::XYPoint(0, 0);
-}
+ROOT::Math::XYPoint Multiplet::getKinkAt(const std::string&) const { return ROOT::Math::XYPoint(0, 0); }
 
 void Multiplet::calculateChi2() {
 
