@@ -37,6 +37,7 @@ To make this work, the spacing of the shifts needs to be smaller than the trigge
 
 * 2D histograms:
   * Distribution of the time residuals between the investigated and the reference detector as a function of the applied shift.
+  * Plotting reference timestamps against detector timestamps to check for clock drifts.
 
 ### Usage
 ```toml
