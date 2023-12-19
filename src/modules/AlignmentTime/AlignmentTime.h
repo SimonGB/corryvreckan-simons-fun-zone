@@ -74,9 +74,6 @@ namespace corryvreckan {
 
         // Returns the array element closest to the target value.
         double findClosest(std::vector<double> const&, double);
-        // Helper for findClosest.
-        // Compares two values to target and returns the closer one.
-        double whichCloser(double, double, double);
 
         // Histograms
         std::map<std::string, TH1D*> hTimeStamps;

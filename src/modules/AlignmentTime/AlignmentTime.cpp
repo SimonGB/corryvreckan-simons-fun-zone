@@ -260,12 +260,21 @@ double AlignmentTime::findClosest(std::vector<double> const& arr, double target)
     if(target >= arr[n - 1])
         return arr[n - 1];
 
+    // Helper for findClosest as lambda expression.
+    // Compares two values to target and returns the closer one.
+    auto which_closer = [](double val1, double val2, double targ) {
+      if(targ - val1 >= val2 - targ)
+        return val2;
+      else
+        return val1;
+    };
+
     // Doing binary search
     uint64_t i = 0, j = n, mid = 0;
     while(i < j) {
         mid = (i + j) / 2;
 
-        // Eeturn if we hit
+        // Return if we hit
         if(arr[mid] == target)
             return arr[mid];
 
@@ -273,26 +282,18 @@ double AlignmentTime::findClosest(std::vector<double> const& arr, double target)
         if(target < arr[mid]) {
             // If target is greater than previous to mid, return closest of two
             if(mid > 0 && target > arr[mid - 1])
-                return whichCloser(arr[mid - 1], arr[mid], target);
+                return which_closer(arr[mid - 1], arr[mid], target);
             // Iteratively repeat for left half
             j = mid;
         }
         // If target is greater than mid, then search right in the same way
         else {
             if(mid < n - 1 && target < arr[mid + 1])
-                return whichCloser(arr[mid], arr[mid + 1], target);
+                return which_closer(arr[mid], arr[mid + 1], target);
             i = mid + 1;
         }
     } // While
 
     // Only single element left after search
     return arr[mid];
-}
-// Helper for findClosest.
-// Compares two values to target and returns the closer one.
-double AlignmentTime::whichCloser(double val1, double val2, double target) {
-    if(target - val1 >= val2 - target)
-        return val2;
-    else
-        return val1;
 }
