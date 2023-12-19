@@ -21,10 +21,11 @@ namespace corryvreckan {
 
     public:
         enum class Position {
-            UNKNOWN, // StandardEvent position unknown
-            BEFORE,  // StandardEvent is before current event
-            DURING,  // StandardEvent is during current event
-            AFTER,   // StandardEvent is after current event
+            UNKNOWN,   // Element position cannot be determined from given information
+            BEFORE,    // Element is before current event
+            DURING,    // Element is during current event
+            AFTER,     // Element is after current event
+            UNDEFINED, // Element is during current event but not part of it
         };
 
         /**

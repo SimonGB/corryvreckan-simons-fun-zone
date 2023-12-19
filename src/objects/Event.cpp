@@ -111,8 +111,8 @@ Event::Position Event::getTriggerPosition(uint32_t trigger_id) const {
         // map element is less than the trigger number - which consequently is after the event.
         return Position::AFTER;
     } else {
-        // We have not enough information to provide position information.
-        return Position::UNKNOWN;
+        // The trigger ID is between first and last, but it's not part of this event:
+        return Position::UNDEFINED;
     }
 }
 
