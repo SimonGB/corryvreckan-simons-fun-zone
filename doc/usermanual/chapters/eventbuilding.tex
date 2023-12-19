@@ -52,6 +52,7 @@ These functions return one of the following four possible positions:
 \begin{description}
         \item[\textbf{\parameter{BEFORE}:}] The data currently under consideration are dated \emph{before} the event. Therefore they should be discarded and more data should be processed.
         \item[\textbf{\parameter{DURING}:}] The data currently under consideration are \emph{within} the defined event frame and should be taken into account. More data should be processed.
+        \item[\textbf{\parameter{UNDEFINED}:}] The data currently under consideration are \emph{within} the defined event but does not belong to it. The data should be skipped and the next data should be processed until one of the other conditions is met.
         \item[\textbf{\parameter{AFTER}:}] The data are dated \emph{after} the current event has finished. The processing of data for this detector should therefore be stopped and the current data retained for consideration in the next event.
         \item[\textbf{\parameter{UNKNOWN}:}] The event does not allow the position in time of the data to be determined. The data should be skipped and the next data should be processed until one of the above conditions can be reached.
 \end{description}
