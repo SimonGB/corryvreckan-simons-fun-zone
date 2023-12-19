@@ -258,7 +258,7 @@ void AlignmentTime::scanDelay(std::string detectorName) {
 // Find delay
 void AlignmentTime::findDelay(std::string detectorName) {
 
-    // If the scan parameteres are good,
+    // If the scan parameters are good,
     // the maximum of the histogram indicates the right shift
     int max, tmp;
     hResidualVsShift[detectorName]->GetBinXYZ(hResidualVsShift[detectorName]->GetMaximumBin(), max, tmp, tmp);
