@@ -23,6 +23,10 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
         LOG(WARNING) << "Module called without reference_name. Output plots will be empty";
     }
 
+    // Check if the user wants to directly apply the determined correction
+    config_.setDefault<bool>("update_time_offset", false);
+    update_time_offset = config_.get<bool>("update_time_offset");
+
     // Get the scan parameters
     // TODO: Should I make better use of the configuration class?
     config_.setDefault<double>("shift_start", 0);
@@ -148,7 +152,7 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         hTimeStampsRef_long->Fill(static_cast<double>(Units::convert(ts, "s")));
     }
 
-    // Loop over all detectors other
+    // Loop over all other detectors
     for(auto& detector : get_detectors()) {
         // Get the detector name
         std::string detectorName = detector->getName();
@@ -166,6 +170,9 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         // calculate final scan parameters and perform scan
         calculateParameters(detectorName);
         scanDelay(detectorName);
+        if(update_time_offset) {
+            findDelay(detectorName);
+        }
     }
 
     LOG(DEBUG) << "Analysed " << m_eventNumber << " events";
@@ -244,6 +251,23 @@ void AlignmentTime::scanDelay(std::string detectorName) {
         }
         counter++;
     }
+
+    return;
+}
+
+// Find delay
+void AlignmentTime::findDelay(std::string detectorName) {
+
+    // If the scan parameteres are good,
+    // the maximum of the histogram indicates the right shift
+    int max, tmp;
+    hResidualVsShift[detectorName]->GetBinXYZ(hResidualVsShift[detectorName]->GetMaximumBin(), max, tmp, tmp);
+    double best_shift = hResidualVsShift[detectorName]->GetXaxis()->GetBinCenter(max);
+
+    // Now update detector, to adjust geometry file
+    auto detector = get_detector(detectorName);
+    detector->setTimeOffset(detector->timeOffset() + best_shift);
+
     return;
 }
 

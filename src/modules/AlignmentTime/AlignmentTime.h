@@ -54,6 +54,9 @@ namespace corryvreckan {
         std::string reference_name_;
         bool reference_filled_;
 
+        // Update time offset?
+        bool update_time_offset;
+
         // Container for time stamps
         std::map<std::string, std::vector<double>> timestamps_;
 
@@ -67,11 +70,15 @@ namespace corryvreckan {
         double time_scale_;
         int time_nbins_;
         bool time_user_;
+
         // Calculating parameters from user input, or guess.
         void calculateParameters(std::string detectorName);
 
         // Scan delay
         void scanDelay(std::string detectorName);
+
+        // Find delay and correct geometry file
+        void findDelay(std::string detectorName);
 
         // Returns the array element closest to the target value.
         double findClosest(std::vector<double> const&, double);
