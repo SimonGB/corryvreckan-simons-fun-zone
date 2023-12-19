@@ -288,10 +288,10 @@ double AlignmentTime::findClosest(std::vector<double> const& arr, double target)
     // Helper for findClosest as lambda expression.
     // Compares two values to target and returns the closer one.
     auto which_closer = [](double val1, double val2, double targ) {
-      if(targ - val1 >= val2 - targ)
-        return val2;
-      else
-        return val1;
+        if(targ - val1 >= val2 - targ)
+            return val2;
+        else
+            return val1;
     };
 
     // Doing binary search
