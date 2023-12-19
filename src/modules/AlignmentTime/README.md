@@ -13,7 +13,7 @@ If the time measurements from different detectors have an offset with respect to
 
 To make this work, the spacing of the shifts needs to be smaller than the trigger frequency. If the offset is large, this might lead to a large number of shifts that need to be investigated. In this case it helps if the range of considered shifts can be constrained. It is recommended to use the `Metronome` module with an arbitrary spacing, so that the pixel time stamps of the considered detectors are added to the clipboard.
 
-### Discuss: 
+### Discuss:
 * At the moment the analyzed time stamps are those saved within the pixel objects for the given detectors. Could add option to take:
   * Cluster timestamps
   * Triggers
@@ -28,6 +28,7 @@ To make this work, the spacing of the shifts needs to be smaller than the trigge
 * `shift_n`: Sets the number of scanned shifts shifts. If this or the previous two parameters are not set the trigger period (inverse frequency) is estimated from the time stamps of the investigated detector. The scan is performed for 200 steps between -5 and 5 times the trigger period. **DoDo:** Optimize.
 * `time_scale`: Sets the minimum and maximum of the residual histogram.
 * `time_nbins`: Sets the number of bins for the residual histogram. If this or the previous parameter are not set the time scale defaults to 5 times the trigger period. The number of bins defaults to 200.
+* `update_time_offset`: Enable automatic adjustment of the `time_offset` in the geometry file. Only recommended once proper scan parameters have been identified. Defaults to `false`.
 
 ### Plots produced
 * 1D histograms:
