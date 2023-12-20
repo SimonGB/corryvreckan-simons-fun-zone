@@ -163,6 +163,8 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             LOG(ERROR) << "No timestamps found for " << detectorName;
             continue;
         }
+
+        LOG(DEBUG) << "Filling time stamp histograms";
         for(auto ts : timestamps_[detectorName]) {
             hTimeStamps[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")));
             hTimeStamps_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")));
@@ -175,6 +177,7 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         }
 
         // calculate final scan parameters and perform scan
+        LOG(DEBUG) << "Starting delay scans";
         calculate_parameters(detectorName);
         scan_delay(detectorName);
         if(update_time_offset) {
