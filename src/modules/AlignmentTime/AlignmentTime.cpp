@@ -287,18 +287,21 @@ double AlignmentTime::find_closest(std::vector<double> const& arr, double target
     uint64_t n = arr.size();
 
     // If we hit the edge, by chance
-    if(target <= arr[0])
+    if(target <= arr[0]) {
         return arr[0];
-    if(target >= arr[n - 1])
+    }
+    if(target >= arr[n - 1]) {
         return arr[n - 1];
+    }
 
     // Helper for findClosest as lambda expression.
     // Compares two values to target and returns the closer one.
     auto which_closer = [](double val1, double val2, double targ) {
-        if(targ - val1 >= val2 - targ)
+        if(targ - val1 >= val2 - targ) {
             return val2;
-        else
+        } else {
             return val1;
+        }
     };
 
     // Doing binary search
@@ -307,21 +310,24 @@ double AlignmentTime::find_closest(std::vector<double> const& arr, double target
         mid = (i + j) / 2;
 
         // Return if we hit
-        if(arr[mid] == target)
+        if(arr[mid] == target) {
             return arr[mid];
+        }
 
         // If target is less than array element, then search in left
         if(target < arr[mid]) {
             // If target is greater than previous to mid, return closest of two
-            if(mid > 0 && target > arr[mid - 1])
+            if(mid > 0 && target > arr[mid - 1]) {
                 return which_closer(arr[mid - 1], arr[mid], target);
+            }
             // Iteratively repeat for left half
             j = mid;
         }
         // If target is greater than mid, then search right in the same way
         else {
-            if(mid < n - 1 && target < arr[mid + 1])
+            if(mid < n - 1 && target < arr[mid + 1]) {
                 return which_closer(arr[mid], arr[mid + 1], target);
+            }
             i = mid + 1;
         }
     } // While
