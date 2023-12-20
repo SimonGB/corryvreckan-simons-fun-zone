@@ -17,11 +17,9 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
     : Module(config, std::move(detector)) {
 
     // Get the name of the detector used as time reference
-    config_.setDefault<std::string>("reference_name", "");
+    config_.setDefault<std::string>("reference_name", this->get_reference()->getName());
     reference_name_ = config_.get<std::string>("reference_name");
-    if(reference_name_.empty()) {
-        LOG(WARNING) << "Module called without reference_name. Output plots will be empty";
-    }
+    LOG(INFO) << "Using " << reference_name_ << " as reference.";
 
     // Check if the user wants to directly apply the determined correction
     config_.setDefault<bool>("update_time_offset", false);
