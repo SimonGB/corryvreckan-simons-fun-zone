@@ -17,9 +17,9 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
     : Module(config, std::move(detector)) {
 
     // Get the name of the detector used as time reference
-    config_.setDefault<std::string>("reference_name", this->get_reference()->getName());
-    reference_name_ = config_.get<std::string>("reference_name");
-    LOG(INFO) << "Using " << reference_name_ << " as reference.";
+    config_.setDefault<std::string>("time_reference_name", this->get_reference()->getName());
+    time_reference_name_ = config_.get<std::string>("time_reference_name");
+    LOG(INFO) << "Using " << time_reference_name_ << " as reference.";
 
     // Check if the user wants to directly apply the determined correction
     config_.setDefault<bool>("update_time_offset", false);
@@ -57,12 +57,12 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 }
 
 void AlignmentTime::initialize() {
-    timestamps_[reference_name_] = {};
+    timestamps_[time_reference_name_] = {};
 
     // Reference time stamp histograms
-    std::string title = reference_name_ + ";pixel timestamps [ms]; # entries";
+    std::string title = time_reference_name_ + ";pixel timestamps [ms]; # entries";
     hTimeStampsRef = new TH1D("timeStampsRef", title.c_str(), 3e6, 0, 3e3);
-    title = reference_name_ + ";pixel timestamps [s]; # entries";
+    title = time_reference_name_ + ";pixel timestamps [s]; # entries";
     hTimeStampsRef_long = new TH1D("timeStampsRef_long", title.c_str(), 3e6, 0, 3e3);
 
     // Iterate through detectors we want to align
@@ -117,17 +117,17 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
         LOG(DEBUG) << "Reference detector already filled";
     } else {
         // Get all pixels for this detector
-        auto pixels = clipboard->getData<Pixel>(reference_name_);
+        auto pixels = clipboard->getData<Pixel>(time_reference_name_);
         if(pixels.empty()) {
-            LOG(DEBUG) << "Detector " << reference_name_ << " does not have any pixels on the clipboard";
+            LOG(DEBUG) << "Detector " << time_reference_name_ << " does not have any pixels on the clipboard";
         }
-        LOG(DEBUG) << "Picked up " << pixels.size() << " pixels for device " << reference_name_;
+        LOG(DEBUG) << "Picked up " << pixels.size() << " pixels for device " << time_reference_name_;
 
         // Iterate pixels
         for(size_t iP = 0; iP < pixels.size(); iP++) {
             Pixel* pixel = pixels[iP].get();
             // Fill the timestamps of this pixel into container
-            timestamps_[reference_name_].emplace_back(pixel->timestamp());
+            timestamps_[time_reference_name_].emplace_back(pixel->timestamp());
         }
 
         reference_filled_ = 1;
@@ -143,12 +143,12 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
 void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     // check if reference timestamps are filled
-    if(timestamps_[reference_name_].size() == 0) {
+    if(timestamps_[time_reference_name_].size() == 0) {
         LOG(ERROR) << "No timestamps found for time reference";
         return;
     }
     // Loop over time stamps in reference detector
-    for(auto ts : timestamps_[reference_name_]) {
+    for(auto ts : timestamps_[time_reference_name_]) {
         hTimeStampsRef->Fill(static_cast<double>(Units::convert(ts, "ms")));
         hTimeStampsRef_long->Fill(static_cast<double>(Units::convert(ts, "s")));
     }
@@ -166,7 +166,7 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         for(auto ts : timestamps_[detectorName]) {
             hTimeStamps[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")));
             hTimeStamps_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")));
-            for(auto ts_ref : timestamps_[reference_name_]) {
+            for(auto ts_ref : timestamps_[time_reference_name_]) {
                 hTimeRefVsDet[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")),
                                                   static_cast<double>(Units::convert(ts_ref, "ms")));
                 hTimeRefVsDet_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")),
@@ -220,8 +220,9 @@ void AlignmentTime::calculate_parameters(std::string detectorName) {
         LOG(INFO) << "and time_nbins = " << time_nbins_;
     }
 
-    if(shift_n_ * time_nbins_ > 1e6){
-        LOG(WARNING) << "Using large number of bins in 2D histogram: shift_n = " << shift_n_ << " times time_nbins = " << time_nbins_;
+    if(shift_n_ * time_nbins_ > 1e6) {
+        LOG(WARNING) << "Using large number of bins in 2D histogram: shift_n = " << shift_n_
+                     << " times time_nbins = " << time_nbins_;
         LOG(WARNING) << "This might cause crashes if there is not enough memory. Consider adjustment!";
     }
 
@@ -255,7 +256,7 @@ void AlignmentTime::scan_delay(std::string detectorName) {
             // Apply shift
             auto detector_ts_shifted = detector_ts + shift;
             // Calculate difference between shifted ts and best matching reference ts.
-            auto residual = detector_ts_shifted - find_closest(timestamps_[reference_name_], detector_ts_shifted);
+            auto residual = detector_ts_shifted - find_closest(timestamps_[time_reference_name_], detector_ts_shifted);
             hResidualVsShift[detectorName]->Fill(static_cast<double>(Units::convert(shift, "ms")),
                                                  static_cast<double>(Units::convert(residual, "ms")));
         }

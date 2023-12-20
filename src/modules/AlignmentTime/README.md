@@ -22,7 +22,7 @@ To make this work, the spacing of the shifts needs to be smaller than the trigge
 * To get the time stamps for the reference and investigated detector the metronome can be used with any spacing. This makes is tricky if one of the detectors is auxiliary, because we need to assign the timestamps to some sort of pixel hit for this to work.
 
 ### Parameters
-* `reference_name`: Name of the detector providing the reference time stamps. Needs to be given for this module to work.
+* `time_reference_name`: Name of the detector providing the reference time stamps, in case this not the reference specified in the geometry file. 
 * `shift_start`: Sets the starting point of the shift scan.
 * `shift_end`: Sets the end of the shift scan.
 * `shift_n`: Sets the number of scanned shifts shifts. If this or the previous two parameters are not set the trigger period (inverse frequency) is estimated from the time stamps of the investigated detector. The scan is performed for 200 steps between -5 and 5 times the trigger period. **DoDo:** Optimize.
