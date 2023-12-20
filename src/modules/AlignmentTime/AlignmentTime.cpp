@@ -16,12 +16,6 @@ using namespace corryvreckan;
 AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, std::move(detector)) {
 
-    // Get the name of the detector used as time reference
-    std::shared_ptr<Detector> reference = get_reference();
-    config_.setDefault<std::string>("time_reference_name", reference->getName());
-    time_reference_name_ = config_.get<std::string>("time_reference_name");
-    LOG(INFO) << "Using " << time_reference_name_ << " as reference.";
-
     // Check if the user wants to directly apply the determined correction
     config_.setDefault<bool>("update_time_offset", false);
     update_time_offset = config_.get<bool>("update_time_offset");
@@ -58,6 +52,13 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 }
 
 void AlignmentTime::initialize() {
+
+    // Get the name of the detector used as time reference
+    std::shared_ptr<Detector> reference = get_reference();
+    config_.setDefault<std::string>("time_reference_name", reference->getName());
+    time_reference_name_ = config_.get<std::string>("time_reference_name");
+    LOG(INFO) << "Using " << time_reference_name_ << " as reference.";
+
     timestamps_[time_reference_name_] = {};
 
     // Reference time stamp histograms
