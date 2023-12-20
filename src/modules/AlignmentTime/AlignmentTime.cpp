@@ -175,10 +175,10 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         }
 
         // calculate final scan parameters and perform scan
-        calculateParameters(detectorName);
-        scanDelay(detectorName);
+        calculate_parameters(detectorName);
+        scan_delay(detectorName);
         if(update_time_offset) {
-            findDelay(detectorName);
+            find_delay(detectorName);
         }
     }
 
@@ -186,7 +186,7 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 }
 
 // Calculating parameters from user input, or guess.
-void AlignmentTime::calculateParameters(std::string detectorName) {
+void AlignmentTime::calculate_parameters(std::string detectorName) {
 
     // Steps need to be smaller than the trigger period.
     // Take difference between first and last and divide by size.
@@ -197,7 +197,7 @@ void AlignmentTime::calculateParameters(std::string detectorName) {
     if(shift_user_) {
         shift_step_ = (shift_end_ - shift_start_) / static_cast<double>(shift_n_);
     } else {
-        // And make it 20 times smaller (my guess is as good as yours).
+        // Calculate period and make it 20 times smaller (my guess is as good as yours).
         shift_step_ = period / 20.;
         // Lets make 200 steps around 0.
         shift_n_ = 200;
@@ -226,7 +226,7 @@ void AlignmentTime::calculateParameters(std::string detectorName) {
 }
 
 // Scan delay
-void AlignmentTime::scanDelay(std::string detectorName) {
+void AlignmentTime::scan_delay(std::string detectorName) {
 
     // Create histogram
     std::string title = detectorName + ";time shift [ms]; #Deltat [ms]; # entries";
@@ -252,7 +252,7 @@ void AlignmentTime::scanDelay(std::string detectorName) {
             // Apply shift
             auto detector_ts_shifted = detector_ts + shift;
             // Calculate difference between shifted ts and best matching reference ts.
-            auto residual = detector_ts_shifted - findClosest(timestamps_[reference_name_], detector_ts_shifted);
+            auto residual = detector_ts_shifted - find_closest(timestamps_[reference_name_], detector_ts_shifted);
             hResidualVsShift[detectorName]->Fill(static_cast<double>(Units::convert(shift, "ms")),
                                                  static_cast<double>(Units::convert(residual, "ms")));
         }
@@ -263,7 +263,7 @@ void AlignmentTime::scanDelay(std::string detectorName) {
 }
 
 // Find delay
-void AlignmentTime::findDelay(std::string detectorName) {
+void AlignmentTime::find_delay(std::string detectorName) {
 
     // If the scan parameters are good,
     // the maximum of the histogram indicates the right shift
@@ -283,7 +283,7 @@ void AlignmentTime::findDelay(std::string detectorName) {
 // Time Complexity: O(log(n))
 // Auxiliary Space: O(log(n)) (implicit stack is created due to recursion)
 // Returns the array element closest to the target value.
-double AlignmentTime::findClosest(std::vector<double> const& arr, double target) {
+double AlignmentTime::find_closest(std::vector<double> const& arr, double target) {
     uint64_t n = arr.size();
 
     // If we hit the edge, by chance

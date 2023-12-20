@@ -72,16 +72,16 @@ namespace corryvreckan {
         bool time_user_;
 
         // Calculating parameters from user input, or guess.
-        void calculateParameters(std::string detectorName);
+        void calculate_parameters(std::string detectorName);
 
         // Scan delay
-        void scanDelay(std::string detectorName);
+        void scan_delay(std::string detectorName);
 
         // Find delay and correct geometry file
-        void findDelay(std::string detectorName);
+        void find_delay(std::string detectorName);
 
         // Returns the array element closest to the target value.
-        double findClosest(std::vector<double> const&, double);
+        double find_closest(std::vector<double> const&, double);
 
         // Histograms
         std::map<std::string, TH1D*> hTimeStamps;
