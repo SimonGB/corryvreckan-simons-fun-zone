@@ -222,7 +222,7 @@ void AlignmentTime::calculate_parameters(std::string detectorName) {
 
     if(shift_n_ * time_nbins_ > 1e6){
         LOG(WARNING) << "Using large number of bins in 2D histogram: shift_n = " << shift_n_ << " times time_nbins = " << time_nbins_;
-        LOG(WARNING) << "This might cause crashes if there is not enough memory. Consider adjustment!"
+        LOG(WARNING) << "This might cause crashes if there is not enough memory. Consider adjustment!";
     }
 
     return;
