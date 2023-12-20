@@ -78,9 +78,9 @@ void AlignmentTime::initialize() {
         title = detectorName + ";pixel timestamps [s]; # entries";
         hTimeStamps_long[detectorName] = new TH1D("timeStamps_long", title.c_str(), 3e6, 0, 3e3);
         title = detectorName + ";pixel timestamps [ms]; reference timestamps [ms] # entries";
-        hTimeRefVsDet[detectorName] = new TH2D("timeStamps_long", title.c_str(), 3e6, 0, 3e3, 3e6, 0, 3e3);
+        hTimeRefVsDet[detectorName] = new TH2D("timeStamps_long", title.c_str(), 3e3, 0, 3e3, 3e3, 0, 3e3);
         title = detectorName + ";pixel timestamps [s]; reference timestamps [s] # entries";
-        hTimeRefVsDet_long[detectorName] = new TH2D("timeStamps_long", title.c_str(), 3e6, 0, 3e3, 3e6, 0, 3e3);
+        hTimeRefVsDet_long[detectorName] = new TH2D("timeStamps_long", title.c_str(), 3e3, 0, 3e3, 3e3, 0, 3e3);
     }
 
     // Initialise member variables
@@ -220,7 +220,10 @@ void AlignmentTime::calculate_parameters(std::string detectorName) {
         LOG(INFO) << "and time_nbins = " << time_nbins_;
     }
 
-    // TODO: Should probably catch cases where user try to use overly large histograms.
+    if(shift_n_ * time_nbins_ > 1e6){
+        LOG(WARNING) << "Using large number of bins in 2D histogram: shift_n = " << shift_n_ << " times time_nbins = " << time_nbins_;
+        LOG(WARNING) << "This might cause crashes if there is not enough memory. Consider adjustment!"
+    }
 
     return;
 }
