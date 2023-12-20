@@ -40,16 +40,15 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 
     // Checking user input
     shift_user_ = true;
-    LOG(INFO) << "Configured to scan from shift_start = " << static_cast<double>(Units::convert(shift_start_, "ms"))
-              << " ms";
-    LOG(INFO) << "to shift_end = " << static_cast<double>(Units::convert(shift_end_, "ms")) << " ms";
+    LOG(INFO) << "Configured to scan from shift_start = " << Units::display(shift_end_, {"s", "ms", "us"});
+    LOG(INFO) << "to shift_end = " << Units::display(shift_end_, {"s", "ms", "us"});
     LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
     if(shift_start_ > shift_end_ || shift_n_ == 0) {
         shift_user_ = false;
         LOG(INFO) << "Attempting to guess reasonable scan parameters.";
     }
     time_user_ = true;
-    LOG(INFO) << "Using time scale of time_scale = " << static_cast<double>(Units::convert(time_scale_, "ms")) << " ms";
+    LOG(INFO) << "Using time_scale = " << Units::display(shift_end_, {"s", "ms", "us"});
     LOG(INFO) << "and time_nbins = " << time_nbins_;
     if(time_scale_ == 0 || time_nbins_ == 0) {
         time_user_ = false;
