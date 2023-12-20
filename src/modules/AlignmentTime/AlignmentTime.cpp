@@ -27,7 +27,7 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 
     // Get the scan parameters
     // TODO: Should I make better use of the configuration class?
-    config_.setDefault<double>("shift_start", 0);
+    config_.setDefault<double>("shift_start", 1);
     config_.setDefault<double>("shift_end", 0);
     config_.setDefault<int>("shift_n", 0);
     config_.setDefault<double>("time_scale", 0);
@@ -44,7 +44,7 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
               << " ms";
     LOG(INFO) << "to shift_end = " << static_cast<double>(Units::convert(shift_end_, "ms")) << " ms";
     LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
-    if(shift_start_ == shift_end_ || shift_n_ == 0) {
+    if(shift_start_ > shift_end_ || shift_n_ == 0) {
         shift_user_ = false;
         LOG(INFO) << "Attempting to guess reasonable scan parameters.";
     }
