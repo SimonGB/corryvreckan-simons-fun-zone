@@ -3,15 +3,15 @@
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # AlignmentTime
-**Maintainer**: Finn Feindt (<finn.feindt@desy.de>)\
-**Module Type**: *DETECTOR*\
-**Detector Type**: *all*\
+**Maintainer**: Finn Feindt (<finn.feindt@desy.de>)
+**Module Type**: *DETECTOR*
+**Detector Type**: *all*
 **Status**: Immature
 
 ### Description
-If the time measurements from different detectors have an offset with respect to each other, it might not be possible to build correlated events based on these time stamps. The purpose of this module is to analyze the timestamps provided by a time reference and any given detector in order to find the time offset between them. To do so, a sorted array of time stamps for both detectors is taken, and a set of shifts is assumed. The shifts are applied to the time stamps of the investigated detector. For each shifted time stamp the closest time stamp in the array from the reference detector is found, their residual (difference) is calculated, and filled into a histogram. When the shift matches the offset, this distribution peaks around 0 and the corresponding shift can be added in the geometry description (`time_offset`).
+If the time measurements from different detectors have an offset with respect to each other, it might not be possible to build correlated events based on these time stamps. The purpose of this module is to analyze the pixel timestamps provided by a time reference and any given detector, in order to find the time offset between them. To do so, a sorted array of time stamps from both detectors is stored, and a set of shifts is assumed. The shifts are applied to the time stamps of the investigated detector. For each shifted time stamp the closest time stamp in the array from the reference detector is found, their residual (difference) is calculated, and filled into a histogram. When the shift matches the offset, this distribution peaks around 0 and the corresponding shift can be added in the geometry description (`time_offset`).
 
-To make this work, the spacing of the shifts needs to be smaller than the trigger frequency. If the offset is large, this might lead to a large number of shifts that need to be investigated. In this case it helps if the range of considered shifts can be constrained. It is recommended to use the `Metronome` module with an arbitrary spacing, so that the pixel time stamps of the considered detectors are added to the clipboard.
+To make this work, the spacing of the shifts needs to be smaller than the trigger frequency. If the offset is large, this might lead to a large number of shifts that need to be investigated. In this case it helps if the range of considered shifts can be constrained. It is recommended to use the `Metronome` module with an arbitrary spacing, so that the pixel time stamps of the considered detectors are added to the clipboard. If the time stamps are provided by an auxiliary detector, corry needs to be configured in a way that these are passed to the pixels of e.g. the reference detector.
 
 ### Discuss:
 * At the moment the analyzed time stamps are those saved within the pixel objects for the given detectors. Could add option to take:
@@ -42,6 +42,6 @@ To make this work, the spacing of the shifts needs to be smaller than the trigge
 ### Usage
 ```toml
 [AlignmentTime]
-type = "dSiPM"
+name = "dSiPM_0"
 reference_name = "MIMOSA26_2"
 ```
