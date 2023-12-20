@@ -79,10 +79,6 @@ void AlignmentTime::initialize() {
         hTimeStamps[detectorName] = new TH1D("timeStamps", title.c_str(), 3e6, 0, 3e3);
         title = detectorName + ";pixel timestamps [s]; # entries";
         hTimeStamps_long[detectorName] = new TH1D("timeStamps_long", title.c_str(), 3e6, 0, 3e3);
-        title = detectorName + ";pixel timestamps [ms]; reference timestamps [ms] # entries";
-        hTimeRefVsDet[detectorName] = new TH2D("timeStamps_long", title.c_str(), 3e3, 0, 3e3, 3e3, 0, 3e3);
-        title = detectorName + ";pixel timestamps [s]; reference timestamps [s] # entries";
-        hTimeRefVsDet_long[detectorName] = new TH2D("timeStamps_long", title.c_str(), 3e3, 0, 3e3, 3e3, 0, 3e3);
     }
 
     // Initialise member variables
@@ -170,12 +166,6 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         for(auto ts : timestamps_[detectorName]) {
             hTimeStamps[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")));
             hTimeStamps_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")));
-            for(auto ts_ref : timestamps_[time_reference_name_]) {
-                hTimeRefVsDet[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")),
-                                                  static_cast<double>(Units::convert(ts_ref, "ms")));
-                hTimeRefVsDet_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")),
-                                                       static_cast<double>(Units::convert(ts_ref, "s")));
-            }
         }
 
         // calculate final scan parameters and perform scan
