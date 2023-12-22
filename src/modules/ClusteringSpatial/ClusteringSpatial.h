@@ -54,6 +54,8 @@ namespace corryvreckan {
         bool useTriggerTimestamp;
         bool chargeWeighting;
         bool rejectByROI;
+        int neighbor_radius_row_;
+        int neighbor_radius_col_;
     };
 } // namespace corryvreckan
 #endif // ClusteringSpatial_H
