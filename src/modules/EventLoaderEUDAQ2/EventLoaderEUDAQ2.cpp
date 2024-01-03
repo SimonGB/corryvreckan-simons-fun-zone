@@ -537,6 +537,7 @@ PixelVector EventLoaderEUDAQ2::get_pixel_data(std::shared_ptr<eudaq::StandardEve
         hPixelMultiplicityPerEudaqEvent->Fill(static_cast<int>(pixels.size()));
     }
 
+    LOG(DEBUG) << detector_->getName() << ": Plane contains " << pixels.size() << " pixels";
     return pixels;
 }
 
@@ -640,6 +641,7 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
 
         if(current_position == Event::Position::DURING) {
             num_eudaq_events_per_corry++;
+            LOG(DEBUG) << "Is within current Corryvreckan event, storing data";
             if(!detector_->isAuxiliary()) {
                 // Store data on the clipboard
                 auto new_pixels = get_pixel_data(event_, plane_id);
