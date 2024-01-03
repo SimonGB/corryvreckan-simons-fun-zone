@@ -62,9 +62,9 @@ namespace corryvreckan {
 
         std::map<std::string, TGraph*> align_correction_shiftX;
         std::map<std::string, TGraph*> align_correction_shiftY;
-        std::map<std::string, TGraph*> align_correction_rotX;
-        std::map<std::string, TGraph*> align_correction_rotY;
-        std::map<std::string, TGraph*> align_correction_rotZ;
+        std::map<std::string, TGraph*> align_correction_rot0;
+        std::map<std::string, TGraph*> align_correction_rot1;
+        std::map<std::string, TGraph*> align_correction_rot2;
     };
 } // namespace corryvreckan
 #endif // AlignmentTrackChi2_H
