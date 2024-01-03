@@ -215,8 +215,9 @@ StatusCode EventLoaderMuPixTelescope::read_sorted(const std::shared_ptr<Clipboar
 }
 
 StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipboard>& clipboard) {
-    if(!eof_)
-        fillBuffer();
+
+    // Fill buffer
+    fillBuffer();
 
     // check if an event is defined - if not we make one
     if(!clipboard->isEventDefined()) {
@@ -235,30 +236,30 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
     }
 
     for(auto t : tags_) {
-        while(true) {
-            if(pixelbuffers_.at(t).size() == 0 && !eof_)
-                fillBuffer();
-            if(pixelbuffers_.at(t).size() == 0) {
-                LOG(DEBUG) << "Buffer " << t << " empty";
-                return StatusCode::EndRun;
-            }
+        while(!pixelbuffers_.at(t).empty()) {
+            // Always fill the buffer:
+            fillBuffer();
+
             auto pixel = pixelbuffers_.at(t).top();
-            if(pixelbuffers_.at(t).size() && (pixel->timestamp() < clipboard->getEvent()->start())) {
+            auto event = clipboard->getEvent();
+            auto position = event->getTimestampPosition(pixel->timestamp());
+
+            if(position == Event::Position::BEFORE) {
                 LOG(DEBUG) << " Old hit found: " << Units::display(pixel->timestamp(), "us") << " vs prev end ("
                            << eventNo_ - 1 << ")\t" << Units::display(prev_event_end_, "us") << " and current start \t"
                            << Units::display(clipboard->getEvent()->start(), "us")
-                           << " and duration: " << clipboard->getEvent()->duration()
-                           << "and number of triggers: " << clipboard->getEvent()->triggerList().size();
+                           << " and duration: " << Units::display(clipboard->getEvent()->duration(), {"us", "ns"})
+                           << " and number of triggers: " << clipboard->getEvent()->triggerList().size();
+                LOG(TRACE) << pixel->timestamp() << " < " << clipboard->getEvent()->start();
                 removed_.at(t)++;
                 hdiscardedHitmap.at(names_.at(t))->Fill(pixel->column(), pixel->row());
                 pixelbuffers_.at(t).pop(); // remove top element
                 continue;
-            } else if(pixelbuffers_.at(t).size() && (pixel->timestamp() < clipboard->getEvent()->end()) &&
-                      (pixel->timestamp() >= clipboard->getEvent()->start())) {
+            } else if(position == Event::Position::DURING) {
                 LOG(DEBUG) << " Adding pixel hit: " << Units::display(pixel->timestamp(), "us") << " vs prev end ("
                            << eventNo_ - 1 << ")\t" << Units::display(prev_event_end_, "us") << " and current start \t"
                            << Units::display(clipboard->getEvent()->start(), "us")
-                           << " and duration: " << Units::display(clipboard->getEvent()->duration(), "us");
+                           << " and duration: " << Units::display(clipboard->getEvent()->duration(), {"us", "ns"});
                 int col = pixel->column();
                 int row = pixel->row();
 
@@ -278,14 +279,13 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
                 hTimeStamp.at(names_.at(t))->Fill(fmod((pixel.get()->timestamp() / 8.), pow(2, 10)));
                 pixelbuffers_.at(t).pop(); // remove top element
             } else {
+                LOG(DEBUG) << "Pixel position with respect to event: " << corryvreckan::to_string(position);
                 break;
             }
-
-            if(!eof_)
-                fillBuffer();
         }
     }
     prev_event_end_ = clipboard->getEvent()->end();
+
     // Return value telling analysis to keep running
     for(auto t : tags_) {
         if(pixels_.at(t).size() > 0)
@@ -293,13 +293,15 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
     }
     bool data_in_buffer = false;
     for(auto t : tags_) {
-        if(pixelbuffers_.at(t).size() > 0)
-            std::map<std::string, TH1F*> ts_ToT;
-
-        data_in_buffer = true;
+        if(pixelbuffers_.at(t).size() > 0) {
+            data_in_buffer = true;
+        }
     }
-    if(!data_in_buffer)
+
+    if(!data_in_buffer) {
         return StatusCode::EndRun;
+    }
+
     return StatusCode::NoData;
 }
 
@@ -423,13 +425,11 @@ std::map<std::string, int> EventLoaderMuPixTelescope::typeString_to_typeID = {{"
                                                                               {"run2020v6", R20V6_UNSORTED_GS1_GS2_GS3},
                                                                               {"run2020v7", R20V7_UNSORTED_GS1_GS2_GS3},
                                                                               {"run2020v8", R20V8_UNSORTED_GS1_GS2_GS3},
-                                                                              {"run2020v9", R20V9_UNSORTED_GS1_GS2_GS3},
                                                                               {"telepix2", TELEPIX2_UNSORTED_GS1_GS2_GS3}};
 
 StatusCode EventLoaderMuPixTelescope::run(const std::shared_ptr<Clipboard>& clipboard) {
     eventNo_++;
-    LOG(WARNING) << "running eventloadermupixtelescope";
-    // std::cout<< "running eventloadermupixtelescope" <<std::endl;
+
     for(auto t : tags_)
         pixels_.at(t).clear();
     // get the hits
