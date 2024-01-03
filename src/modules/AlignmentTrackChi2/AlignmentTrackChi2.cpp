@@ -308,9 +308,9 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
             residualFitter->SetParameter(det * 6 + 0, (detectorID + "_displacementX").c_str(), displacementX, 0, -50, 50);
             residualFitter->SetParameter(det * 6 + 1, (detectorID + "_displacementY").c_str(), displacementY, 0, -50, 50);
             residualFitter->SetParameter(det * 6 + 2, (detectorID + "_displacementZ").c_str(), displacementZ, 0, -10, 500);
-            residualFitter->SetParameter(det * 6 + 3, (detectorID + "_rotationX").c_str(), rotation0, 0, -6.30, 6.30);
-            residualFitter->SetParameter(det * 6 + 4, (detectorID + "_rotationY").c_str(), rotation1, 0, -6.30, 6.30);
-            residualFitter->SetParameter(det * 6 + 5, (detectorID + "_rotationZ").c_str(), rotation2, 0, -6.30, 6.30);
+            residualFitter->SetParameter(det * 6 + 3, (detectorID + "_rotation0").c_str(), rotation0, 0, -6.30, 6.30);
+            residualFitter->SetParameter(det * 6 + 4, (detectorID + "_rotation1").c_str(), rotation1, 0, -6.30, 6.30);
+            residualFitter->SetParameter(det * 6 + 5, (detectorID + "_rotation2").c_str(), rotation2, 0, -6.30, 6.30);
 
             // Set the alignment parameters of this plane to be the optimised values from the alignment
             detector->update(XYZPoint(displacementX, displacementY, displacementZ),
