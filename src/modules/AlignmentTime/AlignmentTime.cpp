@@ -169,7 +169,6 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         }
 
         // calculate final scan parameters and perform scan
-        LOG(DEBUG) << "Starting delay scans";
         calculate_parameters(detectorName);
         scan_delay(detectorName);
         if(update_time_offset) {
@@ -199,9 +198,8 @@ void AlignmentTime::calculate_parameters(std::string detectorName) {
         shift_start_ = -shift_step_ * static_cast<double>(shift_n_) / 2.;
         shift_end_ = shift_step_ * static_cast<double>(shift_n_) / 2.;
         // And tell the world.
-        LOG(INFO) << "Calculated to scan from shift_start = " << static_cast<double>(Units::convert(shift_start_, "ms"))
-                  << " ms";
-        LOG(INFO) << "to shift_end = " << static_cast<double>(Units::convert(shift_end_, "ms")) << " ms";
+        LOG(INFO) << "Calculated to scan from shift_start = " << Units::display(shift_start_, {"s", "ms", "us"});
+        LOG(INFO) << "to shift_end = " << Units::display(shift_end_, {"s", "ms", "us"});
         LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
     }
 
@@ -210,8 +208,7 @@ void AlignmentTime::calculate_parameters(std::string detectorName) {
         time_scale_ = period * 5.;
         time_nbins_ = 200;
         // Tell the world.
-        LOG(INFO) << "Using calculated time scale of time_scale = " << static_cast<double>(Units::convert(time_scale_, "ms"))
-                  << " ms";
+        LOG(INFO) << "Using calculated time scale of time_scale = " << Units::display(time_scale_, {"s", "ms", "us"});
         LOG(INFO) << "and time_nbins = " << time_nbins_;
     }
 
@@ -226,6 +223,8 @@ void AlignmentTime::calculate_parameters(std::string detectorName) {
 
 // Scan delay
 void AlignmentTime::scan_delay(std::string detectorName) {
+
+    LOG(INFO) << "Starting delay scan";
 
     // Create histogram
     std::string title = detectorName + ";time shift [ms]; #Deltat [ms]; # entries";
@@ -243,7 +242,7 @@ void AlignmentTime::scan_delay(std::string detectorName) {
     for(auto shift = shift_start_; shift < shift_end_; shift += shift_step_) {
         // Satisfy my impatiance
         if(0 == counter % 10) {
-            LOG(DEBUG) << "  testing shift " << static_cast<double>(Units::convert(shift, "ms")) << " ms";
+            LOG(DEBUG) << "  testing shift " << Units::display(shift, {"s", "ms", "us"});
         }
 
         // Iterate hits in the detector
@@ -264,6 +263,8 @@ void AlignmentTime::scan_delay(std::string detectorName) {
 // Find delay
 void AlignmentTime::find_delay(std::string detectorName) {
 
+    LOG(INFO) << "Trying to estimate best delay, i.e. the maximum in hResidualVsShift";
+
     // If the scan parameters are good,
     // the maximum of the histogram indicates the right shift
     int max, tmp;
@@ -272,7 +273,11 @@ void AlignmentTime::find_delay(std::string detectorName) {
 
     // Now update detector, to adjust geometry file
     auto detector = get_detector(detectorName);
+    LOG(INFO) << "Updating time offset for detector " << detectorName;
+    LOG(INFO) << "Old: " << Units::display(detector->timeOffset(), {"s", "ms", "us"});
     detector->setTimeOffset(detector->timeOffset() + best_shift);
+    LOG(INFO) << "New: " << Units::display(detector->timeOffset(), {"s", "ms", "us"}) << " with best shift of "
+              << Units::display(best_shift, {"s", "ms", "us"});
 
     return;
 }
