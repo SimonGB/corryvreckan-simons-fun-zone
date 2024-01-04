@@ -271,6 +271,9 @@ void AlignmentTime::find_delay(std::string detectorName) {
     hResidualVsShift[detectorName]->GetBinXYZ(hResidualVsShift[detectorName]->GetMaximumBin(), max, tmp, tmp);
     double best_shift = hResidualVsShift[detectorName]->GetXaxis()->GetBinCenter(max);
 
+    // Histogram is in ms, convert back do base unit
+    best_shift /= static_cast<double>(Units::convert(1., "ms"));
+
     // Now update detector, to adjust geometry file
     auto detector = get_detector(detectorName);
     LOG(INFO) << "Updating time offset for detector " << detectorName;
