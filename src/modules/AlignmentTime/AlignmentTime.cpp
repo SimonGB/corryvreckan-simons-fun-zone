@@ -35,7 +35,7 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 
     // Checking user input
     shift_user_ = true;
-    LOG(INFO) << "Configured to scan from shift_start = " << Units::display(shift_end_, {"s", "ms", "us"});
+    LOG(INFO) << "Configured to scan from shift_start = " << Units::display(shift_start_, {"s", "ms", "us"});
     LOG(INFO) << "to shift_end = " << Units::display(shift_end_, {"s", "ms", "us"});
     LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
     if(shift_start_ > shift_end_ || shift_n_ == 0) {
