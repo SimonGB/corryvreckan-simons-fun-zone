@@ -285,7 +285,7 @@ void AlignmentTime::find_delay(std::string detectorName) {
     return;
 }
 
-// Modiefied Binary search algorithm adapted from
+// Modified Binary search algorithm adapted from
 // https://www.geeksforgeeks.org/cpp-program-to-find-closest-number-in-array/
 // Time Complexity: O(log(n))
 // Auxiliary Space: O(log(n)) (implicit stack is created due to recursion)
