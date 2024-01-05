@@ -278,60 +278,24 @@ void AlignmentTime::find_delay(std::shared_ptr<Detector> detector) {
     return;
 }
 
-// Modified Binary search algorithm adapted from
-// https://www.geeksforgeeks.org/cpp-program-to-find-closest-number-in-array/
-// Time Complexity: O(log(n))
-// Auxiliary Space: O(log(n)) (implicit stack is created due to recursion)
 // Returns the array element closest to the target value.
 double AlignmentTime::find_closest(std::vector<double> const& arr, double target) {
-    uint64_t n = arr.size();
 
-    // If we hit the edge, by chance
-    if(target <= arr[0]) {
-        return arr[0];
-    }
-    if(target >= arr[n - 1]) {
-        return arr[n - 1];
-    }
+  // This returns the first element in arr greater or equal to target.
+  auto bigger = std::lower_bound(arr.begin(), arr.end(), target);
 
-    // Helper for findClosest as lambda expression.
-    // Compares two values to target and returns the closer one.
-    auto which_closer = [](double val1, double val2, double targ) {
-        if(targ - val1 >= val2 - targ) {
-            return val2;
-        } else {
-            return val1;
-        }
-    };
+  // Need to handle both edge cases
+  if(bigger == arr.begin()){
+    return *bigger;
+  }
+  if(bigger == arr.end()){
+    return *(bigger-1);
+  }
 
-    // Doing binary search
-    uint64_t i = 0, j = n, mid = 0;
-    while(i < j) {
-        mid = (i + j) / 2;
-
-        // Return if we hit
-        if(arr[mid] == target) {
-            return arr[mid];
-        }
-
-        // If target is less than array element, then search in left
-        if(target < arr[mid]) {
-            // If target is greater than previous to mid, return closest of two
-            if(mid > 0 && target > arr[mid - 1]) {
-                return which_closer(arr[mid - 1], arr[mid], target);
-            }
-            // Iteratively repeat for left half
-            j = mid;
-        }
-        // If target is greater than mid, then search right in the same way
-        else {
-            if(mid < n - 1 && target < arr[mid + 1]) {
-                return which_closer(arr[mid], arr[mid + 1], target);
-            }
-            i = mid + 1;
-        }
-    } // While
-
-    // Only single element left after search
-    return arr[mid];
+  // Now we only get well defined values and can check
+  if(*bigger - target < target - *(bigger-1)){
+    return *bigger;
+  }
+  // Else
+  return *(bigger-1);
 }
