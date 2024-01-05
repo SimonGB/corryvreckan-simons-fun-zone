@@ -150,9 +150,10 @@ void AlignmentTime::calculate_parameters(std::shared_ptr<Detector> detector) {
     shift_n_ = config_.get<int>("shift_n", 0);
     time_scale_ = config_.get<double>("time_scale", 0);
     time_nbins_ = config_.get<int>("time_nbins", 0);
-    LOG(INFO) << "Configured to scan from shift_start = " << Units::display(shift_start_, {"s", "ms", "us"});
-    LOG(INFO) << "to shift_end = " << Units::display(shift_end_, {"s", "ms", "us"});
-    LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
+    LOG(INFO) << "Configured to scan from" << std::endl
+              << "\tshift_start = " << Units::display(shift_start_, {"s", "ms", "us"}) << std::endl
+              << "\tto shift_end = " << Units::display(shift_end_, {"s", "ms", "us"}) << std::endl
+              << "\tin shift_n = " << shift_n_ << " steps.";
 
     // Check if parameters are configured reasonably, otherwise calculate.
     if(shift_start_ > shift_end_ || shift_n_ == 0) {
@@ -172,15 +173,17 @@ void AlignmentTime::calculate_parameters(std::shared_ptr<Detector> detector) {
         shift_end_ = shift_step_ * static_cast<double>(shift_n_) / 2.;
 
         // And tell the world.
-        LOG(INFO) << "Calculated to scan from shift_start = " << Units::display(shift_start_, {"s", "ms", "us"});
-        LOG(INFO) << "to shift_end = " << Units::display(shift_end_, {"s", "ms", "us"});
-        LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
+        LOG(INFO) << "Calculated to scan from" << std::endl
+                  << "\tshift_start = " << Units::display(shift_start_, {"s", "ms", "us"}) << std::endl
+                  << "\tto shift_end = " << Units::display(shift_end_, {"s", "ms", "us"}) << std::endl
+                  << "\tin shift_n = " << shift_n_ << " steps.";
     } else {
         shift_step_ = (shift_end_ - shift_start_) / static_cast<double>(shift_n_);
     }
 
-    LOG(INFO) << "Configured time_scale = " << Units::display(shift_end_, {"s", "ms", "us"});
-    LOG(INFO) << "and time_nbins = " << time_nbins_;
+    LOG(INFO) << "Configured" << std::endl
+              << "\ttime_scale = " << Units::display(shift_end_, {"s", "ms", "us"}) << std::endl
+              << "\tand time_nbins = " << time_nbins_;
 
     // Check if these are reasonable, otherwise calculate.
     if(time_scale_ == 0 || time_nbins_ == 0) {
@@ -194,14 +197,16 @@ void AlignmentTime::calculate_parameters(std::shared_ptr<Detector> detector) {
         time_scale_ = period * 5.;
         time_nbins_ = 200;
         // And tell the world.
-        LOG(INFO) << "Using calculated time scale instead: time_scale = " << Units::display(time_scale_, {"s", "ms", "us"});
-        LOG(INFO) << "and time_nbins = " << time_nbins_;
+        LOG(INFO) << "Using calculated time scale instead:" << std::endl
+                  << "\ttime_scale = " << Units::display(time_scale_, {"s", "ms", "us"}) << std::endl
+                  << "\tand time_nbins = " << time_nbins_;
     }
 
     if(shift_n_ * time_nbins_ > 1e6) {
-        LOG(WARNING) << "Using large number of bins in 2D histogram: shift_n = " << shift_n_
-                     << " times time_nbins = " << time_nbins_;
-        LOG(WARNING) << "This might cause crashes if there is not enough memory. Consider adjustment!";
+        LOG(WARNING) << "Using large number of bins in 2D histogram:" << std::endl
+                     << "\tshift_n = " << shift_n_ << std::endl
+                     << "\ttimes time_nbins = " << time_nbins_ << std::endl
+                     << "This might cause crashes if there is not enough memory. Consider adjustment!";
     }
 
     return;
@@ -264,10 +269,10 @@ void AlignmentTime::find_delay(std::shared_ptr<Detector> detector) {
     best_shift /= static_cast<double>(Units::convert(1., "ms"));
 
     // Now update detector, to adjust geometry file
-    LOG(INFO) << "Updating time offset for detector " << detectorName;
-    LOG(INFO) << "Old: " << Units::display(detector->timeOffset(), {"s", "ms", "us"});
+    LOG(INFO) << "Updating time offset for detector " << detectorName << std::endl
+              << "\tOld: " << Units::display(detector->timeOffset(), {"s", "ms", "us"});
     detector->setTimeOffset(detector->timeOffset() + best_shift);
-    LOG(INFO) << "New: " << Units::display(detector->timeOffset(), {"s", "ms", "us"}) << " with best shift of "
+    LOG(INFO) << "\tNew: " << Units::display(detector->timeOffset(), {"s", "ms", "us"}) << " with best shift of "
               << Units::display(best_shift, {"s", "ms", "us"});
 
     return;
