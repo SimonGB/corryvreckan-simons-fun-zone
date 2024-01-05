@@ -45,11 +45,11 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 void AlignmentTime::initialize() {
 
     // Get the name of the detector used as time reference
-    auto reference = get_reference();
-    time_reference_name_ = config_.get<std::string>("time_reference_name", reference->getName());
+    time_reference_name_ = config_.get<std::string>("time_reference_name", get_reference()->getName());
     LOG(INFO) << "Using " << time_reference_name_ << " as reference.";
+    auto reference = get_detector(time_reference_name_);
 
-    timestamps_[time_reference_name_] = {};
+    timestamps_[reference] = {};
 
     // Reference time stamp histograms
     std::string title = time_reference_name_ + ";pixel timestamps [ms]; # entries";
@@ -62,7 +62,7 @@ void AlignmentTime::initialize() {
         std::string detectorName = detector->getName();
         LOG(DEBUG) << "Initialise for detector " + detectorName;
 
-        timestamps_[detectorName] = {};
+        timestamps_[detector] = {};
 
         // Detector time stamp histograms
         title = detectorName + ";pixel timestamps [ms]; # entries";
@@ -96,7 +96,7 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
         for(size_t iP = 0; iP < pixels.size(); iP++) {
             Pixel* pixel = pixels[iP].get();
             // Fill the timestamps of this pixel into container
-            timestamps_[detectorName].emplace_back(pixel->timestamp());
+            timestamps_[detector].emplace_back(pixel->timestamp());
         }
     }
 
@@ -112,10 +112,11 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
         LOG(DEBUG) << "Picked up " << pixels.size() << " pixels for device " << time_reference_name_;
 
         // Iterate pixels
+        auto reference = get_detector(time_reference_name_);
         for(size_t iP = 0; iP < pixels.size(); iP++) {
             Pixel* pixel = pixels[iP].get();
             // Fill the timestamps of this pixel into container
-            timestamps_[time_reference_name_].emplace_back(pixel->timestamp());
+            timestamps_[reference].emplace_back(pixel->timestamp());
         }
 
         reference_filled_ = 1;
@@ -131,12 +132,13 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
 void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     // check if reference timestamps are filled
-    if(timestamps_[time_reference_name_].size() == 0) {
+    auto reference = get_detector(time_reference_name_);
+    if(timestamps_[reference].size() == 0) {
         LOG(ERROR) << "No timestamps found for time reference";
         return;
     }
     // Loop over time stamps in reference detector
-    for(auto ts : timestamps_[time_reference_name_]) {
+    for(auto ts : timestamps_[reference]) {
         hTimeStampsRef->Fill(static_cast<double>(Units::convert(ts, "ms")));
         hTimeStampsRef_long->Fill(static_cast<double>(Units::convert(ts, "s")));
     }
@@ -147,22 +149,22 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         std::string detectorName = detector->getName();
         LOG(DEBUG) << "Detector with name " << detectorName;
 
-        if(timestamps_[detectorName].size() == 0) {
+        if(timestamps_[detector].size() == 0) {
             LOG(ERROR) << "No timestamps found for " << detectorName;
             continue;
         }
 
         LOG(DEBUG) << "Filling time stamp histograms";
-        for(auto ts : timestamps_[detectorName]) {
+        for(auto ts : timestamps_[detector]) {
             hTimeStamps[detectorName]->Fill(static_cast<double>(Units::convert(ts, "ms")));
             hTimeStamps_long[detectorName]->Fill(static_cast<double>(Units::convert(ts, "s")));
         }
 
         // calculate final scan parameters and perform scan
-        calculate_parameters(detectorName);
-        scan_delay(detectorName);
+        calculate_parameters(detector);
+        scan_delay(detector);
         if(update_time_offset) {
-            find_delay(detectorName);
+            find_delay(detector);
         }
     }
 
@@ -170,13 +172,13 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 }
 
 // Calculating parameters from user input, or guess.
-void AlignmentTime::calculate_parameters(std::string detectorName) {
+void AlignmentTime::calculate_parameters(std::shared_ptr<Detector> detector) {
 
     // Steps need to be smaller than the trigger period.
     // Take difference between first and last and divide by size.
-    double start = timestamps_[detectorName].at(0);
-    double end = timestamps_[detectorName].at(timestamps_[detectorName].size() - 1);
-    double period = (end - start) / static_cast<double>(timestamps_[detectorName].size());
+    double start = timestamps_[detector].at(0);
+    double end = timestamps_[detector].at(timestamps_[detector].size() - 1);
+    double period = (end - start) / static_cast<double>(timestamps_[detector].size());
 
     if(shift_user_) {
         shift_step_ = (shift_end_ - shift_start_) / static_cast<double>(shift_n_);
@@ -212,11 +214,12 @@ void AlignmentTime::calculate_parameters(std::string detectorName) {
 }
 
 // Scan delay
-void AlignmentTime::scan_delay(std::string detectorName) {
+void AlignmentTime::scan_delay(std::shared_ptr<Detector> detector) {
 
     LOG(INFO) << "Starting delay scan";
 
     // Create histogram
+    std::string detectorName = detector->getName();
     std::string title = detectorName + ";time shift [ms]; #Deltat [ms]; # entries";
     hResidualVsShift[detectorName] = new TH2D("hResidualVsShift",
                                               title.c_str(),
@@ -229,6 +232,7 @@ void AlignmentTime::scan_delay(std::string detectorName) {
 
     // Scanning the shift
     uint64_t counter = 0;
+    auto reference = get_detector(time_reference_name_);
     for(auto shift = shift_start_; shift < shift_end_; shift += shift_step_) {
         // Satisfy my impatiance
         if(0 == counter % 10) {
@@ -236,11 +240,11 @@ void AlignmentTime::scan_delay(std::string detectorName) {
         }
 
         // Iterate hits in the detector
-        for(auto detector_ts : timestamps_[detectorName]) {
+        for(auto detector_ts : timestamps_[detector]) {
             // Apply shift
             auto detector_ts_shifted = detector_ts + shift;
             // Calculate difference between shifted ts and best matching reference ts.
-            auto residual = detector_ts_shifted - find_closest(timestamps_[time_reference_name_], detector_ts_shifted);
+            auto residual = detector_ts_shifted - find_closest(timestamps_[reference], detector_ts_shifted);
             hResidualVsShift[detectorName]->Fill(static_cast<double>(Units::convert(shift, "ms")),
                                                  static_cast<double>(Units::convert(residual, "ms")));
         }
@@ -251,13 +255,14 @@ void AlignmentTime::scan_delay(std::string detectorName) {
 }
 
 // Find delay
-void AlignmentTime::find_delay(std::string detectorName) {
+void AlignmentTime::find_delay(std::shared_ptr<Detector> detector) {
 
     LOG(INFO) << "Trying to estimate best delay, i.e. the maximum in hResidualVsShift";
 
     // If the scan parameters are good,
     // the maximum of the histogram indicates the right shift
     int max, tmp;
+    std::string detectorName = detector->getName();
     hResidualVsShift[detectorName]->GetBinXYZ(hResidualVsShift[detectorName]->GetMaximumBin(), max, tmp, tmp);
     double best_shift = hResidualVsShift[detectorName]->GetXaxis()->GetBinCenter(max);
 
@@ -265,7 +270,6 @@ void AlignmentTime::find_delay(std::string detectorName) {
     best_shift /= static_cast<double>(Units::convert(1., "ms"));
 
     // Now update detector, to adjust geometry file
-    auto detector = get_detector(detectorName);
     LOG(INFO) << "Updating time offset for detector " << detectorName;
     LOG(INFO) << "Old: " << Units::display(detector->timeOffset(), {"s", "ms", "us"});
     detector->setTimeOffset(detector->timeOffset() + best_shift);

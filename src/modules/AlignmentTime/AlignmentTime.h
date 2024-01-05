@@ -58,7 +58,7 @@ namespace corryvreckan {
         bool update_time_offset;
 
         // Container for time stamps
-        std::map<std::string, std::vector<double>> timestamps_;
+        std::map<std::shared_ptr<Detector>, std::vector<double>> timestamps_;
 
         // Scan parameters
         double shift_start_;
@@ -72,13 +72,13 @@ namespace corryvreckan {
         bool time_user_ = true;
 
         // Calculating parameters from user input, or guess.
-        void calculate_parameters(std::string detectorName);
+        void calculate_parameters(std::shared_ptr<Detector>);
 
         // Scan delay
-        void scan_delay(std::string detectorName);
+        void scan_delay(std::shared_ptr<Detector>);
 
         // Find delay and correct geometry file
-        void find_delay(std::string detectorName);
+        void find_delay(std::shared_ptr<Detector>);
 
         // Returns the array element closest to the target value.
         double find_closest(std::vector<double> const&, double);
