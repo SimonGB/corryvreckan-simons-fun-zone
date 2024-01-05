@@ -281,21 +281,21 @@ void AlignmentTime::find_delay(std::shared_ptr<Detector> detector) {
 // Returns the array element closest to the target value.
 double AlignmentTime::find_closest(std::vector<double> const& arr, double target) {
 
-  // This returns the first element in arr greater or equal to target.
-  auto bigger = std::lower_bound(arr.begin(), arr.end(), target);
+    // This returns the first element in arr greater or equal to target.
+    auto bigger = std::lower_bound(arr.begin(), arr.end(), target);
 
-  // Need to handle both edge cases
-  if(bigger == arr.begin()){
-    return *bigger;
-  }
-  if(bigger == arr.end()){
-    return *(bigger-1);
-  }
+    // Need to handle both edge cases
+    if(bigger == arr.begin()) {
+        return *bigger;
+    }
+    if(bigger == arr.end()) {
+        return *(bigger - 1);
+    }
 
-  // Now we only get well defined values and can check
-  if(*bigger - target < target - *(bigger-1)){
-    return *bigger;
-  }
-  // Else
-  return *(bigger-1);
+    // Now we only get well defined values and can check
+    if(*bigger - target < target - *(bigger - 1)) {
+        return *bigger;
+    }
+    // Else
+    return *(bigger - 1);
 }
