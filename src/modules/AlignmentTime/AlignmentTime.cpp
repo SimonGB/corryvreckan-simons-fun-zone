@@ -70,9 +70,6 @@ void AlignmentTime::initialize() {
         title = detectorName + ";pixel timestamps [s]; # entries";
         hTimeStamps_long[detectorName] = new TH1D("timeStamps_long", title.c_str(), 3e6, 0, 3e3);
     }
-
-    // Initialise member variables
-    m_eventNumber = 0;
 }
 
 StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -122,9 +119,6 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
         reference_filled_ = 1;
     }
 
-    // Increment event counter
-    m_eventNumber++;
-
     // Return value telling analysis to keep running
     return StatusCode::Success;
 }
@@ -167,8 +161,6 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             find_delay(detector);
         }
     }
-
-    LOG(DEBUG) << "Analysed " << m_eventNumber << " events";
 }
 
 // Calculating parameters from user input, or guess.
