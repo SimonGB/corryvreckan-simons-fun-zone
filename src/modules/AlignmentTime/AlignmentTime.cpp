@@ -127,7 +127,7 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     // check if reference timestamps are filled
     auto reference = get_detector(time_reference_name_);
-    if(timestamps_[reference].size() == 0) {
+    if(timestamps_[reference].empty()) {
         LOG(ERROR) << "No timestamps found for time reference";
         return;
     }
@@ -143,7 +143,7 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         std::string detectorName = detector->getName();
         LOG(DEBUG) << "Detector with name " << detectorName;
 
-        if(timestamps_[detector].size() == 0) {
+        if(timestamps_[detector].empty()) {
             LOG(ERROR) << "No timestamps found for " << detectorName;
             continue;
         }
