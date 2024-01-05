@@ -17,21 +17,14 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
     : Module(config, std::move(detector)) {
 
     // Check if the user wants to directly apply the determined correction
-    config_.setDefault<bool>("update_time_offset", false);
-    update_time_offset = config_.get<bool>("update_time_offset");
+    update_time_offset = config_.get<bool>("update_time_offset", false);
 
     // Get the scan parameters
-    // TODO: Should I make better use of the configuration class?
-    config_.setDefault<double>("shift_start", 1);
-    config_.setDefault<double>("shift_end", 0);
-    config_.setDefault<int>("shift_n", 0);
-    config_.setDefault<double>("time_scale", 0);
-    config_.setDefault<int>("time_nbins", 0);
-    shift_start_ = config_.get<double>("shift_start");
-    shift_end_ = config_.get<double>("shift_end");
-    shift_n_ = config_.get<int>("shift_n");
-    time_scale_ = config_.get<double>("time_scale");
-    time_nbins_ = config_.get<int>("time_nbins");
+    shift_start_ = config_.get<double>("shift_start", 1);
+    shift_end_ = config_.get<double>("shift_end", 0);
+    shift_n_ = config_.get<int>("shift_n", 0);
+    time_scale_ = config_.get<double>("time_scale", 0);
+    time_nbins_ = config_.get<int>("time_nbins", 0);
 
     // Checking user input
     shift_user_ = true;
@@ -55,8 +48,7 @@ void AlignmentTime::initialize() {
 
     // Get the name of the detector used as time reference
     auto reference = get_reference();
-    config_.setDefault<std::string>("time_reference_name", reference->getName());
-    time_reference_name_ = config_.get<std::string>("time_reference_name");
+    time_reference_name_ = config_.get<std::string>("time_reference_name", reference->getName());
     LOG(INFO) << "Using " << time_reference_name_ << " as reference.";
 
     timestamps_[time_reference_name_] = {};
