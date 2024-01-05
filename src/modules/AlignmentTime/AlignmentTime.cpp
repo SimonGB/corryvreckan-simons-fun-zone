@@ -18,28 +18,6 @@ AlignmentTime::AlignmentTime(Configuration& config, std::shared_ptr<Detector> de
 
     // Check if the user wants to directly apply the determined correction
     update_time_offset = config_.get<bool>("update_time_offset", false);
-
-    // Get the scan parameters
-    shift_start_ = config_.get<double>("shift_start", 1);
-    shift_end_ = config_.get<double>("shift_end", 0);
-    shift_n_ = config_.get<int>("shift_n", 0);
-    time_scale_ = config_.get<double>("time_scale", 0);
-    time_nbins_ = config_.get<int>("time_nbins", 0);
-
-    // Checking user input
-    LOG(INFO) << "Configured to scan from shift_start = " << Units::display(shift_start_, {"s", "ms", "us"});
-    LOG(INFO) << "to shift_end = " << Units::display(shift_end_, {"s", "ms", "us"});
-    LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
-    if(shift_start_ > shift_end_ || shift_n_ == 0) {
-        shift_user_ = false;
-        LOG(INFO) << "Attempting to guess reasonable scan parameters.";
-    }
-    LOG(INFO) << "Using time_scale = " << Units::display(shift_end_, {"s", "ms", "us"});
-    LOG(INFO) << "and time_nbins = " << time_nbins_;
-    if(time_scale_ == 0 || time_nbins_ == 0) {
-        time_user_ = false;
-        LOG(INFO) << "Attempting to guess reasonable range and binning.";
-    }
 }
 
 void AlignmentTime::initialize() {
@@ -166,33 +144,57 @@ void AlignmentTime::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 // Calculating parameters from user input, or guess.
 void AlignmentTime::calculate_parameters(std::shared_ptr<Detector> detector) {
 
-    // Steps need to be smaller than the trigger period.
-    // Take difference between first and last and divide by size.
-    double start = timestamps_[detector].at(0);
-    double end = timestamps_[detector].at(timestamps_[detector].size() - 1);
-    double period = (end - start) / static_cast<double>(timestamps_[detector].size());
+    // Get the scan parameters
+    shift_start_ = config_.get<double>("shift_start", 1);
+    shift_end_ = config_.get<double>("shift_end", 0);
+    shift_n_ = config_.get<int>("shift_n", 0);
+    time_scale_ = config_.get<double>("time_scale", 0);
+    time_nbins_ = config_.get<int>("time_nbins", 0);
+    LOG(INFO) << "Configured to scan from shift_start = " << Units::display(shift_start_, {"s", "ms", "us"});
+    LOG(INFO) << "to shift_end = " << Units::display(shift_end_, {"s", "ms", "us"});
+    LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
 
-    if(shift_user_) {
-        shift_step_ = (shift_end_ - shift_start_) / static_cast<double>(shift_n_);
-    } else {
+    // Check if parameters are configured reasonably, otherwise calculate.
+    if(shift_start_ > shift_end_ || shift_n_ == 0) {
+        LOG(INFO) << "Attempting to guess reasonable scan parameters.";
+
+        // Steps need to be smaller than the trigger period.
+        // Take difference between first and last and divide by size.
+        double start = timestamps_[detector].at(0);
+        double end = timestamps_[detector].at(timestamps_[detector].size() - 1);
+        double period = (end - start) / static_cast<double>(timestamps_[detector].size());
+
         // Calculate period and make it 20 times smaller (my guess is as good as yours).
         shift_step_ = period / 20.;
         // Lets make 200 steps around 0.
         shift_n_ = 200;
         shift_start_ = -shift_step_ * static_cast<double>(shift_n_) / 2.;
         shift_end_ = shift_step_ * static_cast<double>(shift_n_) / 2.;
+
         // And tell the world.
         LOG(INFO) << "Calculated to scan from shift_start = " << Units::display(shift_start_, {"s", "ms", "us"});
         LOG(INFO) << "to shift_end = " << Units::display(shift_end_, {"s", "ms", "us"});
         LOG(INFO) << "in shift_n = " << shift_n_ << " steps.";
+    } else {
+        shift_step_ = (shift_end_ - shift_start_) / static_cast<double>(shift_n_);
     }
 
-    if(!time_user_) {
-        // Same as range above
+    LOG(INFO) << "Configured time_scale = " << Units::display(shift_end_, {"s", "ms", "us"});
+    LOG(INFO) << "and time_nbins = " << time_nbins_;
+
+    // Check if these are reasonable, otherwise calculate.
+    if(time_scale_ == 0 || time_nbins_ == 0) {
+        LOG(INFO) << "Attempting to guess reasonable time scale.";
+
+        // Same as above
+        double start = timestamps_[detector].at(0);
+        double end = timestamps_[detector].at(timestamps_[detector].size() - 1);
+        double period = (end - start) / static_cast<double>(timestamps_[detector].size());
+
         time_scale_ = period * 5.;
         time_nbins_ = 200;
-        // Tell the world.
-        LOG(INFO) << "Using calculated time scale of time_scale = " << Units::display(time_scale_, {"s", "ms", "us"});
+        // And tell the world.
+        LOG(INFO) << "Using calculated time scale instead: time_scale = " << Units::display(time_scale_, {"s", "ms", "us"});
         LOG(INFO) << "and time_nbins = " << time_nbins_;
     }
 

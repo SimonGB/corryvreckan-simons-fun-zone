@@ -65,11 +65,9 @@ namespace corryvreckan {
         double shift_step_;
         double shift_end_;
         int shift_n_;
-        bool shift_user_ = true;
         // Vertical axis
         double time_scale_;
         int time_nbins_;
-        bool time_user_ = true;
 
         // Calculating parameters from user input, or guess.
         void calculate_parameters(std::shared_ptr<Detector>);
