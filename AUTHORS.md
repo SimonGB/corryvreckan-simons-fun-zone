@@ -32,6 +32,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Adrian Fiergolski, CERN, [afiergol](https://gitlab.cern.ch/afiergol)
 * Sejla Hadzic, MPP, [sehadzic](https://gitlab.cern.ch/sehadzic)
 * Jan Hammerich,University of Liverpool, [jhammeri](https://gitlab.cern.ch/jhammeri)
+* Yajun He, DESY, [yajun](https://gitlab.cern.ch/yajun)
 * Adrian Herkert, DESY, [adherker](https://gitlab.cern.ch/adherker)
 * Daniel Hynds, Nikhef, [dhynds](https://gitlab.cern.ch/dhynds)
 * Nicolò Jacazio, CERN, [njacazio](https://gitlab.cern.ch/njacazio)
