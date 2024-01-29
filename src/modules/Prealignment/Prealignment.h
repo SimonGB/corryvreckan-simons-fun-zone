@@ -25,6 +25,7 @@ namespace corryvreckan {
     enum class PrealignMethod {
         MEAN = 0,
         MAXIMUM,
+        MAXIMUM2D,
         GAUSS_FIT,
     };
 
@@ -48,6 +49,7 @@ namespace corryvreckan {
         // Correlation plots
         TH1F* correlationX;
         TH1F* correlationY;
+        TH2F* correlationXY;
         TH2F* correlationX2Dlocal;
         TH2F* correlationY2Dlocal;
         TH2F* correlationX2D;

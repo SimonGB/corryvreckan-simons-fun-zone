@@ -55,6 +55,9 @@ void Prealignment::initialize() {
     correlationX = new TH1F("correlationX", title.c_str(), 1000, -1.0 * range_abs, 1.0 * range_abs);
     title = m_detector->getName() + ": correlation Y;y_{ref}-y [mm];events";
     correlationY = new TH1F("correlationY", title.c_str(), 1000, -1.0 * range_abs, 1.0 * range_abs);
+    title = m_detector->getName() + ": correlation XY;x_{ref}-x [mm];y_{ref}-y [mm];events";
+    correlationXY = new TH2F(
+        "correlationXY", title.c_str(), 1000, -1.0 * range_abs, 1.0 * range_abs, 1000, -1.0 * range_abs, 1.0 * range_abs);
     // 2D correlation plots (pixel-by-pixel, local coordinates):
     title = m_detector->getName() + ": 2D correlation X (local);x [px];x_{ref} [px];events";
     correlationX2Dlocal = new TH2F("correlationX_2Dlocal",
@@ -113,6 +116,8 @@ StatusCode Prealignment::run(const std::shared_ptr<Clipboard>& clipboard) {
                 correlationY->Fill(refCluster->global().y() - cluster->global().y());
                 correlationY2D->Fill(cluster->global().y(), refCluster->global().y());
                 correlationY2Dlocal->Fill(cluster->row(), refCluster->row());
+                correlationXY->Fill(refCluster->global().x() - cluster->global().x(),
+                                    refCluster->global().y() - cluster->global().y());
             }
         }
     }
@@ -169,6 +174,24 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             shift_X = correlationX->GetXaxis()->GetBinCenter(binMaxX);
             int binMaxY = correlationY->GetMaximumBin();
             shift_Y = correlationY->GetXaxis()->GetBinCenter(binMaxY);
+        } else if(method == PrealignMethod::MAXIMUM2D) {
+            int binMaxX1 = correlationX->GetMaximumBin();
+            TH1D* ProjY = correlationXY->ProjectionY("_py", binMaxX1 - 1, binMaxX1 + 1);
+            int binMaxY1 = ProjY->GetMaximumBin();
+            auto max1 = correlationXY->GetBinContent(binMaxX1, binMaxY1);
+
+            int binMaxY2 = correlationY->GetMaximumBin();
+            TH1D* ProjX = correlationXY->ProjectionX("_px", binMaxY2 - 1, binMaxY2 + 1);
+            int binMaxX2 = ProjX->GetMaximumBin();
+            auto max2 = correlationXY->GetBinContent(binMaxX2, binMaxY2);
+
+            if(max1 > max2) {
+                shift_X = correlationX->GetXaxis()->GetBinCenter(binMaxX1);
+                shift_Y = ProjY->GetXaxis()->GetBinCenter(binMaxY1);
+            } else {
+                shift_X = ProjX->GetXaxis()->GetBinCenter(binMaxX2);
+                shift_Y = correlationY->GetXaxis()->GetBinCenter(binMaxY2);
+            }
         }
 
         LOG(DEBUG) << "Shift (without damping factor)" << m_detector->getName()
