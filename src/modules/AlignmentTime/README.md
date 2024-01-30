@@ -6,7 +6,7 @@
 **Maintainer**: Finn Feindt (<finn.feindt@desy.de>)
 **Module Type**: *DETECTOR*
 **Detector Type**: *all*
-**Status**: Immature
+**Status**: Experimental
 
 ### Description
 If the time measurements from different detectors have an offset with respect to each other, it might not be possible to build correlated events based on these time stamps. The purpose of this module is to analyze the pixel timestamps provided by a time reference and any given detector, in order to find the time offset between them. To do so, a sorted array of time stamps from both detectors is stored, and a set of shifts is assumed. The shifts are applied to the time stamps of the investigated detector. For each shifted time stamp the closest time stamp in the array from the reference detector is found, their residual (difference) is calculated, and filled into a histogram. When the shift matches the offset, this distribution peaks around 0 and the corresponding shift can be added in the geometry description (`time_offset`).
