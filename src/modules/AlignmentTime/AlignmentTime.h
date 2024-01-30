@@ -52,7 +52,6 @@ namespace corryvreckan {
     private:
         // Handling time reference
         std::string time_reference_name_;
-        bool reference_filled_;
 
         // Update time offset?
         bool update_time_offset;

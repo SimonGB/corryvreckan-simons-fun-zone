@@ -52,7 +52,7 @@ void AlignmentTime::initialize() {
 
 StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
 
-    reference_filled_ = 0;
+    bool reference_filled = 0;
 
     // Loop over all detectors
     for(auto& detector : get_detectors()) {
@@ -76,7 +76,7 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
     }
 
     // Fill also reference timestamps, once
-    if(reference_filled_) {
+    if(reference_filled) {
         LOG(DEBUG) << "Reference detector already filled";
     } else {
         // Get all pixels for this detector
@@ -93,7 +93,7 @@ StatusCode AlignmentTime::run(const std::shared_ptr<Clipboard>& clipboard) {
             timestamps_[time_reference_name_].emplace_back(pixel->timestamp());
         }
 
-        reference_filled_ = 1;
+        reference_filled = 1;
     }
 
     // Return value telling analysis to keep running
