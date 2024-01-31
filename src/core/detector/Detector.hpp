@@ -263,6 +263,12 @@ namespace corryvreckan {
         double timeOffset() const { return m_timeOffset; }
 
         /**
+         * @brief Set the time offset of the detector
+         * @param time New time offset of the detector
+         */
+        void setTimeOffset(double time) { m_timeOffset = time; }
+
+        /**
          * @brief Get detector time resolution, used for timing cuts during clustering, track formation, etc.
          * @return Time resolutiom of respective detector
          */
