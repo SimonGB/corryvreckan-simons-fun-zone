@@ -216,9 +216,9 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
     // Store the alignment shifts per detector:
     std::map<std::string, std::vector<double>> shiftsX;
     std::map<std::string, std::vector<double>> shiftsY;
-    std::map<std::string, std::vector<double>> rotX;
-    std::map<std::string, std::vector<double>> rotY;
-    std::map<std::string, std::vector<double>> rotZ;
+    std::map<std::string, std::vector<double>> rot0;
+    std::map<std::string, std::vector<double>> rot1;
+    std::map<std::string, std::vector<double>> rot2;
 
     // Loop over all planes. For each plane, set the plane alignment parameters which will be varied, and then minimise the
     // track chi2 (sum of biased residuals). This means that tracks are refitted with each minimisation step.
@@ -259,18 +259,18 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
 
             if(m_alignOrientation) {
                 residualFitter->SetParameter(
-                    det * 6 + 3, (detectorID + "_rotationX").c_str(), detector->rotation().X(), 0.001, -6.30, 6.30);
+                    det * 6 + 3, (detectorID + "_rotation0").c_str(), detector->rotation().X(), 0.001, -6.30, 6.30);
                 residualFitter->SetParameter(
-                    det * 6 + 4, (detectorID + "_rotationY").c_str(), detector->rotation().Y(), 0.001, -6.30, 6.30);
+                    det * 6 + 4, (detectorID + "_rotation1").c_str(), detector->rotation().Y(), 0.001, -6.30, 6.30);
                 residualFitter->SetParameter(
-                    det * 6 + 5, (detectorID + "_rotationZ").c_str(), detector->rotation().Z(), 0.001, -6.30, 6.30);
+                    det * 6 + 5, (detectorID + "_rotation2").c_str(), detector->rotation().Z(), 0.001, -6.30, 6.30);
             } else {
                 residualFitter->SetParameter(
-                    det * 6 + 3, (detectorID + "_rotationX").c_str(), detector->rotation().X(), 0, -6.30, 6.30);
+                    det * 6 + 3, (detectorID + "_rotation0").c_str(), detector->rotation().X(), 0, -6.30, 6.30);
                 residualFitter->SetParameter(
-                    det * 6 + 4, (detectorID + "_rotationY").c_str(), detector->rotation().Y(), 0, -6.30, 6.30);
+                    det * 6 + 4, (detectorID + "_rotation1").c_str(), detector->rotation().Y(), 0, -6.30, 6.30);
                 residualFitter->SetParameter(
-                    det * 6 + 5, (detectorID + "_rotationZ").c_str(), detector->rotation().Z(), 0, -6.30, 6.30);
+                    det * 6 + 5, (detectorID + "_rotation2").c_str(), detector->rotation().Z(), 0, -6.30, 6.30);
             }
             auto old_position = detector->displacement();
             auto old_orientation = detector->rotation();
@@ -283,20 +283,20 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
             auto displacementX = residualFitter->GetParameter(det * 6 + 0);
             auto displacementY = residualFitter->GetParameter(det * 6 + 1);
             auto displacementZ = residualFitter->GetParameter(det * 6 + 2);
-            auto rotationX = residualFitter->GetParameter(det * 6 + 3);
-            auto rotationY = residualFitter->GetParameter(det * 6 + 4);
-            auto rotationZ = residualFitter->GetParameter(det * 6 + 5);
+            auto rotation0 = residualFitter->GetParameter(det * 6 + 3);
+            auto rotation1 = residualFitter->GetParameter(det * 6 + 4);
+            auto rotation2 = residualFitter->GetParameter(det * 6 + 5);
 
             // Store corrections:
             shiftsX[detectorID].push_back(
                 static_cast<double>(Units::convert(detector->displacement().X() - old_position.X(), "um")));
             shiftsY[detectorID].push_back(
                 static_cast<double>(Units::convert(detector->displacement().Y() - old_position.Y(), "um")));
-            rotX[detectorID].push_back(
+            rot0[detectorID].push_back(
                 static_cast<double>(Units::convert(detector->rotation().X() - old_orientation.X(), "deg")));
-            rotY[detectorID].push_back(
+            rot1[detectorID].push_back(
                 static_cast<double>(Units::convert(detector->rotation().Y() - old_orientation.Y(), "deg")));
-            rotZ[detectorID].push_back(
+            rot2[detectorID].push_back(
                 static_cast<double>(Units::convert(detector->rotation().Z() - old_orientation.Z(), "deg")));
 
             LOG(INFO) << detector->getName() << "/" << iteration << " dT"
@@ -308,13 +308,13 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
             residualFitter->SetParameter(det * 6 + 0, (detectorID + "_displacementX").c_str(), displacementX, 0, -50, 50);
             residualFitter->SetParameter(det * 6 + 1, (detectorID + "_displacementY").c_str(), displacementY, 0, -50, 50);
             residualFitter->SetParameter(det * 6 + 2, (detectorID + "_displacementZ").c_str(), displacementZ, 0, -10, 500);
-            residualFitter->SetParameter(det * 6 + 3, (detectorID + "_rotationX").c_str(), rotationX, 0, -6.30, 6.30);
-            residualFitter->SetParameter(det * 6 + 4, (detectorID + "_rotationY").c_str(), rotationY, 0, -6.30, 6.30);
-            residualFitter->SetParameter(det * 6 + 5, (detectorID + "_rotationZ").c_str(), rotationZ, 0, -6.30, 6.30);
+            residualFitter->SetParameter(det * 6 + 3, (detectorID + "_rotation0").c_str(), rotation0, 0, -6.30, 6.30);
+            residualFitter->SetParameter(det * 6 + 4, (detectorID + "_rotation1").c_str(), rotation1, 0, -6.30, 6.30);
+            residualFitter->SetParameter(det * 6 + 5, (detectorID + "_rotation2").c_str(), rotation2, 0, -6.30, 6.30);
 
             // Set the alignment parameters of this plane to be the optimised values from the alignment
             detector->update(XYZPoint(displacementX, displacementY, displacementZ),
-                             XYZVector(rotationX, rotationY, rotationZ));
+                             XYZVector(rotation0, rotation1, rotation2));
             det++;
         }
     }
@@ -353,26 +353,26 @@ void AlignmentTrackChi2::finalize(const std::shared_ptr<ReadonlyClipboard>& clip
         align_correction_shiftY[detector->getName()]->GetYaxis()->SetTitle("correction [#mum]");
         align_correction_shiftY[detector->getName()]->Write(name.c_str());
 
-        name = "alignment_correction_rotationX_" + detector->getName();
-        align_correction_rotX[detector->getName()] =
-            new TGraph(static_cast<int>(rotX[detector->getName()].size()), &iterations[0], &rotX[detector->getName()][0]);
-        align_correction_rotX[detector->getName()]->GetXaxis()->SetTitle("# iteration");
-        align_correction_rotX[detector->getName()]->GetYaxis()->SetTitle("correction [deg]");
-        align_correction_rotX[detector->getName()]->Write(name.c_str());
+        name = "alignment_correction_rotation0_" + detector->getName() + "_ini_mode_" + detector->orientation_mode();
+        align_correction_rot0[detector->getName()] =
+            new TGraph(static_cast<int>(rot0[detector->getName()].size()), &iterations[0], &rot0[detector->getName()][0]);
+        align_correction_rot0[detector->getName()]->GetXaxis()->SetTitle("# iteration");
+        align_correction_rot0[detector->getName()]->GetYaxis()->SetTitle("correction [deg]");
+        align_correction_rot0[detector->getName()]->Write(name.c_str());
 
-        name = "alignment_correction_rotationY_" + detector->getName();
-        align_correction_rotY[detector->getName()] =
-            new TGraph(static_cast<int>(rotY[detector->getName()].size()), &iterations[0], &rotY[detector->getName()][0]);
-        align_correction_rotY[detector->getName()]->GetXaxis()->SetTitle("# iteration");
-        align_correction_rotY[detector->getName()]->GetYaxis()->SetTitle("correction [deg]");
-        align_correction_rotY[detector->getName()]->Write(name.c_str());
+        name = "alignment_correction_rotation1_" + detector->getName() + "_ini_mode_" + detector->orientation_mode();
+        align_correction_rot0[detector->getName()] =
+            new TGraph(static_cast<int>(rot0[detector->getName()].size()), &iterations[0], &rot0[detector->getName()][0]);
+        align_correction_rot0[detector->getName()]->GetXaxis()->SetTitle("# iteration");
+        align_correction_rot0[detector->getName()]->GetYaxis()->SetTitle("correction [deg]");
+        align_correction_rot0[detector->getName()]->Write(name.c_str());
 
-        name = "alignment_correction_rotationZ_" + detector->getName();
-        align_correction_rotZ[detector->getName()] =
-            new TGraph(static_cast<int>(rotZ[detector->getName()].size()), &iterations[0], &rotZ[detector->getName()][0]);
-        align_correction_rotZ[detector->getName()]->GetXaxis()->SetTitle("# iteration");
-        align_correction_rotZ[detector->getName()]->GetYaxis()->SetTitle("correction [deg]");
-        align_correction_rotZ[detector->getName()]->Write(name.c_str());
+        name = "alignment_correction_rotation0_" + detector->getName() + "_ini_mode_" + detector->orientation_mode();
+        align_correction_rot0[detector->getName()] =
+            new TGraph(static_cast<int>(rot0[detector->getName()].size()), &iterations[0], &rot0[detector->getName()][0]);
+        align_correction_rot0[detector->getName()]->GetXaxis()->SetTitle("# iteration");
+        align_correction_rot0[detector->getName()]->GetYaxis()->SetTitle("correction [deg]");
+        align_correction_rot0[detector->getName()]->Write(name.c_str());
     }
 
     // Clean up local track storage

@@ -99,9 +99,9 @@ namespace corryvreckan {
         TProfile* profile_dX_Y;
         TGraph* align_correction_shiftX;
         TGraph* align_correction_shiftY;
-        TGraph* align_correction_rotX;
-        TGraph* align_correction_rotY;
-        TGraph* align_correction_rotZ;
+        TGraph* align_correction_rot0;
+        TGraph* align_correction_rot1;
+        TGraph* align_correction_rot2;
     };
 
 } // namespace corryvreckan

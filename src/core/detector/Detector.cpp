@@ -109,21 +109,21 @@ Detector::Alignment::Alignment(const Configuration& config) {
 
     // Get the orientation right - we keep this constant:
     orientation_ = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
-    auto mode = config.get<std::string>("orientation_mode", "xyz");
+    mode_ = config.get<std::string>("orientation_mode", "xyz");
 
-    if(mode == "xyz") {
+    if(mode_ == "xyz") {
         LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
         // First angle given in the configuration file is around x, second around y, last around z:
         rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
             return RotationZ(rot.Z()) * RotationY(rot.Y()) * RotationX(rot.X());
         };
-    } else if(mode == "zyx") {
+    } else if(mode_ == "zyx") {
         LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
         // First angle given in the configuration file is around z, second around y, last around x:
         rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
             return static_cast<ROOT::Math::Rotation3D>(RotationZYX(rot.x(), rot.y(), rot.z()));
         };
-    } else if(mode == "zxz") {
+    } else if(mode_ == "zxz") {
         LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
         // First angle given in the configuration file is around z, second around x, last around z:
         rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {

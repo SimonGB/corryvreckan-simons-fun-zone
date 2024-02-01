@@ -33,7 +33,7 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     config_.setDefault<bool>("align_position", true);
     config_.setDefault<bool>("align_orientation", true);
     config_.setDefault<std::string>("align_position_axes", "xy");
-    config_.setDefault<std::string>("align_orientation_axes", "xyz");
+    config_.setDefault<std::string>("align_orientation_axes", "012");
     config_.setDefault<size_t>("max_associated_clusters", 1);
     config_.setDefault<double>("max_track_chi2ndof", 10.);
     config_.setDefault<double>("spatial_cut_sensoredge", 0.);
@@ -49,6 +49,11 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     m_alignOrientation = config_.get<bool>("align_orientation");
     m_alignPosition_axes = config_.get<std::string>("align_position_axes");
     m_alignOrientation_axes = config_.get<std::string>("align_orientation_axes");
+
+    if(!std::all_of(m_alignOrientation_axes.begin(), m_alignOrientation_axes.end(), ::isdigit)) {
+        LOG(WARNING) << "Found non-digit characters in orientation axis designation, defaulting to all axes (\"012\")";
+        m_alignOrientation_axes = "012";
+    }
 
     std::transform(m_alignPosition_axes.begin(), m_alignPosition_axes.end(), m_alignPosition_axes.begin(), ::tolower);
     std::transform(
@@ -384,9 +389,9 @@ void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& cl
     // Store the alignment shifts per detector:
     std::vector<double> shiftsX;
     std::vector<double> shiftsY;
-    std::vector<double> rotX;
-    std::vector<double> rotY;
-    std::vector<double> rotZ;
+    std::vector<double> rot0;
+    std::vector<double> rot1;
+    std::vector<double> rot2;
 
     AlignmentDUTResidual::globalDetector = m_detector;
     auto name = m_detector->getName();
@@ -434,20 +439,20 @@ void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& cl
     // Z is never changed:
     residualFitter->SetParameter(2, (name + "_displacementZ").c_str(), m_detector->displacement().Z(), 0, -10, 500);
 
-    if(m_alignOrientation && m_alignOrientation_axes.find('x') != std::string::npos) {
-        residualFitter->SetParameter(3, (name + "_rotationX").c_str(), m_detector->rotation().X(), 0.001, -6.30, 6.30);
+    if(m_alignOrientation && m_alignOrientation_axes.find('0') != std::string::npos) {
+        residualFitter->SetParameter(3, (name + "_rotation0").c_str(), m_detector->rotation().X(), 0.001, -6.30, 6.30);
     } else {
-        residualFitter->SetParameter(3, (name + "_rotationX").c_str(), m_detector->rotation().X(), 0, -6.30, 6.30);
+        residualFitter->SetParameter(3, (name + "_rotation0").c_str(), m_detector->rotation().X(), 0, -6.30, 6.30);
     }
-    if(m_alignOrientation && m_alignOrientation_axes.find('y') != std::string::npos) {
-        residualFitter->SetParameter(4, (name + "_rotationY").c_str(), m_detector->rotation().Y(), 0.001, -6.30, 6.30);
+    if(m_alignOrientation && m_alignOrientation_axes.find('1') != std::string::npos) {
+        residualFitter->SetParameter(4, (name + "_rotation1").c_str(), m_detector->rotation().Y(), 0.001, -6.30, 6.30);
     } else {
-        residualFitter->SetParameter(4, (name + "_rotationY").c_str(), m_detector->rotation().Y(), 0, -6.30, 6.30);
+        residualFitter->SetParameter(4, (name + "_rotation1").c_str(), m_detector->rotation().Y(), 0, -6.30, 6.30);
     }
-    if(m_alignOrientation && m_alignOrientation_axes.find('z') != std::string::npos) {
-        residualFitter->SetParameter(5, (name + "_rotationZ").c_str(), m_detector->rotation().Z(), 0.001, -6.30, 6.30);
+    if(m_alignOrientation && m_alignOrientation_axes.find('2') != std::string::npos) {
+        residualFitter->SetParameter(5, (name + "_rotation2").c_str(), m_detector->rotation().Z(), 0.001, -6.30, 6.30);
     } else {
-        residualFitter->SetParameter(5, (name + "_rotationZ").c_str(), m_detector->rotation().Z(), 0, -6.30, 6.30);
+        residualFitter->SetParameter(5, (name + "_rotation2").c_str(), m_detector->rotation().Z(), 0, -6.30, 6.30);
     }
 
     for(size_t iteration = 0; iteration < nIterations; iteration++) {
@@ -466,9 +471,9 @@ void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& cl
         // Store corrections:
         shiftsX.push_back(static_cast<double>(Units::convert(m_detector->displacement().X() - old_position.X(), "um")));
         shiftsY.push_back(static_cast<double>(Units::convert(m_detector->displacement().Y() - old_position.Y(), "um")));
-        rotX.push_back(static_cast<double>(Units::convert(m_detector->rotation().X() - old_orientation.X(), "deg")));
-        rotY.push_back(static_cast<double>(Units::convert(m_detector->rotation().Y() - old_orientation.Y(), "deg")));
-        rotZ.push_back(static_cast<double>(Units::convert(m_detector->rotation().Z() - old_orientation.Z(), "deg")));
+        rot0.push_back(static_cast<double>(Units::convert(m_detector->rotation().X() - old_orientation.X(), "deg")));
+        rot1.push_back(static_cast<double>(Units::convert(m_detector->rotation().Y() - old_orientation.Y(), "deg")));
+        rot2.push_back(static_cast<double>(Units::convert(m_detector->rotation().Z() - old_orientation.Z(), "deg")));
 
         LOG(INFO) << m_detector->getName() << "/" << iteration << " dT"
                   << Units::display(m_detector->displacement() - old_position, {"mm", "um"}) << " dR"
@@ -494,23 +499,23 @@ void AlignmentDUTResidual::finalize(const std::shared_ptr<ReadonlyClipboard>& cl
     align_correction_shiftY->GetYaxis()->SetTitle("correction [#mum]");
     align_correction_shiftY->Write(graph_name.c_str());
 
-    graph_name = "alignment_correction_rotationX_" + m_detector->getName();
-    align_correction_rotX = new TGraph(static_cast<int>(rotX.size()), &iterations[0], &rotX[0]);
-    align_correction_rotX->GetXaxis()->SetTitle("# iteration");
-    align_correction_rotX->GetYaxis()->SetTitle("correction [#mum]");
-    align_correction_rotX->Write(graph_name.c_str());
+    graph_name = "alignment_correction_rotation0_" + m_detector->getName() + "_in_mode_" + m_detector->orientation_mode();
+    align_correction_rot0 = new TGraph(static_cast<int>(rot0.size()), &iterations[0], &rot0[0]);
+    align_correction_rot0->GetXaxis()->SetTitle("# iteration");
+    align_correction_rot0->GetYaxis()->SetTitle("correction [#mum]");
+    align_correction_rot0->Write(graph_name.c_str());
 
-    graph_name = "alignment_correction_rotationY_" + m_detector->getName();
-    align_correction_rotY = new TGraph(static_cast<int>(rotY.size()), &iterations[0], &rotY[0]);
-    align_correction_rotY->GetXaxis()->SetTitle("# iteration");
-    align_correction_rotY->GetYaxis()->SetTitle("correction [#mum]");
-    align_correction_rotY->Write(graph_name.c_str());
+    graph_name = "alignment_correction_rotation1_" + m_detector->getName() + "_in_mode_" + m_detector->orientation_mode();
+    align_correction_rot1 = new TGraph(static_cast<int>(rot1.size()), &iterations[0], &rot1[0]);
+    align_correction_rot1->GetXaxis()->SetTitle("# iteration");
+    align_correction_rot1->GetYaxis()->SetTitle("correction [#mum]");
+    align_correction_rot1->Write(graph_name.c_str());
 
-    graph_name = "alignment_correction_rotationZ_" + m_detector->getName();
-    align_correction_rotZ = new TGraph(static_cast<int>(rotZ.size()), &iterations[0], &rotZ[0]);
-    align_correction_rotZ->GetXaxis()->SetTitle("# iteration");
-    align_correction_rotZ->GetYaxis()->SetTitle("correction [#mum]");
-    align_correction_rotZ->Write(graph_name.c_str());
+    graph_name = "alignment_correction_rotation2_" + m_detector->getName() + "_in_mode_" + m_detector->orientation_mode();
+    align_correction_rot2 = new TGraph(static_cast<int>(rot2.size()), &iterations[0], &rot2[0]);
+    align_correction_rot2->GetXaxis()->SetTitle("# iteration");
+    align_correction_rot2->GetYaxis()->SetTitle("correction [#mum]");
+    align_correction_rot2->Write(graph_name.c_str());
 
     // Clean up local track storage
     AlignmentDUTResidual::globalTracks.clear();

@@ -102,6 +102,8 @@ namespace corryvreckan {
 
             const ROOT::Math::XYZVector& orientation() const { return orientation_; };
 
+            const std::string& mode() const { return mode_; };
+
             void update(double time, bool force = false);
 
             void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
@@ -112,6 +114,9 @@ namespace corryvreckan {
             void recalculate();
 
             std::array<std::shared_ptr<TFormula>, 3> parse_formulae(const Configuration& config, const std::string& key);
+
+            // Cache for the orientation mode:
+            std::string mode_{};
 
             // Cache for last time the transformations were renewed, in ns:
             double last_time_{};
@@ -291,6 +296,11 @@ namespace corryvreckan {
          * @return Normal vector to sensor surface
          */
         ROOT::Math::XYZVector normal() const { return alignment_->normal(); }
+        /**
+         * @brief Get orientation mode
+         * @return string with mode
+         */
+        std::string orientation_mode() const { return alignment_->mode(); }
 
         /**
          * @brief Get origin vector to sensor surface
