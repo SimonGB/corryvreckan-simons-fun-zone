@@ -50,6 +50,11 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     m_alignPosition_axes = config_.get<std::string>("align_position_axes");
     m_alignOrientation_axes = config_.get<std::string>("align_orientation_axes");
 
+    if(!std::all_of(m_alignOrientation_axes.begin(), m_alignOrientation_axes.end(), ::isdigit)) {
+        LOG(WARNING) << "Found non-digit characters in orientation axis designation, defaulting to all axes (\"012\")";
+        m_alignOrientation_axes = "012";
+    }
+
     std::transform(m_alignPosition_axes.begin(), m_alignPosition_axes.end(), m_alignPosition_axes.begin(), ::tolower);
     std::transform(
         m_alignOrientation_axes.begin(), m_alignOrientation_axes.end(), m_alignOrientation_axes.begin(), ::tolower);
