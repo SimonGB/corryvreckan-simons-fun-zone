@@ -18,13 +18,20 @@ using namespace std;
 ClusteringSpatial::ClusteringSpatial(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector) {
 
+    config_.setAlias("neighbor_radius_row", "neighbour_radius_row", true);
+    config_.setAlias("neighbor_radius_col", "neighbour_radius_col", true);
+
     config_.setDefault<bool>("use_trigger_timestamp", false);
     config_.setDefault<bool>("charge_weighting", true);
     config_.setDefault<bool>("reject_by_roi", false);
+    config_.setDefault<int>("neighbor_radius_row", 1);
+    config_.setDefault<int>("neighbor_radius_col", 1);
 
     useTriggerTimestamp = config_.get<bool>("use_trigger_timestamp");
     chargeWeighting = config_.get<bool>("charge_weighting");
     rejectByROI = config_.get<bool>("reject_by_roi");
+    neighbor_radius_row_ = config_.get<int>("neighbor_radius_row");
+    neighbor_radius_col_ = config_.get<int>("neighbor_radius_col");
 }
 
 void ClusteringSpatial::initialize() {
@@ -130,13 +137,13 @@ StatusCode ClusteringSpatial::run(const std::shared_ptr<Clipboard>& clipboard) {
         while(addedPixel) {
 
             addedPixel = false;
-            for(int row = pixel->row() - 1; row <= pixel->row() + 1; row++) {
+            for(int row = pixel->row() - neighbor_radius_row_; row <= pixel->row() + neighbor_radius_row_; row++) {
                 // If out of bounds for row
                 if(row < 0 || row >= nRows) {
                     continue;
                 }
 
-                for(int col = pixel->column() - 1; col <= pixel->column() + 1; col++) {
+                for(int col = pixel->column() - neighbor_radius_col_; col <= pixel->column() + neighbor_radius_col_; col++) {
                     // If out of bounds for column
                     if(col < 0 || col >= nCols) {
                         continue;
