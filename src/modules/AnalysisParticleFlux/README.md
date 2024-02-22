@@ -20,7 +20,7 @@
     *  `zenith_high`: Upper bound of the zenith histogram. Defaults to `90 deg`.
     * `zenith_granularity`: Number of bins in $`\vartheta`$ which defaults to `9`.
 * `track_intercept`: Value of $`z`$ where the track angles are calculated. Defaults to `0.0` and does not affect the analysis for `straightline` tracks.
-* `angle_unit`:Angle unit of the output histograms. Can be either `deg`, `rad` or `mrad`. Defaults to `deg`.
+* `output_plots_in_degrees`:Controls the angle unit of the output histograms - `deg` if true or `rad` if false. Defaults to `true`.
 
 ### Plots produced
 The following plots are produced:
