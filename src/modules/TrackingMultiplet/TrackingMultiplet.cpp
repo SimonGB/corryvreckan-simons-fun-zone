@@ -233,33 +233,21 @@ void TrackingMultiplet::initialize() {
     multipletOffsetAtScattererY = new TH1F("multipletOffsetAtScattererY", title.c_str(), 500, -300., 300.);
 
     title = "Multiplet kink X at scatterer;kink x [mrad];multiplets";
-    multipletKinkAtScattererX = new TH1F("multipletKinkAtScattererX", title.c_str(), 500, -20., 20.);
+    multipletKinkAtScattererX = new TH1F("multipletKinkAtScattererX", title.c_str(), 5000, -10., 10.);
     title = "Multiplet kink Y at scatterer;kink y [mrad];multiplets";
-    multipletKinkAtScattererY = new TH1F("multipletKinkAtScattererY", title.c_str(), 500, -20., 20.);
+    multipletKinkAtScattererY = new TH1F("multipletKinkAtScattererY", title.c_str(), 5000, -10., 10.);
 
     title = "Distribution of Kink X at scatterer;global x [mm];global y [mm];|kink x| [mrad]";
-    multipletKinkAtScattererXvsGlobalXY =  new TH2F("multipletKinkAtScattererXvsGlobalXY", title.c_str(), 400, -20., 20., 400, -20., 20.);
-
-    title = "Distribution of Kink X at scatterer (Kink > 50);global x [mm];global y [mm];|kink x| [mrad]";
-    multipletKinkAtScattererXvsGlobalXY_larger50 =  new TH2F("multipletKinkAtScattererXvsGlobalXY_larger50", title.c_str(), 400, -20., 20., 400, -20., 20.);
+    multipletKinkAtScattererXvsGlobalXY =  new TH2F("multipletKinkAtScattererXvsGlobalXY", title.c_str(), 4000, -20., 20., 4000, -20., 20.);
 
     title = "Distribution of Kink Y at scatterer;global x [mm];global y [mm];|kink y| [mrad]";
-    multipletKinkAtScattererYvsGlobalXY =  new TH2F("multipletKinkAtScattererYvsGlobalXY", title.c_str(), 400, -20., 20., 400, -20., 20.);
-
-    title = "Distribution of Kink Y at scatterer (Kink > 50);global x [mm];global y [mm];|kink y| [mrad]";
-    multipletKinkAtScattererYvsGlobalXY_larger50 =  new TH2F("multipletKinkAtScattererYvsGlobalXY_larger50", title.c_str(), 400, -20., 20., 400, -20., 20.);
+    multipletKinkAtScattererYvsGlobalXY =  new TH2F("multipletKinkAtScattererYvsGlobalXY", title.c_str(), 4000, -20., 20., 4000, -20., 20.);
 
     title = "Distribution of Multiplet intersecting at Scatterer;global x [mm];global y [mm];number of tracks";
-    multipletRegisteredAtScatterer =  new TH2F("multipletRegisteredAtScatterer", title.c_str(), 400, -20., 20., 400, -20., 20.);
-
-    title = "Distribution of Multiplet intersecting at Scatterer (Kink_X > 50);global x [mm];global y [mm];number of tracks";
-    multipletRegisteredAtScattererX_larger50 =  new TH2F("multipletRegisteredAtScattererX_larger50", title.c_str(), 400, -20., 20., 400, -20., 20.);
-
-    title = "Distribution of Multiplet intersecting at Scatterer (Kink_Y > 50);global x [mm];global y [mm];number of tracks";
-    multipletRegisteredAtScattererY_larger50 =  new TH2F("multipletRegisteredAtScattererY_larger50", title.c_str(), 400, -20., 20., 400, -20., 20.);
-
+    multipletRegisteredAtScatterer =  new TH2F("multipletRegisteredAtScatterer", title.c_str(), 4000, -20., 20., 4000, -20., 20.);
+    
     title = "Kink Angle Y vs. Kink Angle X at Scatterer;Kink Angle X [mrad];Kink Angle Y [mrad]";
-    multipletKinkAtScattererYvsX = new TH2F("multipletKinkAtScattererYvsX", title.c_str(), 400, -20., 20., 400, -20., 20.);
+    multipletKinkAtScattererYvsX = new TH2F("multipletKinkAtScattererYvsX", title.c_str(), 4000, -20., 20., 4000, -20., 20.);
 
     for(auto stream : {upstream, downstream}) {
         std::string stream_name = stream == upstream ? "upstream" : "downstream";
