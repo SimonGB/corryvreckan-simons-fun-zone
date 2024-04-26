@@ -249,6 +249,15 @@ void TrackingMultiplet::initialize() {
     title = "Kink Angle Y vs. Kink Angle X at Scatterer;Kink Angle X [mrad];Kink Angle Y [mrad]";
     multipletKinkAtScattererYvsX = new TH2F("multipletKinkAtScattererYvsX", title.c_str(), 4000, -20., 20., 4000, -20., 20.);
 
+    // Declare a TTree and variables to store the values
+    tree = new TTree("multiplet_data", "Data from Multiplet Analysis");
+
+    // Add branches to the tree
+    tree->Branch("posx", &posx, "posx/D");
+    tree->Branch("posy", &posy, "posy/D");
+    tree->Branch("kinkx", &kinkx, "kinkx/D");
+    tree->Branch("kinky", &kinky, "kinky/D");
+
     for(auto stream : {upstream, downstream}) {
         std::string stream_name = stream == upstream ? "upstream" : "downstream";
         std::string stream_name_caps = stream == upstream ? "Upstream" : "Downstream";
@@ -869,19 +878,18 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         multipletKinkAtScattererYvsGlobalXY->Fill(pos_x, pos_y, kinkY*kinkY);
 
         
-
-        if (std::abs(kinkX) > 50) {
-            multipletKinkAtScattererXvsGlobalXY_larger50->Fill(pos_x, pos_y, kinkX*kinkX);
-            multipletRegisteredAtScattererX_larger50->Fill(pos_x, pos_y, 1); 
-        }
-        if (std::abs(kinkY) > 50) {
-            multipletKinkAtScattererYvsGlobalXY_larger50->Fill(pos_x, pos_y, kinkY*kinkY);
-            multipletRegisteredAtScattererY_larger50->Fill(pos_x, pos_y, 1);
-        }
-        
         multipletKinkAtScattererYvsX->Fill(kinkX, kinkY);
 
         multipletRegisteredAtScatterer->Fill(pos_x, pos_y, 1);
+
+        // Fill the variables
+        posx = pos_x;
+        posy = pos_y;
+        kinkx = kinkX;
+        kinky = kinkY;
+
+        // Fill the tree with the current values
+        tree->Fill();
     }
     fill_tracklet_histograms(upstream, all, upstream_tracklets);
     fill_tracklet_histograms(downstream, all, downstream_tracklets);

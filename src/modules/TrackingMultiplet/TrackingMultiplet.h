@@ -16,6 +16,7 @@
 #include <TH1F.h>
 #include <TH2F.h>
 #include <iostream>
+#include <TTree.h>
 
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
@@ -121,6 +122,13 @@ namespace corryvreckan {
         TH2F* multipletRegisteredAtScattererY_larger50;
 
         TH2F* multipletKinkAtScattererYvsX;
+
+        TTree* tree;
+        Double_t posx;
+        Double_t posy;
+        Double_t kinkx;
+        Double_t kinky;
+
 
         // Function to calculate the weighted average timestamp from the clusters of a track
         double calculate_average_timestamp(const Track* track);
