@@ -128,6 +128,7 @@ namespace corryvreckan {
         Double_t posy;
         Double_t kinkx;
         Double_t kinky;
+        Double_t chi2ndof;
 
 
         // Function to calculate the weighted average timestamp from the clusters of a track

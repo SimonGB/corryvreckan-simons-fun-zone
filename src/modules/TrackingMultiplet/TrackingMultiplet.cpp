@@ -257,6 +257,7 @@ void TrackingMultiplet::initialize() {
     tree->Branch("posy", &posy, "posy/D");
     tree->Branch("kinkx", &kinkx, "kinkx/D");
     tree->Branch("kinky", &kinky, "kinky/D");
+    tree->Branch("chi2ndof", &chi2ndof, "chi2ndof/D");
 
     for(auto stream : {upstream, downstream}) {
         std::string stream_name = stream == upstream ? "upstream" : "downstream";
@@ -856,8 +857,10 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         upstream_selected.push_back(multiplet->getUpstreamTracklet());
         downstream_selected.push_back(multiplet->getDownstreamTracklet());
 
+        double chi2ndof_multi = multiplet->getChi2ndof();
+
         trackChi2->Fill(multiplet->getChi2());
-        trackChi2ndof->Fill(multiplet->getChi2ndof());
+        trackChi2ndof->Fill(chi2ndof_multi);
 
         double distanceX = multiplet->getOffsetAtScatterer().X();
         double distanceY = multiplet->getOffsetAtScatterer().Y();
@@ -887,6 +890,7 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         posy = pos_y;
         kinkx = kinkX;
         kinky = kinkY;
+        chi2ndof = chi2ndof_multi;
 
         // Fill the tree with the current values
         tree->Fill();
